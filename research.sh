@@ -17,6 +17,23 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+RESET_MODE=false
+for arg in "$@"; do
+    case "$arg" in
+        --reset)
+            RESET_MODE=true
+            ;;
+        *)
+            echo "Unknown option: $arg" >&2
+            echo "Usage: $0 [--reset]" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,6 +43,26 @@ STATE_FILE="$SCRIPT_DIR/.topic-index"
 LOG_FILE="$SCRIPT_DIR/agent.log"
 DATE="$(date +%Y-%m-%d)"
 MODEL="claude-opus-4-6"
+
+# ---------------------------------------------------------------------------
+# Reset mode — wipe state and briefs for a clean test run
+# ---------------------------------------------------------------------------
+if [[ "$RESET_MODE" == true ]]; then
+    echo "WARNING: This will permanently delete all research briefs, the learning log, and all state."
+    read -r -p "Are you sure you want to reset? [y/N] " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "Reset cancelled."
+        exit 0
+    fi
+    echo "Resetting state..."
+    rm -f "$STATE_FILE"
+    rm -f "$LEARNING_LOG"
+    rm -rf "$BRIEFS_DIR"
+    rm -f "$LOG_FILE"
+    echo "Deleted: .topic-index, learning-log.md, briefs/, agent.log"
+    echo "Run ./research.sh to start fresh."
+    exit 0
+fi
 
 # ---------------------------------------------------------------------------
 # Resolve `claude` binary
@@ -216,6 +253,8 @@ Produce a well-structured research brief in the following exact markdown format:
 ---
 
 Be precise, cite sources, include publication/announcement dates, and prioritize recency. Do not pad with background information that hasn't changed recently — focus on what is *new*.
+
+IMPORTANT: Output the brief directly as markdown text to stdout. Do NOT use any file-writing tools. Do NOT ask for permission to write files. Simply print the markdown content and nothing else.
 PROMPTEOF
 
 # ---------------------------------------------------------------------------
