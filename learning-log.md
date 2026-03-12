@@ -7,15 +7,16 @@ The agent rotates through six priority areas in round-robin order.
 
 | # | Area | Focus |
 |---|------|-------|
-| 1 | Safety & Alignment | Alignment techniques, interpretability, governance |
-| 2 | Agentic Systems | Frameworks, multi-agent, tool use, planning |
-| 3 | MLOps | LLMOps, deployment, monitoring, fine-tuning infra |
-| 4 | Inference Optimization | Quantization, serving, latency, hardware kernels |
-| 5 | Frontier Research | Latest papers & model releases from major labs |
-| 6 | Foundation Model Internals | Architectures, attention, pre-training, scaling |
+| 1 | Safety, Assurance & Governance | Governance frameworks, regulation, auditing, compliance |
+| 2 | Enterprise GenAI Adoption | Case studies, ROI, large-scale deployments, vendor landscape |
+| 3 | Agentic Systems | Frameworks, multi-agent, tool use, planning |
+| 4 | Frontier Research | Latest papers & model releases from major labs |
+| 5 | GenAI Products & Platforms | New releases, enterprise platforms, API updates |
+| 6 | MLOps & LLMOps | Deployment, monitoring, fine-tuning infra, evaluation |
+| 7 | Inference Optimization | Quantization, serving, latency, hardware kernels |
 
 ## Research History
 
 | Date | Topic | Brief |
 |------|-------|-------|
-| 2026-03-12 | Safety & Alignment | [2026-03-12-safety-and-alignment.md](briefs/2026-03-12-safety-and-alignment.md) |
+| 2026-03-12 | Safety, Assurance & Governance | [2026-03-12-safety-assurance-and-governance.md](briefs/2026-03-12-safety-assurance-and-governance.md) |
