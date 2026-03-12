@@ -20,3 +20,4 @@ The agent rotates through six priority areas in round-robin order.
 | Date | Topic | Brief |
 |------|-------|-------|
 | 2026-03-12 | Safety, Assurance & Governance | [2026-03-12-safety-assurance-and-governance.md](briefs/2026-03-12-safety-assurance-and-governance.md) |
+| 2026-03-13 | Enterprise GenAI Adoption | [2026-03-13-enterprise-genai-adoption.md](briefs/2026-03-13-enterprise-genai-adoption.md) |
