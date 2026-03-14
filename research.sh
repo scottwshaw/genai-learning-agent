@@ -3,8 +3,8 @@
 # research.sh — Daily GenAI Learning Agent
 # =============================================================================
 # Runs daily via cron. Uses `claude -p` with web search to research the latest
-# GenAI developments, saves a markdown brief to briefs/, updates learning-log.md
-# with a round-robin topic tracker, and commits the results via git.
+# GenAI developments across 7 topic areas, saves a markdown brief to briefs/,
+# updates learning-log.md with a round-robin topic tracker, and commits via git.
 #
 # SETUP:
 #   1. chmod +x research.sh
@@ -20,14 +20,18 @@ set -euo pipefail
 # Argument parsing
 # ---------------------------------------------------------------------------
 RESET_MODE=false
+LIST_TOPICS=false
 for arg in "$@"; do
     case "$arg" in
         --reset)
             RESET_MODE=true
             ;;
+        --topics)
+            LIST_TOPICS=true
+            ;;
         *)
             echo "Unknown option: $arg" >&2
-            echo "Usage: $0 [--reset]" >&2
+            echo "Usage: $0 [--reset|--topics]" >&2
             exit 1
             ;;
     esac
@@ -109,31 +113,34 @@ log() {
 # Topic rotation (round-robin across 6 priority areas)
 # ---------------------------------------------------------------------------
 TOPIC_SLUGS=(
-    "safety-and-alignment"
+    "safety-assurance-and-governance"
+    "enterprise-genai-adoption"
     "agentic-systems"
-    "mlops"
-    "inference-optimization"
     "frontier-research"
-    "foundation-model-internals"
+    "genai-products-and-platforms"
+    "mlops-and-llmops"
+    "inference-optimization"
 )
 
 TOPIC_LABELS=(
-    "Safety & Alignment"
+    "Safety, Assurance & Governance"
+    "Enterprise GenAI Adoption"
     "Agentic Systems"
-    "MLOps"
-    "Inference Optimization"
     "Frontier Research"
-    "Foundation Model Internals"
+    "GenAI Products & Platforms"
+    "MLOps & LLMOps"
+    "Inference Optimization"
 )
 
 # Per-topic search focus injected into the research prompt
 TOPIC_FOCUS=(
-    "AI safety research, alignment techniques, RLHF/RLAIF advances, interpretability methods, red-teaming, constitutional AI, scalable oversight, and AI governance policy"
+    "formal AI governance frameworks, regulatory developments (EU AI Act, NIST AI RMF, ISO 42001), enterprise risk management, AI auditing and assurance, compliance requirements, responsible AI policy, and corporate AI governance programs"
+    "how businesses are deploying GenAI at scale, enterprise adoption case studies, ROI and business value stories, organizational change management, workforce impact, vendor selection, and lessons learned from large-scale GenAI implementations"
     "autonomous agent frameworks (LangGraph, AutoGen, CrewAI, etc.), multi-agent coordination, tool use, planning and reasoning, memory architectures, agent evaluation benchmarks, and agentic workflow design patterns"
+    "latest research papers and preprints from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, xAI, and other labs; new model releases; benchmark results; and significant technical breakthroughs published in the past two weeks"
+    "new model and product releases from OpenAI, Anthropic, Google, Microsoft, AWS, Salesforce, and other vendors; enterprise AI platform updates; API changes; pricing and availability announcements; and competitive landscape shifts"
     "LLMOps tooling, model deployment pipelines, experiment tracking, fine-tuning infrastructure, model monitoring and observability, evaluation frameworks, and production ML systems at scale"
     "LLM inference efficiency, quantization techniques (GPTQ, AWQ, GGUF), speculative decoding, KV cache optimization, hardware-specific kernel optimizations (FlashAttention, etc.), serving frameworks (vLLM, TGI, SGLang), and throughput/latency improvements"
-    "latest research papers and preprints from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, xAI, and other labs; new model releases; benchmark results; and significant technical breakthroughs published in the past two weeks"
-    "transformer architecture innovations, attention mechanism variants, tokenization advances, pre-training techniques and curricula, scaling laws, mixture-of-experts designs, state-space models (Mamba, etc.), and other architectural research"
 )
 
 NUM_TOPICS="${#TOPIC_SLUGS[@]}"
@@ -152,6 +159,22 @@ get_topic_index() {
 }
 
 # ---------------------------------------------------------------------------
+# List topics mode
+# ---------------------------------------------------------------------------
+if [[ "$LIST_TOPICS" == true ]]; then
+    CURRENT_IDX="$(get_topic_index)"
+    echo "Topics (round-robin order):"
+    for i in "${!TOPIC_LABELS[@]}"; do
+        if (( i == CURRENT_IDX )); then
+            echo "  -> $((i + 1)). ${TOPIC_LABELS[$i]}  [next]"
+        else
+            echo "     $((i + 1)). ${TOPIC_LABELS[$i]}"
+        fi
+    done
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
 # Initialization
 # ---------------------------------------------------------------------------
 mkdir -p "$BRIEFS_DIR"
@@ -168,12 +191,13 @@ The agent rotates through six priority areas in round-robin order.
 
 | # | Area | Focus |
 |---|------|-------|
-| 1 | Safety & Alignment | Alignment techniques, interpretability, governance |
-| 2 | Agentic Systems | Frameworks, multi-agent, tool use, planning |
-| 3 | MLOps | LLMOps, deployment, monitoring, fine-tuning infra |
-| 4 | Inference Optimization | Quantization, serving, latency, hardware kernels |
-| 5 | Frontier Research | Latest papers & model releases from major labs |
-| 6 | Foundation Model Internals | Architectures, attention, pre-training, scaling |
+| 1 | Safety, Assurance & Governance | Governance frameworks, regulation, auditing, compliance |
+| 2 | Enterprise GenAI Adoption | Case studies, ROI, large-scale deployments, vendor landscape |
+| 3 | Agentic Systems | Frameworks, multi-agent, tool use, planning |
+| 4 | Frontier Research | Latest papers & model releases from major labs |
+| 5 | GenAI Products & Platforms | New releases, enterprise platforms, API updates |
+| 6 | MLOps & LLMOps | Deployment, monitoring, fine-tuning infra, evaluation |
+| 7 | Inference Optimization | Quantization, serving, latency, hardware kernels |
 
 ## Research History
 
