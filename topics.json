@@ -1,0 +1,39 @@
+{
+  "topics": [
+    {
+      "slug": "safety-assurance-and-governance",
+      "label": "Safety, Assurance & Governance",
+      "focus": "formal AI governance frameworks, regulatory developments (EU AI Act, NIST AI RMF, ISO 42001), enterprise risk management, AI auditing and assurance, compliance requirements, responsible AI policy, and corporate AI governance programs"
+    },
+    {
+      "slug": "enterprise-genai-adoption",
+      "label": "Enterprise GenAI Adoption",
+      "focus": "how businesses are deploying GenAI at scale, enterprise adoption case studies, ROI and business value stories, organizational change management, workforce impact, vendor selection, and lessons learned from large-scale GenAI implementations"
+    },
+    {
+      "slug": "agentic-systems",
+      "label": "Agentic Systems",
+      "focus": "autonomous agent frameworks (LangGraph, AutoGen, CrewAI, etc.), multi-agent coordination, tool use, planning and reasoning, memory architectures, agent evaluation benchmarks, and agentic workflow design patterns"
+    },
+    {
+      "slug": "frontier-research",
+      "label": "Frontier Research",
+      "focus": "latest research papers and preprints from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, xAI, and other labs; new model releases; benchmark results; and significant technical breakthroughs published in the past two weeks"
+    },
+    {
+      "slug": "genai-products-and-platforms",
+      "label": "GenAI Products & Platforms",
+      "focus": "new model and product releases from OpenAI, Anthropic, Google, Microsoft, AWS, Salesforce, and other vendors; enterprise AI platform updates; API changes; pricing and availability announcements; and competitive landscape shifts"
+    },
+    {
+      "slug": "mlops-and-llmops",
+      "label": "MLOps & LLMOps",
+      "focus": "LLMOps tooling, model deployment pipelines, experiment tracking, fine-tuning infrastructure, model monitoring and observability, evaluation frameworks, and production ML systems at scale"
+    },
+    {
+      "slug": "inference-optimization",
+      "label": "Inference Optimization",
+      "focus": "LLM inference efficiency, quantization techniques (GPTQ, AWQ, GGUF), speculative decoding, KV cache optimization, hardware-specific kernel optimizations (FlashAttention, etc.), serving frameworks (vLLM, TGI, SGLang), and throughput/latency improvements"
+    }
+  ]
+}

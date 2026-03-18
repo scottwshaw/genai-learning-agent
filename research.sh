@@ -12,6 +12,10 @@
 #   3. Add to crontab (e.g. 07:00 daily):
 #        0 7 * * * /path/to/genai-learning-agent/research.sh >> /path/to/genai-learning-agent/agent.log 2>&1
 #   4. Ensure `claude` is authenticated on the VM: claude auth login
+#
+# PREREQUISITES:
+#   - jq (apt install jq / brew install jq)
+#   - claude CLI (npm install -g @anthropic-ai/claude-code)
 # =============================================================================
 
 set -euo pipefail
@@ -45,8 +49,28 @@ BRIEFS_DIR="$SCRIPT_DIR/briefs"
 LEARNING_LOG="$SCRIPT_DIR/learning-log.md"
 STATE_FILE="$SCRIPT_DIR/.topic-index"
 LOG_FILE="$SCRIPT_DIR/agent.log"
+TOPICS_FILE="$SCRIPT_DIR/topics.json"
+PROMPT_TEMPLATE="$SCRIPT_DIR/prompts/research-prompt.md"
 DATE="$(date +%Y-%m-%d)"
 MODEL="claude-opus-4-6"
+
+# ---------------------------------------------------------------------------
+# Prerequisite checks
+# ---------------------------------------------------------------------------
+if ! command -v jq &>/dev/null; then
+    echo "[ERROR] 'jq' is required but not found. Install with: apt install jq  OR  brew install jq" >&2
+    exit 1
+fi
+
+if [[ ! -f "$TOPICS_FILE" ]]; then
+    echo "[ERROR] topics.json not found at $TOPICS_FILE" >&2
+    exit 1
+fi
+
+if [[ ! -f "$PROMPT_TEMPLATE" ]]; then
+    echo "[ERROR] Prompt template not found at $PROMPT_TEMPLATE" >&2
+    exit 1
+fi
 
 # ---------------------------------------------------------------------------
 # Reset mode — wipe state and briefs for a clean test run
@@ -110,40 +134,9 @@ log() {
 }
 
 # ---------------------------------------------------------------------------
-# Topic rotation (round-robin across 6 priority areas)
+# Topic rotation (round-robin, driven by topics.json)
 # ---------------------------------------------------------------------------
-TOPIC_SLUGS=(
-    "safety-assurance-and-governance"
-    "enterprise-genai-adoption"
-    "agentic-systems"
-    "frontier-research"
-    "genai-products-and-platforms"
-    "mlops-and-llmops"
-    "inference-optimization"
-)
-
-TOPIC_LABELS=(
-    "Safety, Assurance & Governance"
-    "Enterprise GenAI Adoption"
-    "Agentic Systems"
-    "Frontier Research"
-    "GenAI Products & Platforms"
-    "MLOps & LLMOps"
-    "Inference Optimization"
-)
-
-# Per-topic search focus injected into the research prompt
-TOPIC_FOCUS=(
-    "formal AI governance frameworks, regulatory developments (EU AI Act, NIST AI RMF, ISO 42001), enterprise risk management, AI auditing and assurance, compliance requirements, responsible AI policy, and corporate AI governance programs"
-    "how businesses are deploying GenAI at scale, enterprise adoption case studies, ROI and business value stories, organizational change management, workforce impact, vendor selection, and lessons learned from large-scale GenAI implementations"
-    "autonomous agent frameworks (LangGraph, AutoGen, CrewAI, etc.), multi-agent coordination, tool use, planning and reasoning, memory architectures, agent evaluation benchmarks, and agentic workflow design patterns"
-    "latest research papers and preprints from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, xAI, and other labs; new model releases; benchmark results; and significant technical breakthroughs published in the past two weeks"
-    "new model and product releases from OpenAI, Anthropic, Google, Microsoft, AWS, Salesforce, and other vendors; enterprise AI platform updates; API changes; pricing and availability announcements; and competitive landscape shifts"
-    "LLMOps tooling, model deployment pipelines, experiment tracking, fine-tuning infrastructure, model monitoring and observability, evaluation frameworks, and production ML systems at scale"
-    "LLM inference efficiency, quantization techniques (GPTQ, AWQ, GGUF), speculative decoding, KV cache optimization, hardware-specific kernel optimizations (FlashAttention, etc.), serving frameworks (vLLM, TGI, SGLang), and throughput/latency improvements"
-)
-
-NUM_TOPICS="${#TOPIC_SLUGS[@]}"
+NUM_TOPICS="$(jq '.topics | length' "$TOPICS_FILE")"
 
 get_topic_index() {
     if [[ -f "$STATE_FILE" ]]; then
@@ -164,11 +157,12 @@ get_topic_index() {
 if [[ "$LIST_TOPICS" == true ]]; then
     CURRENT_IDX="$(get_topic_index)"
     echo "Topics (round-robin order):"
-    for i in "${!TOPIC_LABELS[@]}"; do
+    for i in $(seq 0 $(( NUM_TOPICS - 1 ))); do
+        label="$(jq -r ".topics[$i].label" "$TOPICS_FILE")"
         if (( i == CURRENT_IDX )); then
-            echo "  -> $((i + 1)). ${TOPIC_LABELS[$i]}  [next]"
+            echo "  -> $(( i + 1 )). $label  [next]"
         else
-            echo "     $((i + 1)). ${TOPIC_LABELS[$i]}"
+            echo "     $(( i + 1 )). $label"
         fi
     done
     exit 0
@@ -212,9 +206,9 @@ fi
 IDX="$(get_topic_index)"
 NEXT_IDX=$(( (IDX + 1) % NUM_TOPICS ))
 
-TOPIC_SLUG="${TOPIC_SLUGS[$IDX]}"
-TOPIC_LABEL="${TOPIC_LABELS[$IDX]}"
-TOPIC_FOCUS_TEXT="${TOPIC_FOCUS[$IDX]}"
+TOPIC_SLUG="$(jq -r ".topics[$IDX].slug" "$TOPICS_FILE")"
+TOPIC_LABEL="$(jq -r ".topics[$IDX].label" "$TOPICS_FILE")"
+TOPIC_FOCUS_TEXT="$(jq -r ".topics[$IDX].focus" "$TOPICS_FILE")"
 BRIEF_FILE="$BRIEFS_DIR/${DATE}-${TOPIC_SLUG}.md"
 
 log "=========================================="
@@ -231,55 +225,32 @@ if [[ -f "$BRIEF_FILE" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Build the research prompt
+# Determine previous brief date for the same topic (for recency filtering)
 # ---------------------------------------------------------------------------
-read -r -d '' RESEARCH_PROMPT <<PROMPTEOF || true
-You are an expert GenAI research assistant producing a daily intelligence brief for a senior ML engineer.
+PREVIOUS_BRIEF_DATE="$(ls "$BRIEFS_DIR"/*-"${TOPIC_SLUG}".md 2>/dev/null \
+    | sort | tail -1 \
+    | xargs -I{} basename {} \
+    | sed "s/-${TOPIC_SLUG}\.md//" \
+    || echo "")"
 
-Today's date is ${DATE}. Your task is to research the LATEST developments (ideally from the past 7-14 days, no older than 30 days unless seminal) in the following area:
+if [[ -z "$PREVIOUS_BRIEF_DATE" ]]; then
+    # No prior brief — default to 14 days ago
+    PREVIOUS_BRIEF_DATE="$(date -d '14 days ago' +%Y-%m-%d 2>/dev/null \
+        || date -v-14d +%Y-%m-%d)"
+fi
 
-**${TOPIC_LABEL}**
+log "Previous brief date for this topic: $PREVIOUS_BRIEF_DATE"
 
-Focus specifically on: ${TOPIC_FOCUS_TEXT}
-
-Use web search to find recent papers, blog posts, GitHub releases, announcements, and news. Prioritize primary sources (arXiv, official lab blogs, GitHub) over aggregators.
-
-Produce a well-structured research brief in the following exact markdown format:
-
----
-
-# ${TOPIC_LABEL} — Research Brief (${DATE})
-
-## Key Developments
-
-- [bullet: development with date, source, and 1-sentence explanation]
-- (3–5 bullets, most significant recent items only)
-
-## Notable Papers / Models / Tools
-
-| Item | Date | Source | Summary |
-|------|------|--------|---------|
-(list each notable paper, model release, or tool with a brief description and link)
-
-## Technical Deep-Dive
-
-(Choose the single most technically interesting development from above. Explain it in 2–4 paragraphs with genuine technical depth — cover the mechanism, what's novel, why it matters, and any limitations. Be specific: include architecture details, benchmark numbers, or algorithmic insights where relevant.)
-
-## Implications & Trends
-
-- [bullet: what this development signals for the field]
-- (2–3 bullets connecting recent developments to broader trajectories)
-
-## Sources
-
-(List every URL you found useful, one per line, with a brief label)
-
----
-
-Be precise, cite sources, include publication/announcement dates, and prioritize recency. Do not pad with background information that hasn't changed recently — focus on what is *new*.
-
-IMPORTANT: Output the brief directly as markdown text to stdout. Do NOT use any file-writing tools. Do NOT ask for permission to write files. Simply print the markdown content and nothing else.
-PROMPTEOF
+# ---------------------------------------------------------------------------
+# Build the research prompt
+# Prompt loaded from prompts/research-prompt.md — can also be used by API-based runners
+# ---------------------------------------------------------------------------
+RESEARCH_PROMPT="$(sed \
+    -e "s/{{DATE}}/${DATE}/g" \
+    -e "s/{{TOPIC_LABEL}}/${TOPIC_LABEL}/g" \
+    -e "s/{{PREVIOUS_BRIEF_DATE}}/${PREVIOUS_BRIEF_DATE}/g" \
+    -e "s|{{TOPIC_FOCUS}}|${TOPIC_FOCUS_TEXT}|g" \
+    "$PROMPT_TEMPLATE")"
 
 # ---------------------------------------------------------------------------
 # Run claude -p with web search
@@ -322,7 +293,8 @@ log "Updated learning-log.md"
 # Advance the topic index for tomorrow
 # ---------------------------------------------------------------------------
 echo "$NEXT_IDX" > "$STATE_FILE"
-log "Next topic: ${TOPIC_LABELS[$NEXT_IDX]} (index $NEXT_IDX)"
+NEXT_LABEL="$(jq -r ".topics[$NEXT_IDX].label" "$TOPICS_FILE")"
+log "Next topic: $NEXT_LABEL (index $NEXT_IDX)"
 
 # ---------------------------------------------------------------------------
 # Git commit
@@ -342,5 +314,5 @@ Generated by learning-agent on $(hostname)."
     log "Git committed: research(${DATE}): ${TOPIC_LABEL}"
 fi
 
-log "Done. Run $(( (NEXT_IDX) + 1 ))/${NUM_TOPICS} next time: ${TOPIC_LABELS[$NEXT_IDX]}"
+log "Done. Run $(( NEXT_IDX + 1 ))/${NUM_TOPICS} next time: $NEXT_LABEL"
 log "=========================================="
