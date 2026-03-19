@@ -26,3 +26,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-03-16 | Frontier Research | [2026-03-16-frontier-research.md](briefs/2026-03-16-frontier-research.md) |
 | 2026-03-17 | GenAI Products & Platforms | [2026-03-17-genai-products-and-platforms.md](briefs/2026-03-17-genai-products-and-platforms.md) |
 | 2026-03-17 | MLOps & LLMOps | [2026-03-17-mlops-and-llmops.md](briefs/2026-03-17-mlops-and-llmops.md) |
+| 2026-03-19 | Inference Optimization | [2026-03-19-inference-optimization.md](briefs/2026-03-19-inference-optimization.md) |
