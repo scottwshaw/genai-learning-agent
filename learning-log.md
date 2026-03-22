@@ -30,3 +30,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-03-20 | Safety, Assurance & Governance | [2026-03-20-safety-assurance-and-governance.md](briefs/2026-03-20-safety-assurance-and-governance.md) |
 | 2026-03-21 | Enterprise GenAI Adoption | [2026-03-21-enterprise-genai-adoption.md](briefs/2026-03-21-enterprise-genai-adoption.md) |
 | 2026-03-21 | Agentic Systems | [2026-03-21-agentic-systems.md](briefs/2026-03-21-agentic-systems.md) |
+| 2026-03-22 | Frontier Research | [2026-03-22-frontier-research.md](briefs/2026-03-22-frontier-research.md) |
