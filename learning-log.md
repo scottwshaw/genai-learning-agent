@@ -32,3 +32,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-03-21 | Agentic Systems | [2026-03-21-agentic-systems.md](briefs/2026-03-21-agentic-systems.md) |
 | 2026-03-22 | Frontier Research | [2026-03-22-frontier-research.md](briefs/2026-03-22-frontier-research.md) |
 | 2026-03-23 | GenAI Products & Platforms | [2026-03-23-genai-products-and-platforms.md](briefs/2026-03-23-genai-products-and-platforms.md) |
+| 2026-03-23 | MLOps & LLMOps | [2026-03-23-mlops-and-llmops.md](briefs/2026-03-23-mlops-and-llmops.md) |
