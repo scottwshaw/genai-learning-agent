@@ -35,3 +35,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-03-23 | MLOps & LLMOps | [2026-03-23-mlops-and-llmops.md](briefs/2026-03-23-mlops-and-llmops.md) |
 | 2026-03-24 | MLOps & LLMOps | [2026-03-24-mlops-and-llmops.md](briefs/2026-03-24-mlops-and-llmops.md) |
 | 2026-03-24 | Inference Optimization | [2026-03-24-inference-optimization.md](briefs/2026-03-24-inference-optimization.md) |
+| 2026-03-25 | LLM Production Infrastructure | [2026-03-25-llm-production-infrastructure.md](briefs/2026-03-25-llm-production-infrastructure.md) |
