@@ -3,37 +3,32 @@
     {
       "slug": "safety-assurance-and-governance",
       "label": "Safety, Assurance & Governance",
-      "focus": "formal AI governance frameworks, regulatory developments (EU AI Act, NIST AI RMF, ISO 42001), enterprise risk management, AI auditing and assurance, compliance requirements, responsible AI policy, and corporate AI governance programs"
+      "focus": "formal AI governance frameworks and their adoption in practice (EU AI Act enforcement, NIST AI RMF, ISO 42001 certifications); AI safety research including alignment, interpretability, and evaluation evasion; enterprise risk management for LLM deployments; AI auditing methodologies and assurance tooling; multi-jurisdiction compliance requirements; intent laundering and adversarial robustness; and corporate AI ethics programs with measurable outcomes"
     },
     {
       "slug": "enterprise-genai-adoption",
       "label": "Enterprise GenAI Adoption",
-      "focus": "how businesses are deploying GenAI at scale, enterprise adoption case studies, ROI and business value stories, organizational change management, workforce impact, vendor selection, and lessons learned from large-scale GenAI implementations"
+      "focus": "how enterprises are deploying GenAI at scale including specific case studies with ROI data, productivity metrics, and failure modes; organizational and workforce change management; build-vs-buy and vendor selection decisions; large-scale regulated industry adoption (financial services, healthcare, legal, government); barriers to production deployment; and analyst forecasts from IDC, Gartner, Forrester, and McKinsey on enterprise AI spend and readiness"
     },
     {
       "slug": "agentic-systems",
       "label": "Agentic Systems",
-      "focus": "autonomous agent frameworks (LangGraph, AutoGen, CrewAI, etc.), multi-agent coordination, tool use, planning and reasoning, memory architectures, agent evaluation benchmarks, and agentic workflow design patterns"
+      "focus": "autonomous agent frameworks (LangGraph, AutoGen, CrewAI, Mastra, etc.) and their production readiness; multi-agent coordination protocols (MCP, A2A) and ecosystem adoption; tool use, planning, and long-horizon task reliability; memory architectures (episodic, semantic, procedural) and persistent state management; agent evaluation benchmarks and failure mode taxonomies; agentic workflow design patterns; and the emerging AgentOps discipline — cost control, observability, and non-deterministic evaluation for agentic pipelines"
     },
     {
-      "slug": "frontier-research",
-      "label": "Frontier Research",
-      "focus": "latest research papers and preprints from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, xAI, and other labs; new model releases; benchmark results; and significant technical breakthroughs published in the past two weeks"
+      "slug": "models-and-market",
+      "label": "Models & Market",
+      "focus": "two distinct but related areas covered together: (1) FRONTIER CAPABILITIES — latest model releases and benchmark results from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, DeepSeek, xAI, and others; significant research breakthroughs; independent benchmark evaluations (SWE-bench, GPQA, ARC-AGI, MMMU); context window advances; reasoning and coding capability gaps; and (2) MARKET & PRODUCTS — commercial product launches, API changes, pricing shifts, platform integrations, and competitive positioning; the open-weight vs. closed model dynamic; enterprise platform updates from Microsoft, AWS, Google Cloud, Salesforce; and analyst views on market structure. Cover both lenses in each brief — capability without market context, or market without capability grounding, misses the full picture"
     },
     {
-      "slug": "genai-products-and-platforms",
-      "label": "GenAI Products & Platforms",
-      "focus": "new model and product releases from OpenAI, Anthropic, Google, Microsoft, AWS, Salesforce, and other vendors; enterprise AI platform updates; API changes; pricing and availability announcements; and competitive landscape shifts"
+      "slug": "llm-production-infrastructure",
+      "label": "LLM Production Infrastructure",
+      "focus": "two complementary layers of the LLM production stack covered together: (1) OPERATIONS LAYER — LLMOps tooling and platforms; model deployment pipelines; production monitoring and observability (eval-driven alerting, drift detection, multi-turn evaluation); fine-tuning and PEFT infrastructure; experiment tracking; evaluation frameworks for quality, safety, and hallucination; the vendor landscape for LLM observability and evaluation at scale; and (2) COMPUTE LAYER — inference efficiency and serving performance; quantization techniques (GPTQ, AWQ, GGUF, fp8); speculative decoding and draft model approaches; KV cache optimisation and memory management; hardware-specific kernel work (FlashAttention variants, Triton, CUDA); serving frameworks (vLLM, TGI, SGLang, TensorRT-LLM) and their throughput/latency trade-offs; and hardware co-design trends (GPU, TPU, custom silicon). Cover both layers — operational concerns without compute depth, or kernel work without deployment context, leaves the picture incomplete"
     },
     {
-      "slug": "mlops-and-llmops",
-      "label": "MLOps & LLMOps",
-      "focus": "LLMOps tooling, model deployment pipelines, experiment tracking, fine-tuning infrastructure, model monitoring and observability, evaluation frameworks, and production ML systems at scale"
-    },
-    {
-      "slug": "inference-optimization",
-      "label": "Inference Optimization",
-      "focus": "LLM inference efficiency, quantization techniques (GPTQ, AWQ, GGUF), speculative decoding, KV cache optimization, hardware-specific kernel optimizations (FlashAttention, etc.), serving frameworks (vLLM, TGI, SGLang), and throughput/latency improvements"
+      "slug": "ai-infrastructure-and-geopolitics",
+      "label": "AI Infrastructure & Geopolitics",
+      "focus": "the physical and geopolitical substrate that determines AI capacity: semiconductor supply chains (TSMC, ASML, HBM memory, CoWoS packaging) and disruption risks; GPU and TPU availability, allocation, and waitlists; energy supply for AI — power consumption trends, data center energy sourcing, nuclear and renewable commitments by hyperscalers; new data center announcements and buildout timelines; sovereign compute initiatives and hyperscaler regional expansion, with particular focus on Australia and Asia-Pacific (when will AWS, Azure, Google, Oracle put meaningful GPU capacity into Australian sovereign territory?); US and allied export controls on advanced chips and their downstream effects on training and inference capacity; geopolitical risks to the AI supply chain (Taiwan, China, trade policy); and macroeconomic factors affecting AI infrastructure investment. Preferred sources: Epoch AI, SemiAnalysis, The Information, IEEE Spectrum, official hyperscaler infrastructure announcements, and energy/policy outlets"
     }
   ]
 }

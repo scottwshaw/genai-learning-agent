@@ -42,6 +42,8 @@ At the end of this prompt you will find a block of **recent briefs across all to
 - **Identify what is genuinely new**: use the prior coverage as a baseline. Surface developments that extend, challenge, or resolve things mentioned before, not just things that are new to this specific topic area.
 - **Spot cross-cutting signals**: if multiple recent briefs point in the same direction independently, that convergence is itself a signal worth calling out.
 
+**Important — topic labels change over time.** The previous briefs may carry different topic names than the current taxonomy (e.g. "Frontier Research", "GenAI Products & Platforms", "MLOps & LLMOps", "Inference Optimization" are older labels for content now covered under "Models & Market" and "LLM Production Infrastructure"). Do not filter or discount any brief because its title does not match today's topic. Judge each brief by its *content*, not its label — all recent briefs are relevant context regardless of what they were called.
+
 ### Output Format
 
 Produce a well-structured research brief in the following **exact** markdown format. Do not add extra sections, rename headings, or change their order.
