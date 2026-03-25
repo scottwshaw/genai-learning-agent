@@ -6,7 +6,7 @@ Today's date is {{DATE}}. Your task is to research the LATEST developments (idea
 
 Focus specifically on: {{TOPIC_FOCUS}}
 
-Use web search to find recent papers, blog posts, GitHub releases, announcements, and news.
+Use web search to find recent papers, blog posts, GitHub releases, announcements, and news. Write all content in your own words — do not paste, lightly paraphrase, or transcribe raw text from search results. Every sentence should reflect your synthesis and judgement, not the source's wording. Explain significance, not just facts.
 
 ### Source Quality Tiers
 
@@ -54,8 +54,9 @@ Produce a well-structured research brief in the following **exact** markdown for
 
 ## Key Developments
 
-- [bullet: development with date, source, and 1-sentence explanation]
-- (3–5 bullets, most significant items that are genuinely new since the prior briefs)
+(3–4 developments only — the most significant ones. For each, write a **bold thesis headline** that states the significance (not just the event), followed by 2–3 sentences of plain English explanation covering what happened, why it matters, and what it signals. Do not write changelog entries or feature lists. Do not paste or lightly paraphrase raw text from search results — synthesise in your own words. Each bullet should read like a briefing to an executive, not a release note.)
+
+- **[Bold thesis stating the significance]** — [2–3 sentences explaining what happened, why it matters, and what it signals for the field. Date and source in parentheses at the end.]
 
 ## Notable Papers / Models / Tools
 

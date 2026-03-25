@@ -2,20 +2,25 @@
 # =============================================================================
 # research.sh — Daily GenAI Learning Agent
 # =============================================================================
-# Runs daily via cron. Uses `claude -p` with web search to research the latest
-# GenAI developments across 7 topic areas, saves a markdown brief to briefs/,
-# updates learning-log.md with a round-robin topic tracker, and commits via git.
+# Runs daily via cron. Uses the Anthropic API (via run_research.py) with web
+# search to research the latest GenAI developments across 6 topic areas, saves
+# a markdown brief to briefs/, updates learning-log.md, and commits via git.
+#
+# ANTHROPIC_API_KEY must be set in the environment at invocation time.
+# It is never stored on disk. Inject it via cron, SSH, or a secrets manager:
+#   ANTHROPIC_API_KEY=sk-ant-... ./research.sh
+#   ssh user@host "ANTHROPIC_API_KEY=sk-ant-... /path/to/research.sh"
 #
 # SETUP:
-#   1. chmod +x research.sh
-#   2. Run once manually to initialize: ./research.sh
-#   3. Add to crontab (e.g. 07:00 daily):
-#        0 7 * * * /path/to/genai-learning-agent/research.sh >> /path/to/genai-learning-agent/agent.log 2>&1
-#   4. Ensure `claude` is authenticated on the VM: claude auth login
+#   1. pip install anthropic
+#   2. chmod +x research.sh
+#   3. Run once manually to verify: ANTHROPIC_API_KEY=sk-ant-... ./research.sh --no-commit
+#   4. Add to crontab (e.g. 07:00 daily), injecting the key:
+#        0 7 * * * ANTHROPIC_API_KEY=sk-ant-... /path/to/research.sh >> /path/to/agent.log 2>&1
 #
 # PREREQUISITES:
+#   - python3 + anthropic package (pip install anthropic)
 #   - jq (apt install jq / brew install jq)
-#   - claude CLI (npm install -g @anthropic-ai/claude-code)
 # =============================================================================
 
 set -euo pipefail
@@ -97,36 +102,20 @@ if [[ "$RESET_MODE" == true ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Resolve `claude` binary
-# Cron environments often have a minimal PATH, so we search common locations.
+# Resolve python3 — prefer the project venv if present
 # ---------------------------------------------------------------------------
-find_claude() {
-    # Check PATH first
-    if command -v claude &>/dev/null; then
-        command -v claude
-        return
-    fi
-    # Common install locations for npm global / nvm / claude installer
-    local candidates=(
-        "$HOME/.claude/local/claude"
-        "$HOME/.npm-global/bin/claude"
-        "$HOME/.nvm/versions/node/$(ls "$HOME/.nvm/versions/node" 2>/dev/null | sort -V | tail -1)/bin/claude"
-        "/usr/local/bin/claude"
-        "/usr/bin/claude"
-        "$HOME/.local/bin/claude"
-    )
-    for c in "${candidates[@]}"; do
-        if [[ -x "$c" ]]; then
-            echo "$c"
-            return
-        fi
-    done
-    echo ""
-}
+if [[ -x "$SCRIPT_DIR/.venv/bin/python3" ]]; then
+    PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python3"
+else
+    PYTHON_BIN="$(command -v python3 2>/dev/null || true)"
+fi
+if [[ -z "$PYTHON_BIN" ]]; then
+    echo "[ERROR] 'python3' not found. Create a venv: python3 -m venv .venv && .venv/bin/pip install anthropic" >&2
+    exit 1
+fi
 
-CLAUDE_BIN="$(find_claude)"
-if [[ -z "$CLAUDE_BIN" ]]; then
-    echo "[ERROR] 'claude' binary not found. Run 'npm install -g @anthropic-ai/claude-code' and authenticate." >&2
+if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+    echo "[ERROR] ANTHROPIC_API_KEY environment variable is not set." >&2
     exit 1
 fi
 
@@ -293,16 +282,15 @@ Use them to: avoid repeating developments already surfaced; track how trends are
 ${RECENT_BRIEFS_CONTENT}"
 
 # ---------------------------------------------------------------------------
-# Run claude -p with web search
+# Run research via Anthropic API (run_research.py)
+# ANTHROPIC_API_KEY is read from the environment — never stored on disk.
 # ---------------------------------------------------------------------------
-log "Invoking: $CLAUDE_BIN -p [prompt] --allowedTools WebSearch,WebFetch --model $MODEL"
+log "Invoking: python3 run_research.py (model=$MODEL)"
 
-if ! "$CLAUDE_BIN" -p "$RESEARCH_PROMPT" \
-    --allowedTools "WebSearch,WebFetch" \
-    --model "$MODEL" \
-    --output-format text \
+if ! ANTHROPIC_MODEL="$MODEL" echo "$RESEARCH_PROMPT" \
+    | "$PYTHON_BIN" "$SCRIPT_DIR/run_research.py" \
     > "$BRIEF_FILE" 2>>"$LOG_FILE"; then
-    log "ERROR: claude -p exited with non-zero status"
+    log "ERROR: run_research.py exited with non-zero status"
     # Remove partial output so a re-run starts fresh
     rm -f "$BRIEF_FILE"
     exit 1
