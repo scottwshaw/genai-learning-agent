@@ -14,6 +14,7 @@ Environment variables:
 
 import os
 import sys
+import time
 
 try:
     import anthropic
@@ -51,28 +52,48 @@ def main():
     for iteration in range(20):  # safety cap on agentic loop iterations
         log(f"API call #{iteration + 1}")
 
-        response = client.messages.create(
-            model=model,
-            max_tokens=8096,
-            tools=tools,
-            messages=messages,
-        )
+        # Retry on transient overload (529) with exponential backoff
+        response = None
+        for attempt in range(5):
+            try:
+                response = client.messages.create(
+                    model=model,
+                    max_tokens=8096,
+                    tools=tools,
+                    messages=messages,
+                )
+                break
+            except anthropic.APIStatusError as e:
+                if e.status_code == 529 and attempt < 4:
+                    wait = 30 * (2 ** attempt)  # 30s, 60s, 120s, 240s
+                    log(f"API overloaded (529), retrying in {wait}s (attempt {attempt + 1}/5)...")
+                    time.sleep(wait)
+                else:
+                    raise
+        if response is None:
+            log("ERROR: All retry attempts exhausted")
+            sys.exit(1)
 
         log(f"stop_reason={response.stop_reason}, blocks={len(response.content)}")
 
-        # Collect all text blocks from this response turn
-        text_parts = [
-            block.text
-            for block in response.content
-            if getattr(block, "type", None) == "text"
-        ]
-
         if response.stop_reason == "end_turn":
-            output = "\n".join(text_parts).strip()
-            if not output:
-                print("ERROR: Model returned no text content", file=sys.stderr)
+            # Concatenate all text blocks then split at the first '#'.
+            # Everything before it is reasoning/narration — log it; everything
+            # from '#' onward is the markdown brief — write it to stdout.
+            full_text = "\n".join(
+                block.text for block in response.content
+                if getattr(block, "type", None) == "text"
+            )
+            marker = full_text.find("#")
+            if marker == -1:
+                print("ERROR: No markdown content found in response (no '#' heading)", file=sys.stderr)
+                log(f"[full response] {full_text}")
                 sys.exit(1)
-            print(output)
+            reasoning = full_text[:marker].strip()
+            brief = full_text[marker:].strip()
+            if reasoning:
+                log(f"[reasoning]\n{reasoning}")
+            print(brief)
             return
 
         if response.stop_reason == "tool_use":
