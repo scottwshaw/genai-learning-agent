@@ -85,6 +85,27 @@ For market-shaping claims in observability, evaluation, governance, or LLMOps ca
 - enterprise case studies with concrete deployment evidence
 - credible practitioner reporting from engineering-led organizations
 
+### Comparative Claim Rule
+
+Do not make unsupported comparative claims such as:
+
+- "most complete"
+- "leading"
+- "best-in-class"
+- "most mature"
+- "the strongest offering from any hyperscaler"
+- "the dominant platform"
+
+unless Tier 1 independent evidence directly supports that comparison.
+
+Vendor announcements and vendor-adjacent coverage are not sufficient evidence for comparative market judgments.
+If the evidence only shows that a product added useful enterprise controls, say that directly. Do not turn "has strong features" into "best available platform."
+When in doubt, use narrower language such as:
+
+- "a significant step toward production readiness"
+- "one of the more comprehensive vendor offerings, though independent comparative evidence is limited"
+- "addresses several common enterprise blockers, but category leadership is not established"
+
 ### Using the Provided Context
 
 At the end of this prompt you will find a block of **recent briefs across all topics**. Before researching, read them carefully. Use them to:
@@ -136,6 +157,10 @@ Bad:
 - "Tool X proves that category Y is now enterprise-ready."
 Why bad: a single product release is not evidence of category maturity without independent validation.
 
+Bad:
+- "Microsoft Foundry Agent Service is the most complete production-grade agent platform from any hyperscaler."
+Why bad: this is an unsupported comparative market claim unless backed by independent Tier 1 comparative evidence.
+
 Better:
 - "Langfuse's architecture shift suggests observability vendors are trying to handle larger, more evaluation-heavy workloads, but this is evidence of tooling evolution rather than proof that 'LLM observability' is a settled category."
 
@@ -150,6 +175,7 @@ Do not:
 - infer category maturity from vendor launches alone
 - use vendor terminology as if it were settled industry language
 - describe a product category as solved, standard, or dominant without independent support
+- make market-leadership or "most complete" claims without explicit Tier 1 comparative evidence
 
 **Self-check each Key Development before writing it:**
 1. Does the headline state a consequence or signal — not a product event or version number?
@@ -157,6 +183,7 @@ Do not:
 3. Have you used "changelog", "release notes", "v4.X", or a version bump as your framing? If so, reframe around the operational or market implication instead.
 4. Would an AI-literate executive who doesn't follow this vendor understand the significance from the headline alone?
 5. Would this bullet still make sense unchanged in another topic brief? If yes, reject it or rewrite it around the unique topic-specific implication.
+6. Are you making an implicit ranking or "best available" claim? If yes, either cite Tier 1 comparative evidence or weaken the language.
 
 If any check fails, rewrite before proceeding.
 

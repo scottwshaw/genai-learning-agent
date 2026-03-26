@@ -29,6 +29,7 @@ Use this worksheet to score a single brief quickly. Score each dimension from `1
 - Did it avoid reusing the same discovered items from other recent briefs?
 - Did it still connect its findings to larger cross-topic trends where appropriate?
 - Were the most important claims grounded in strong sources?
+- Did it avoid unsupported comparative claims such as "leading", "most complete", or "best-in-class"?
 - Could an AI-literate executive understand the `Key Developments` section quickly?
 - Was the `Technical Deep-Dive` substantive without becoming too detailed?
 - Did the brief explain why the developments matter for the intended reader?
@@ -50,6 +51,7 @@ Use this worksheet to score a single brief quickly. Score each dimension from `1
 ### Weaknesses
 
 - 
+- Unsupported comparative or market-leadership claims:
 
 ### Prompt Implications
 

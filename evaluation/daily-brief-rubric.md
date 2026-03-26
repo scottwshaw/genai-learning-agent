@@ -100,23 +100,27 @@ Assesses whether the brief relies on strong sources appropriately and uses weake
 - Tier 2 sources are used carefully for factual developments only.
 - Tier 3 sources are avoided or clearly flagged.
 - Source selection reflects judgment, not convenience.
+- Comparative claims such as "leading", "most complete", or "best-in-class" are either avoided or explicitly supported by strong independent evidence.
 
 **Score 3**
 
 - Source quality is mixed.
 - Some important points rely too much on vendor or secondary reporting.
 - Source tiers are mostly respected but not consistently.
+- One or more comparative or market-judgment claims rely on weak or vendor-adjacent evidence.
 
 **Score 1**
 
 - Weak or promotional sources drive the brief.
 - Major claims lack credible support.
 - The brief shows little discipline in source weighting.
+- Vendor positioning language is repeated as if it were established fact.
 
 **What to look for**
 
 - Are analytical claims supported by high-quality evidence?
 - Is vendor content treated as fact-reporting, not proof?
+- Are comparative claims backed by independent evidence, or are they just vendor framing?
 
 ### 5. Audience Relevance — 10%
 
@@ -181,21 +185,25 @@ Assesses whether the brief interprets developments and explains why they matter,
 - The brief consistently explains significance, implications, and signals.
 - It synthesizes across sources rather than restating them.
 - Trend statements are specific and defensible.
+- It avoids overclaiming; comparative judgments are carefully scoped and evidenced.
 
 **Score 3**
 
 - Some analysis is present, but parts of the brief remain descriptive.
 - Significance is stated unevenly or too generically.
+- Some conclusions are stronger than the cited evidence warrants.
 
 **Score 1**
 
 - The brief mostly summarizes events.
 - It does not show much judgment, synthesis, or interpretation.
+- Or it makes sweeping leadership or maturity claims that are not defensible from the evidence.
 
 **What to look for**
 
 - Does the brief tell the reader what matters and why?
 - Are conclusions drawn from evidence rather than asserted vaguely?
+- Does the brief distinguish "important product signal" from "category leader" or "market winner"?
 
 ### 8. Format Compliance And Structural Execution — 5%
 
@@ -242,6 +250,7 @@ For each brief, an evaluator should be able to answer these quickly:
 - Did it stay within its topic without duplicating another topic's discoveries?
 - Did it connect to broader trends across topics where appropriate?
 - Were the sources credible and used with discipline?
+- Did it avoid unsupported "leading / most complete / best-in-class" claims?
 - Was the top of the brief readable to an AI-literate executive?
 - Was the technical prose substantive without becoming excessive?
 - Did the brief explain why the developments matter?
