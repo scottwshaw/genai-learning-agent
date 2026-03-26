@@ -91,7 +91,7 @@ LOG_FILE="$SCRIPT_DIR/agent.log"
 TOPICS_FILE="$SCRIPT_DIR/topics.json"
 PROMPT_TEMPLATE="$SCRIPT_DIR/prompts/research-prompt.md"
 DATE="$(date +%Y-%m-%d)"
-MODEL="${ANTHROPIC_MODEL:-claude-opus-4-6}"
+MODEL="${ANTHROPIC_MODEL:-claude-sonnet-4-6}"
 
 # ---------------------------------------------------------------------------
 # Prerequisite checks

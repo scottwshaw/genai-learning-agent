@@ -152,7 +152,7 @@ Optional comparison is explicit:
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
   --topic llm-production-infrastructure \
-  --model claude-opus-4-6 \
+  --model claude-sonnet-4-6 \
   --label primary \
   --compare-model claude-sonnet-4-6 \
   --compare-label challenger
@@ -163,7 +163,7 @@ You can also compare against an existing brief instead of generating the second 
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
   --topic llm-production-infrastructure \
-  --model claude-opus-4-6 \
+  --model claude-sonnet-4-6 \
   --label primary \
   --compare-brief eval-runs/20260326-153316/run.md \
   --compare-label previous-run

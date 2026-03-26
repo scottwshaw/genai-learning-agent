@@ -9,7 +9,7 @@ Setup:
 
 Environment variables:
     ANTHROPIC_API_KEY   (required)
-    ANTHROPIC_MODEL     (optional, default: claude-opus-4-6)
+    ANTHROPIC_MODEL     (optional, default: claude-sonnet-4-6)
 """
 
 import os
@@ -45,7 +45,7 @@ def main():
         print("ERROR: No prompt received on stdin", file=sys.stderr)
         sys.exit(1)
 
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-opus-4-6")
+    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     client = anthropic.Anthropic(api_key=api_key)
 
     log(f"Starting: model={model}, prompt_chars={len(prompt)}")

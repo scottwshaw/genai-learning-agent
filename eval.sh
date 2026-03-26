@@ -11,7 +11,7 @@
 #
 # Primary run options:
 #   --topic SLUG|N       Topic to evaluate (default: current rotation topic)
-#   --model MODEL        Model for the primary run (default: claude-opus-4-6)
+#   --model MODEL        Model for the primary run (default: claude-sonnet-4-6)
 #   --prompt FILE        Prompt template for the primary run
 #                        (default: prompts/research-prompt.md)
 #   --label TEXT         Human label for the primary run (default: model name)
@@ -51,7 +51,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AGENT_CLI="$SCRIPT_DIR/agent_cli.py"
 
 TOPIC_SLUG=""
-MODEL="claude-opus-4-6"
+MODEL="claude-sonnet-4-6"
 PROMPT="$SCRIPT_DIR/prompts/research-prompt.md"
 LABEL=""
 BRIEF_FILE=""
