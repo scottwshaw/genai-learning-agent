@@ -7,7 +7,6 @@ import json
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
-from string import Template
 
 
 RUBRIC_DIMENSIONS = [
@@ -109,13 +108,16 @@ def render_research_prompt(
     recent_count: int,
     recent_content: str,
 ) -> str:
-    template = Template(prompt_template.read_text())
-    base = template.safe_substitute(
-        DATE=run_date,
-        TOPIC_LABEL=topic.label,
-        PREVIOUS_BRIEF_DATE=previous_date,
-        TOPIC_FOCUS=topic.focus,
-    ).rstrip()
+    base = prompt_template.read_text()
+    substitutions = {
+        "{{DATE}}": run_date,
+        "{{TOPIC_LABEL}}": topic.label,
+        "{{PREVIOUS_BRIEF_DATE}}": previous_date,
+        "{{TOPIC_FOCUS}}": topic.focus,
+    }
+    for placeholder, value in substitutions.items():
+        base = base.replace(placeholder, value)
+    base = base.rstrip()
     return (
         f"{base}\n\n---\n\n"
         f"## CONTEXT: Recent Briefs (Last {recent_count} Runs Across All Topics)\n\n"

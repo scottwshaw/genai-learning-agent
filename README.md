@@ -77,12 +77,18 @@ ssh user@host "ANTHROPIC_API_KEY=sk-ant-... /path/to/research.sh"
 
 ```
 research.sh              # Main script
+eval.sh                  # Eval runner (single-run first, optional comparison)
 run_research.py          # Anthropic API caller (reads prompt from stdin)
+score_brief.py           # Model-based rubric scorer
+agent_cli.py             # Shared CLI for eval/research helpers
+agent_utils.py           # Shared helper functions and renderers
 topics.json              # Topic definitions and focus areas
 prompts/
   research-prompt.md     # Research prompt template
 briefs/
   YYYY-MM-DD-<slug>.md   # Daily research briefs
+eval-runs/
+  YYYYMMDD-HHMMSS/       # Eval session outputs
 learning-log.md          # Index of all briefs
 .venv/                   # Python venv (gitignored)
 .topic-index             # Round-robin state (gitignored)
@@ -98,6 +104,10 @@ agent.log                # Runtime log (gitignored)
 
 ## Eval runs
 
+`eval.sh` is now built around a single evaluated run. Comparison is optional.
+
+### Generate and score one run
+
 Single-run eval is the default:
 
 ```bash
@@ -107,6 +117,17 @@ ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
   --label sonnet-baseline
 ```
 
+Use a numeric topic index if you prefer:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
+  --topic 2 \
+  --model claude-sonnet-4-6 \
+  --label sonnet-test
+```
+
+### Score an existing brief
+
 Score an existing brief:
 
 ```bash
@@ -114,6 +135,17 @@ ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
   --topic llm-production-infrastructure \
   --brief eval-runs/20260326-153316/run.md
 ```
+
+If you already have a brief and only want to copy it into a new eval run with metadata, skip scoring:
+
+```bash
+./eval.sh \
+  --topic llm-production-infrastructure \
+  --brief eval-runs/20260326-153316/run.md \
+  --no-score
+```
+
+### Compare only when needed
 
 Optional comparison is explicit:
 
@@ -126,6 +158,43 @@ ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
   --compare-label challenger
 ```
 
-Each eval brief now includes an embedded metadata block at the top, and the run
-directory also contains `run.metadata.json` and `compare.metadata.json` when
-applicable. Scored evals also write both JSON and Markdown score reports.
+You can also compare against an existing brief instead of generating the second run:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
+  --topic llm-production-infrastructure \
+  --model claude-opus-4-6 \
+  --label primary \
+  --compare-brief eval-runs/20260326-153316/run.md \
+  --compare-label previous-run
+```
+
+### Eval outputs
+
+Each eval session creates `eval-runs/YYYYMMDD-HHMMSS/` with some or all of:
+
+- `config.md`: session summary
+- `run.md`: primary brief
+- `run.metadata.json`: machine-readable metadata for the primary brief
+- `scores.json`: primary score output
+- `scores.md`: readable Markdown score report
+- `compare.md`: comparison brief when enabled
+- `compare.metadata.json`: comparison metadata when enabled
+- `compare-scores.json`: comparison score output when enabled
+- `compare-scores.md`: readable Markdown score report for the comparison run
+- `comparison.md`: side-by-side comparison report when both runs are scored
+
+Each generated eval brief also includes an embedded metadata block at the top so
+the brief remains self-describing if it gets copied elsewhere.
+
+### Prompt provenance
+
+For generated eval runs, the metadata records prompt provenance using git:
+
+- repo `HEAD` at eval time
+- the last commit touching the prompt file
+- whether the prompt file was `clean`, `modified`, or `untracked`
+- a saved diff patch when the prompt file had uncommitted changes
+
+This gives you enough information to reconstruct which prompt version produced a
+brief without copying the entire prompt into the eval output.

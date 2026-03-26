@@ -13,7 +13,7 @@
     {
       "slug": "agentic-systems",
       "label": "Agentic Systems",
-      "focus": "autonomous agent frameworks (LangGraph, AutoGen, CrewAI, Mastra, etc.) and their production readiness; multi-agent coordination protocols (MCP, A2A) and ecosystem adoption; tool use, planning, and long-horizon task reliability; memory architectures (episodic, semantic, procedural) and persistent state management; agent evaluation benchmarks and failure mode taxonomies; agentic workflow design patterns; and the emerging AgentOps discipline — cost control, observability, and non-deterministic evaluation for agentic pipelines"
+      "focus": "Agent frameworks and agent-specific system design: autonomous agent frameworks (LangGraph, AutoGen, CrewAI, Mastra, etc.) and their production readiness; multi-agent coordination protocols (MCP, A2A) and ecosystem adoption; tool use, planning, delegation, long-horizon task reliability, and memory architectures (episodic, semantic, procedural) for persistent agent state; agent evaluation benchmarks and failure-mode taxonomies; agentic workflow design patterns; and AgentOps only where the development is specifically about agent behavior, orchestration, or non-deterministic agent evaluation. EXCLUDE FROM THIS TOPIC — generic LLM observability platforms, general-purpose eval tools, serving-framework releases, inference optimization, and broad production infrastructure unless the primary significance is clearly agent-specific (for example: tool-use tracing for agents, multi-agent orchestration, agent memory management, or agent protocol adoption). If the same item would read unchanged in the LLM Production Infrastructure brief, it does not belong here."
     },
     {
       "slug": "models-and-market",

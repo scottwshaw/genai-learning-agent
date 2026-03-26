@@ -16,6 +16,12 @@ For each candidate development, decide whether this topic is the primary owner:
 - If the item mainly belongs to another topic, do not use it as a key development here unless there is materially new information or a clearly different topic-specific implication that has not already been covered.
 - If an item is relevant across multiple topics, treat the factual development as belonging to one topic and treat the broader implication as a cross-topic pattern to mention in `## Landscape Trends`.
 
+Before you commit to a candidate development, apply this rejection test:
+
+- If the same item would read essentially unchanged in `LLM Production Infrastructure`, `Models & Market`, or another adjacent topic brief, reject it.
+- Only keep cross-topic items when the topic-specific angle is the primary reason the reader should care.
+- For `Agentic Systems` specifically, reject generic observability, eval, routing, or serving news unless the core novelty is about agent frameworks, agent orchestration, tool use, planning, memory, MCP/A2A, multi-agent coordination, or agent-specific reliability.
+
 Never reuse the same factual development across multiple briefs unless at least one of the following is true:
 
 - there is new reporting or a substantive update since the earlier brief
@@ -150,6 +156,7 @@ Do not:
 2. Is the first sentence explaining *why it matters*, not *what was released*?
 3. Have you used "changelog", "release notes", "v4.X", or a version bump as your framing? If so, reframe around the operational or market implication instead.
 4. Would an AI-literate executive who doesn't follow this vendor understand the significance from the headline alone?
+5. Would this bullet still make sense unchanged in another topic brief? If yes, reject it or rewrite it around the unique topic-specific implication.
 
 If any check fails, rewrite before proceeding.
 

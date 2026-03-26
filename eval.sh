@@ -340,14 +340,10 @@ annotate_brief_file() {
 capture_prompt_provenance() {
     local prompt_file="$1"
     local diff_out="$2"
-    local -n prompt_commit_ref="$3"
-    local -n prompt_status_ref="$4"
-    local -n prompt_diff_ref="$5"
     local prompt_git_path="$prompt_file"
-
-    prompt_commit_ref=""
-    prompt_status_ref=""
-    prompt_diff_ref=""
+    local prompt_commit_ref=""
+    local prompt_status_ref=""
+    local prompt_diff_ref=""
 
     if [[ "$prompt_git_path" == "$SCRIPT_DIR/"* ]]; then
         prompt_git_path="${prompt_git_path#$SCRIPT_DIR/}"
@@ -367,6 +363,8 @@ capture_prompt_provenance() {
         prompt_status_ref="untracked"
         rm -f "$diff_out"
     fi
+
+    printf '%s\n%s\n%s\n' "$prompt_commit_ref" "$prompt_status_ref" "$prompt_diff_ref"
 }
 
 write_config
@@ -378,7 +376,9 @@ else
     PRIMARY_PROMPT_COMMIT=""
     PRIMARY_PROMPT_STATUS=""
     PRIMARY_PROMPT_DIFF=""
-    capture_prompt_provenance "$PROMPT" "$PRIMARY_PROMPT_DIFF_OUT" PRIMARY_PROMPT_COMMIT PRIMARY_PROMPT_STATUS PRIMARY_PROMPT_DIFF
+    IFS=$'\n' read -r PRIMARY_PROMPT_COMMIT PRIMARY_PROMPT_STATUS PRIMARY_PROMPT_DIFF <<EOF
+$(capture_prompt_provenance "$PROMPT" "$PRIMARY_PROMPT_DIFF_OUT")
+EOF
     run_brief "$LABEL" "$MODEL" "$PROMPT" "$PRIMARY_BRIEF_OUT"
     annotate_brief_file "$PRIMARY_BRIEF_OUT" "$PRIMARY_METADATA_OUT" "primary" "$LABEL" "$MODEL" "$PROMPT" "generated" "" "$PRIMARY_PROMPT_COMMIT" "$PRIMARY_PROMPT_STATUS" "$PRIMARY_PROMPT_DIFF"
 fi
@@ -391,7 +391,9 @@ if [[ "$COMPARE_ENABLED" == true ]]; then
         COMPARE_PROMPT_COMMIT=""
         COMPARE_PROMPT_STATUS=""
         COMPARE_PROMPT_DIFF=""
-        capture_prompt_provenance "$COMPARE_PROMPT" "$COMPARE_PROMPT_DIFF_OUT" COMPARE_PROMPT_COMMIT COMPARE_PROMPT_STATUS COMPARE_PROMPT_DIFF
+        IFS=$'\n' read -r COMPARE_PROMPT_COMMIT COMPARE_PROMPT_STATUS COMPARE_PROMPT_DIFF <<EOF
+$(capture_prompt_provenance "$COMPARE_PROMPT" "$COMPARE_PROMPT_DIFF_OUT")
+EOF
         run_brief "$COMPARE_LABEL" "$COMPARE_MODEL" "$COMPARE_PROMPT" "$COMPARE_BRIEF_OUT"
         annotate_brief_file "$COMPARE_BRIEF_OUT" "$COMPARE_METADATA_OUT" "comparison" "$COMPARE_LABEL" "$COMPARE_MODEL" "$COMPARE_PROMPT" "generated" "" "$COMPARE_PROMPT_COMMIT" "$COMPARE_PROMPT_STATUS" "$COMPARE_PROMPT_DIFF"
     fi
