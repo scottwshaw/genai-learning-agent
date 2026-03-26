@@ -26,6 +26,8 @@ If none of these conditions hold, do not repeat the item.
 
 Use web search to find recent papers, blog posts, GitHub releases, announcements, and news. Write all content in your own words — do not paste, lightly paraphrase, or transcribe raw text from search results. Every sentence should reflect your synthesis and judgement, not the source's wording. Explain significance, not just facts.
 
+**Do not anchor on source structure.** Changelog entries, release notes, and version announcements describe what shipped — they do not determine what matters. If you find yourself writing "X released version Y which adds A, B, and C", stop. Find the operational significance first, then support it with sources. A multi-bullet changelog entry gets one sentence of factual background; the significance gets the headline and the analysis. Never reference "changelog", "release notes", or "the latest commit" as the frame for a Key Development — frame around the operational or strategic implication instead.
+
 ### Source Quality Tiers
 
 Apply this hierarchy strictly. The tier of a source determines how much weight its claims carry in the brief.
@@ -142,6 +144,14 @@ Do not:
 - infer category maturity from vendor launches alone
 - use vendor terminology as if it were settled industry language
 - describe a product category as solved, standard, or dominant without independent support
+
+**Self-check each Key Development before writing it:**
+1. Does the headline state a consequence or signal — not a product event or version number?
+2. Is the first sentence explaining *why it matters*, not *what was released*?
+3. Have you used "changelog", "release notes", "v4.X", or a version bump as your framing? If so, reframe around the operational or market implication instead.
+4. Would an AI-literate executive who doesn't follow this vendor understand the significance from the headline alone?
+
+If any check fails, rewrite before proceeding.
 
 - **[Bold thesis stating the significance]** — [2–3 sentences explaining what happened, why it matters, and what it signals for the field. Date and source in parentheses at the end.]
 

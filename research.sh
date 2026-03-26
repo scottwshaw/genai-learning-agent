@@ -31,20 +31,49 @@ set -euo pipefail
 RESET_MODE=false
 LIST_TOPICS=false
 NO_COMMIT=false
-for arg in "$@"; do
-    case "$arg" in
+EVAL_OUTPUT=""          # --eval-output FILE  : write brief here; skip all side effects
+TOPIC_SLUG_OVERRIDE=""  # --topic-slug SLUG / --topic N : override rotation
+LOCK_ROTATION=false     # set true when topic is manually selected (don't advance index)
+PROMPT_FILE_OVERRIDE="" # --prompt-file FILE  : override prompt template
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --reset)
             RESET_MODE=true
+            shift
             ;;
         --topics)
             LIST_TOPICS=true
+            shift
             ;;
         --no-commit)
             NO_COMMIT=true
+            shift
+            ;;
+        --topic)
+            # Accepts a 1-based index (1-6) or a topic slug
+            TOPIC_SLUG_OVERRIDE="${2:?--topic requires a number or slug}"
+            LOCK_ROTATION=true
+            shift 2
+            ;;
+        --eval-output)
+            EVAL_OUTPUT="${2:?--eval-output requires a file path}"
+            shift 2
+            ;;
+        --topic-slug)
+            # Internal flag used by eval.sh; rotation always locked in eval mode
+            TOPIC_SLUG_OVERRIDE="${2:?--topic-slug requires a slug}"
+            shift 2
+            ;;
+        --prompt-file)
+            PROMPT_FILE_OVERRIDE="${2:?--prompt-file requires a file path}"
+            shift 2
             ;;
         *)
-            echo "Unknown option: $arg" >&2
+            echo "Unknown option: $1" >&2
             echo "Usage: $0 [--reset|--topics|--no-commit]" >&2
+            echo "       $0 [--topic N|SLUG] [--no-commit]   # N is 1-based topic number" >&2
+            echo "       $0 --eval-output FILE [--topic-slug SLUG] [--prompt-file FILE]" >&2
             exit 1
             ;;
     esac
@@ -61,7 +90,7 @@ LOG_FILE="$SCRIPT_DIR/agent.log"
 TOPICS_FILE="$SCRIPT_DIR/topics.json"
 PROMPT_TEMPLATE="$SCRIPT_DIR/prompts/research-prompt.md"
 DATE="$(date +%Y-%m-%d)"
-MODEL="claude-opus-4-6"
+MODEL="${ANTHROPIC_MODEL:-claude-opus-4-6}"
 
 # ---------------------------------------------------------------------------
 # Prerequisite checks
@@ -74,6 +103,10 @@ fi
 if [[ ! -f "$TOPICS_FILE" ]]; then
     echo "[ERROR] topics.json not found at $TOPICS_FILE" >&2
     exit 1
+fi
+
+if [[ -n "$PROMPT_FILE_OVERRIDE" ]]; then
+    PROMPT_TEMPLATE="$PROMPT_FILE_OVERRIDE"
 fi
 
 if [[ ! -f "$PROMPT_TEMPLATE" ]]; then
@@ -197,12 +230,47 @@ fi
 # Determine today's topic
 # ---------------------------------------------------------------------------
 IDX="$(get_topic_index)"
+
+# --topic / --topic-slug override: resolve to an index
+if [[ -n "$TOPIC_SLUG_OVERRIDE" ]]; then
+    FOUND_IDX=""
+    # Accept 1-based numeric index (e.g. --topic 3)
+    if [[ "$TOPIC_SLUG_OVERRIDE" =~ ^[0-9]+$ ]]; then
+        N=$(( TOPIC_SLUG_OVERRIDE - 1 ))
+        if (( N >= 0 && N < NUM_TOPICS )); then
+            FOUND_IDX="$N"
+        else
+            echo "[ERROR] --topic $TOPIC_SLUG_OVERRIDE is out of range (1-${NUM_TOPICS})" >&2
+            exit 1
+        fi
+    else
+        # Accept slug string
+        for i in $(seq 0 $(( NUM_TOPICS - 1 ))); do
+            if [[ "$(jq -r ".topics[$i].slug" "$TOPICS_FILE")" == "$TOPIC_SLUG_OVERRIDE" ]]; then
+                FOUND_IDX="$i"
+                break
+            fi
+        done
+        if [[ -z "$FOUND_IDX" ]]; then
+            echo "[ERROR] Topic slug '$TOPIC_SLUG_OVERRIDE' not found in topics.json" >&2
+            exit 1
+        fi
+    fi
+    IDX="$FOUND_IDX"
+fi
+
 NEXT_IDX=$(( (IDX + 1) % NUM_TOPICS ))
 
 TOPIC_SLUG="$(jq -r ".topics[$IDX].slug" "$TOPICS_FILE")"
 TOPIC_LABEL="$(jq -r ".topics[$IDX].label" "$TOPICS_FILE")"
 TOPIC_FOCUS_TEXT="$(jq -r ".topics[$IDX].focus" "$TOPICS_FILE")"
-BRIEF_FILE="$BRIEFS_DIR/${DATE}-${TOPIC_SLUG}.md"
+
+# In eval mode use the caller-specified output path; otherwise use briefs/
+if [[ -n "$EVAL_OUTPUT" ]]; then
+    BRIEF_FILE="$EVAL_OUTPUT"
+else
+    BRIEF_FILE="$BRIEFS_DIR/${DATE}-${TOPIC_SLUG}.md"
+fi
 
 log "=========================================="
 log "Daily GenAI Learning Agent starting"
@@ -210,8 +278,8 @@ log "Topic ($((IDX + 1))/${NUM_TOPICS}): $TOPIC_LABEL"
 log "Output: $BRIEF_FILE"
 log "=========================================="
 
-# Skip if today's brief already exists (idempotent re-runs)
-if [[ -f "$BRIEF_FILE" ]]; then
+# Skip if today's brief already exists (idempotent re-runs) — skipped in eval mode
+if [[ -z "$EVAL_OUTPUT" ]] && [[ -f "$BRIEF_FILE" ]]; then
     log "Brief already exists for today ($BRIEF_FILE). Skipping research."
     log "Delete the file to force a re-run."
     exit 0
@@ -287,8 +355,8 @@ ${RECENT_BRIEFS_CONTENT}"
 # ---------------------------------------------------------------------------
 log "Invoking: python3 run_research.py (model=$MODEL)"
 
-if ! ANTHROPIC_MODEL="$MODEL" echo "$RESEARCH_PROMPT" \
-    | "$PYTHON_BIN" "$SCRIPT_DIR/run_research.py" \
+if ! echo "$RESEARCH_PROMPT" \
+    | ANTHROPIC_MODEL="$MODEL" "$PYTHON_BIN" "$SCRIPT_DIR/run_research.py" \
     > "$BRIEF_FILE" 2>>"$LOG_FILE"; then
     log "ERROR: run_research.py exited with non-zero status"
     # Remove partial output so a re-run starts fresh
@@ -308,26 +376,32 @@ fi
 log "Brief saved (${BRIEF_SIZE} bytes): $BRIEF_FILE"
 
 # ---------------------------------------------------------------------------
-# Update learning log
+# Update learning log  (skipped in eval mode)
 # ---------------------------------------------------------------------------
-BRIEF_BASENAME="$(basename "$BRIEF_FILE")"
-printf "| %s | %s | [%s](briefs/%s) |\n" \
-    "$DATE" "$TOPIC_LABEL" "$BRIEF_BASENAME" "$BRIEF_BASENAME" \
-    >> "$LEARNING_LOG"
-
-log "Updated learning-log.md"
+if [[ -z "$EVAL_OUTPUT" ]]; then
+    BRIEF_BASENAME="$(basename "$BRIEF_FILE")"
+    printf "| %s | %s | [%s](briefs/%s) |\n" \
+        "$DATE" "$TOPIC_LABEL" "$BRIEF_BASENAME" "$BRIEF_BASENAME" \
+        >> "$LEARNING_LOG"
+    log "Updated learning-log.md"
+fi
 
 # ---------------------------------------------------------------------------
 # Advance the topic index for tomorrow
+# Skipped in eval mode or when topic was manually selected (--topic N|SLUG)
 # ---------------------------------------------------------------------------
-echo "$NEXT_IDX" > "$STATE_FILE"
-NEXT_LABEL="$(jq -r ".topics[$NEXT_IDX].label" "$TOPICS_FILE")"
-log "Next topic: $NEXT_LABEL (index $NEXT_IDX)"
+if [[ -z "$EVAL_OUTPUT" ]] && [[ "$LOCK_ROTATION" == false ]]; then
+    echo "$NEXT_IDX" > "$STATE_FILE"
+    NEXT_LABEL="$(jq -r ".topics[$NEXT_IDX].label" "$TOPICS_FILE")"
+    log "Next topic: $NEXT_LABEL (index $NEXT_IDX)"
+fi
 
 # ---------------------------------------------------------------------------
-# Git commit
+# Git commit  (skipped in eval mode)
 # ---------------------------------------------------------------------------
-if [[ "$NO_COMMIT" == true ]]; then
+if [[ -n "$EVAL_OUTPUT" ]]; then
+    log "Eval mode: brief written to $EVAL_OUTPUT (no commit, no log update, no index advance)"
+elif [[ "$NO_COMMIT" == true ]]; then
     log "Skipping git commit (--no-commit flag set). Brief saved but not staged."
 else
     cd "$SCRIPT_DIR"
@@ -346,5 +420,9 @@ Generated by learning-agent on $(hostname)."
     fi
 fi
 
-log "Done. Run $(( NEXT_IDX + 1 ))/${NUM_TOPICS} next time: $NEXT_LABEL"
+if [[ -z "$EVAL_OUTPUT" ]]; then
+    log "Done. Run $(( NEXT_IDX + 1 ))/${NUM_TOPICS} next time: $NEXT_LABEL"
+else
+    log "Done (eval mode)."
+fi
 log "=========================================="
