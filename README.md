@@ -95,3 +95,37 @@ agent.log                # Runtime log (gitignored)
 ./research.sh --topics   # Show topic rotation and which is next
 ./research.sh --reset    # Wipe all briefs and state (destructive)
 ```
+
+## Eval runs
+
+Single-run eval is the default:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
+  --topic llm-production-infrastructure \
+  --model claude-sonnet-4-6 \
+  --label sonnet-baseline
+```
+
+Score an existing brief:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
+  --topic llm-production-infrastructure \
+  --brief eval-runs/20260326-153316/run.md
+```
+
+Optional comparison is explicit:
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
+  --topic llm-production-infrastructure \
+  --model claude-opus-4-6 \
+  --label primary \
+  --compare-model claude-sonnet-4-6 \
+  --compare-label challenger
+```
+
+Each eval brief now includes an embedded metadata block at the top, and the run
+directory also contains `run.metadata.json` and `compare.metadata.json` when
+applicable. Scored evals also write both JSON and Markdown score reports.

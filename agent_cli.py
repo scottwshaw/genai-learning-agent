@@ -10,10 +10,12 @@ from pathlib import Path
 from agent_utils import (
     compute_weighted_score,
     ensure_learning_log,
+    format_score_report,
     next_topic_index,
     previous_brief_date,
     recent_briefs_context,
     render_comparison_markdown,
+    render_eval_metadata_block,
     render_research_prompt,
     resolve_topic,
 )
@@ -94,6 +96,42 @@ def command_render_comparison(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_annotate_brief(args: argparse.Namespace) -> int:
+    metadata = {
+        "session_id": args.session_id,
+        "recorded_at": args.recorded_at,
+        "role": args.role,
+        "topic_slug": args.topic_slug,
+        "topic_label": args.topic_label,
+        "label": args.label,
+        "model": args.model,
+        "prompt_path": args.prompt_path,
+        "prompt": Path(args.prompt).name if args.prompt else "",
+        "git_head": args.git_head,
+        "prompt_git_commit": args.prompt_git_commit,
+        "prompt_git_status": args.prompt_git_status,
+        "prompt_diff": args.prompt_diff,
+        "source_type": args.source_type,
+        "source_file": args.source_file,
+        "scoring_model": args.scoring_model,
+    }
+    brief_path = Path(args.brief)
+    original = brief_path.read_text()
+    annotated = f"{render_eval_metadata_block(metadata)}\n\n{original.lstrip()}"
+    brief_path.write_text(annotated)
+    metadata_path = Path(args.metadata_output)
+    metadata_path.write_text(json.dumps(metadata, indent=2) + "\n")
+    return 0
+
+
+def command_render_score_report(args: argparse.Namespace) -> int:
+    result = json.loads(Path(args.score_json).read_text())
+    result["weighted_score"] = result.get("weighted_score", compute_weighted_score(result["scores"]))
+    output = format_score_report(result, args.topic_label, args.brief_file)
+    Path(args.output).write_text(output)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Shared CLI for research/eval helpers")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -137,6 +175,34 @@ def build_parser() -> argparse.ArgumentParser:
     comparison_parser.add_argument("--scores-b", required=True)
     comparison_parser.add_argument("--output", required=True)
     comparison_parser.set_defaults(func=command_render_comparison)
+
+    annotate_parser = subparsers.add_parser("annotate-brief")
+    annotate_parser.add_argument("--brief", required=True)
+    annotate_parser.add_argument("--metadata-output", required=True)
+    annotate_parser.add_argument("--session-id", required=True)
+    annotate_parser.add_argument("--recorded-at", required=True)
+    annotate_parser.add_argument("--role", required=True)
+    annotate_parser.add_argument("--topic-slug", required=True)
+    annotate_parser.add_argument("--topic-label", required=True)
+    annotate_parser.add_argument("--label", required=True)
+    annotate_parser.add_argument("--model")
+    annotate_parser.add_argument("--prompt")
+    annotate_parser.add_argument("--prompt-path")
+    annotate_parser.add_argument("--git-head")
+    annotate_parser.add_argument("--prompt-git-commit")
+    annotate_parser.add_argument("--prompt-git-status")
+    annotate_parser.add_argument("--prompt-diff")
+    annotate_parser.add_argument("--source-type", required=True)
+    annotate_parser.add_argument("--source-file")
+    annotate_parser.add_argument("--scoring-model", required=True)
+    annotate_parser.set_defaults(func=command_annotate_brief)
+
+    score_report_parser = subparsers.add_parser("render-score-report")
+    score_report_parser.add_argument("--score-json", required=True)
+    score_report_parser.add_argument("--brief-file", required=True)
+    score_report_parser.add_argument("--topic-label", required=True)
+    score_report_parser.add_argument("--output", required=True)
+    score_report_parser.set_defaults(func=command_render_score_report)
 
     return parser
 

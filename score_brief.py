@@ -22,7 +22,7 @@ import re
 import sys
 from pathlib import Path
 
-from agent_utils import RUBRIC_DIMENSIONS, compute_weighted_score
+from agent_utils import RUBRIC_DIMENSIONS, compute_weighted_score, format_score_report
 
 try:
     import anthropic
@@ -60,44 +60,6 @@ Return ONLY a valid JSON object — no markdown fences, no extra prose.
 
 ## Brief to Evaluate
 {brief}"""
-def format_text_report(result: dict, topic_label: str, brief_file: str) -> str:
-    scores = result["scores"]
-    weighted = result.get("weighted_score", compute_weighted_score(scores))
-
-    lines = [
-        f"# Brief Evaluation: {Path(brief_file).name}",
-        f"**Topic:** {topic_label}",
-        f"**Overall Score:** {weighted}/100",
-        "",
-        "## Scorecard",
-        "| Dimension | Weight | Score | Pts |",
-        "|-----------|--------|-------|-----|",
-    ]
-    for dim in RUBRIC_DIMENSIONS:
-        entry = scores.get(dim["key"], {})
-        score = entry.get("score", "—") if isinstance(entry, dict) else "—"
-        pts = round(score * dim["weight"] / 5, 1) if isinstance(score, int) else "—"
-        lines.append(f"| {dim['label']} | {dim['weight']}% | {score}/5 | {pts} |")
-    lines.append(f"| **TOTAL** | **100%** | | **{weighted}** |")
-
-    lines += ["", "## Dimension Rationale"]
-    for dim in RUBRIC_DIMENSIONS:
-        entry = scores.get(dim["key"], {})
-        score = entry.get("score", "—") if isinstance(entry, dict) else "—"
-        rationale = entry.get("rationale", "") if isinstance(entry, dict) else ""
-        lines.append(f"**{dim['label']}** ({score}/5): {rationale}")
-        lines.append("")
-
-    lines += [
-        "## Overall Assessment",
-        result.get("overall_observations", ""),
-        "",
-        f"**Top Strength:** {result.get('top_strength', '')}",
-        f"**Top Weakness:** {result.get('top_weakness', '')}",
-    ]
-    return "\n".join(lines)
-
-
 def main():
     parser = argparse.ArgumentParser(description="Score a research brief using Claude")
     parser.add_argument("brief_file", help="Path to the brief markdown file")
@@ -147,7 +109,7 @@ def main():
     if args.output == "json":
         print(json.dumps(result, indent=2))
     else:
-        print(format_text_report(result, args.topic_label, args.brief_file))
+        print(format_score_report(result, args.topic_label, args.brief_file))
 
 
 if __name__ == "__main__":

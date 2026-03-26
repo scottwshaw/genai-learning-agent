@@ -165,6 +165,44 @@ def compute_weighted_score(scores: dict) -> float:
     return round(total, 1)
 
 
+def format_score_report(result: dict, topic_label: str, brief_file: str) -> str:
+    scores = result["scores"]
+    weighted = result.get("weighted_score", compute_weighted_score(scores))
+
+    lines = [
+        f"# Brief Evaluation: {Path(brief_file).name}",
+        f"**Topic:** {topic_label}",
+        f"**Overall Score:** {weighted}/100",
+        "",
+        "## Scorecard",
+        "| Dimension | Weight | Score | Pts |",
+        "|-----------|--------|-------|-----|",
+    ]
+    for dim in RUBRIC_DIMENSIONS:
+        entry = scores.get(dim["key"], {})
+        score = entry.get("score", "—") if isinstance(entry, dict) else "—"
+        pts = round(score * dim["weight"] / 5, 1) if isinstance(score, int) else "—"
+        lines.append(f"| {dim['label']} | {dim['weight']}% | {score}/5 | {pts} |")
+    lines.append(f"| **TOTAL** | **100%** | | **{weighted}** |")
+
+    lines += ["", "## Dimension Rationale"]
+    for dim in RUBRIC_DIMENSIONS:
+        entry = scores.get(dim["key"], {})
+        score = entry.get("score", "—") if isinstance(entry, dict) else "—"
+        rationale = entry.get("rationale", "") if isinstance(entry, dict) else ""
+        lines.append(f"**{dim['label']}** ({score}/5): {rationale}")
+        lines.append("")
+
+    lines += [
+        "## Overall Assessment",
+        result.get("overall_observations", ""),
+        "",
+        f"**Top Strength:** {result.get('top_strength', '')}",
+        f"**Top Weakness:** {result.get('top_weakness', '')}",
+    ]
+    return "\n".join(lines)
+
+
 def format_score_comparison_row(scores_a: dict, scores_b: dict, dim: dict) -> str:
     score_a = scores_a.get(dim["key"], {}).get("score", 0)
     score_b = scores_b.get(dim["key"], {}).get("score", 0)
@@ -253,3 +291,30 @@ def render_comparison_markdown(
     ]
     return "\n".join(lines)
 
+
+def render_eval_metadata_block(metadata: dict) -> str:
+    ordered_keys = [
+        "session_id",
+        "recorded_at",
+        "role",
+        "topic_slug",
+        "topic_label",
+        "label",
+        "model",
+        "prompt_path",
+        "prompt",
+        "git_head",
+        "prompt_git_commit",
+        "prompt_git_status",
+        "prompt_diff",
+        "source_type",
+        "source_file",
+        "scoring_model",
+    ]
+    lines = ["<!-- eval-metadata"]
+    for key in ordered_keys:
+        value = metadata.get(key)
+        if value not in (None, ""):
+            lines.append(f"{key}: {value}")
+    lines.append("-->")
+    return "\n".join(lines)

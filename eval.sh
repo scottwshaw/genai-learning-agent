@@ -1,37 +1,48 @@
 #!/usr/bin/env bash
 # =============================================================================
-# eval.sh — Side-by-side evaluation of research agent variants
+# eval.sh — Evaluate one research run, with optional comparison
 # =============================================================================
-# Runs two research agent configurations against the same topic prompt and
-# scores each output against the rubric. Results are stored in eval-runs/ and
-# never committed to git or written to briefs/.
+# Default behavior is a single eval run: generate one brief (or use an existing
+# brief), then score it against the rubric. Comparison is optional and layered
+# on top of the single-run flow.
 #
 # Usage:
 #   ./eval.sh [options]
 #
-# Options:
-#   --topic SLUG         Topic slug to evaluate (default: current rotation topic)
-#   --model-a MODEL      Model for run A (default: claude-opus-4-6)
-#   --model-b MODEL      Model for run B (default: claude-sonnet-4-6)
-#   --prompt-a FILE      Prompt template for run A (default: prompts/research-prompt.md)
-#   --prompt-b FILE      Prompt template for run B (default: same as A)
-#   --label-a TEXT       Human label for run A (default: model name)
-#   --label-b TEXT       Human label for run B (default: model name)
-#   --single             Run only variant A (no comparison)
-#   --score-only FILE    Score an existing brief, skip generation (sets --single)
-#   --no-score           Generate briefs but skip scoring
-#   --scoring-model M    Model to use for rubric scoring (default: claude-opus-4-6)
+# Primary run options:
+#   --topic SLUG|N       Topic to evaluate (default: current rotation topic)
+#   --model MODEL        Model for the primary run (default: claude-opus-4-6)
+#   --prompt FILE        Prompt template for the primary run
+#                        (default: prompts/research-prompt.md)
+#   --label TEXT         Human label for the primary run (default: model name)
+#   --brief FILE         Score an existing brief instead of generating one
 #
-# Environment:
-#   ANTHROPIC_API_KEY    Required
+# Optional comparison:
+#   --compare-model M    Generate and score a comparison run with model M
+#   --compare-prompt F   Prompt template for the comparison run
+#                        (default: same as primary)
+#   --compare-label T    Human label for the comparison run
+#   --compare-brief F    Compare against an existing brief instead of generating
+#
+# General options:
+#   --no-score           Generate brief(s) but skip scoring
+#   --scoring-model M    Model to use for rubric scoring
+#
+# Backward-compatible aliases:
+#   --model-a/--prompt-a/--label-a map to primary run
+#   --model-b/--prompt-b/--label-b map to comparison run
+#   --score-only maps to --brief
+#   --single is accepted but ignored
 #
 # Outputs (in eval-runs/YYYYMMDD-HHMMSS/):
 #   config.md            Session config summary
-#   run-a.md             Brief from variant A
-#   run-b.md             Brief from variant B (if not --single)
-#   scores-a.json        Rubric scores for A (if not --no-score)
-#   scores-b.json        Rubric scores for B (if not --single/--no-score)
-#   comparison.md        Side-by-side comparison report (if not --single)
+#   run.md               Primary brief
+#   scores.json          Primary rubric score
+#   scores.md            Primary rubric score report
+#   compare.md           Comparison brief (if comparison enabled)
+#   compare-scores.json  Comparison rubric score (if comparison enabled)
+#   compare-scores.md    Comparison rubric score report (if comparison enabled)
+#   comparison.md        Side-by-side comparison report (if both scored)
 # =============================================================================
 
 set -euo pipefail
@@ -39,60 +50,75 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AGENT_CLI="$SCRIPT_DIR/agent_cli.py"
 
-# ---------------------------------------------------------------------------
-# Argument parsing
-# ---------------------------------------------------------------------------
 TOPIC_SLUG=""
-MODEL_A="claude-opus-4-6"
-MODEL_B="claude-sonnet-4-6"
-PROMPT_A="$SCRIPT_DIR/prompts/research-prompt.md"
-PROMPT_B=""
-LABEL_A=""
-LABEL_B=""
-SINGLE=false
-SCORE_ONLY_FILE=""
-BRIEF_A_FILE=""
-BRIEF_B_FILE=""
+MODEL="claude-opus-4-6"
+PROMPT="$SCRIPT_DIR/prompts/research-prompt.md"
+LABEL=""
+BRIEF_FILE=""
+
+COMPARE_MODEL=""
+COMPARE_PROMPT=""
+COMPARE_LABEL=""
+COMPARE_BRIEF_FILE=""
+
 NO_SCORE=false
 SCORING_MODEL="${SCORING_MODEL:-claude-opus-4-6}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --topic)        TOPIC_SLUG="${2:?--topic requires a slug}";    shift 2 ;;
-        --model-a)      MODEL_A="${2:?--model-a requires a value}";    shift 2 ;;
-        --model-b)      MODEL_B="${2:?--model-b requires a value}";    shift 2 ;;
-        --prompt-a)     PROMPT_A="${2:?--prompt-a requires a file}";   shift 2 ;;
-        --prompt-b)     PROMPT_B="${2:?--prompt-b requires a file}";   shift 2 ;;
-        --label-a)      LABEL_A="${2:?--label-a requires a value}";    shift 2 ;;
-        --label-b)      LABEL_B="${2:?--label-b requires a value}";    shift 2 ;;
-        --single)       SINGLE=true;                                    shift   ;;
-        --score-only)   SCORE_ONLY_FILE="${2:?--score-only requires a file}"; SINGLE=true; shift 2 ;;
-        --brief-a)      BRIEF_A_FILE="${2:?--brief-a requires a file}"; shift 2 ;;
-        --brief-b)      BRIEF_B_FILE="${2:?--brief-b requires a file}"; shift 2 ;;
-        --no-score)     NO_SCORE=true;                                  shift   ;;
-        --scoring-model) SCORING_MODEL="${2:?--scoring-model requires a value}"; shift 2 ;;
+        --topic)          TOPIC_SLUG="${2:?--topic requires a slug or index}"; shift 2 ;;
+        --model|--model-a) MODEL="${2:?--model requires a value}"; shift 2 ;;
+        --prompt|--prompt-a) PROMPT="${2:?--prompt requires a file}"; shift 2 ;;
+        --label|--label-a) LABEL="${2:?--label requires a value}"; shift 2 ;;
+        --brief|--score-only) BRIEF_FILE="${2:?--brief requires a file}"; shift 2 ;;
+        --compare-model|--model-b) COMPARE_MODEL="${2:?--compare-model requires a value}"; shift 2 ;;
+        --compare-prompt|--prompt-b) COMPARE_PROMPT="${2:?--compare-prompt requires a file}"; shift 2 ;;
+        --compare-label|--label-b) COMPARE_LABEL="${2:?--compare-label requires a value}"; shift 2 ;;
+        --compare-brief)  COMPARE_BRIEF_FILE="${2:?--compare-brief requires a file}"; shift 2 ;;
+        --single)         shift ;;
+        --no-score)       NO_SCORE=true; shift ;;
+        --scoring-model)  SCORING_MODEL="${2:?--scoring-model requires a value}"; shift 2 ;;
         *)
             echo "Unknown option: $1" >&2
-            echo "Usage: $0 [--topic SLUG|N] [--model-a MODEL] [--model-b MODEL]" >&2
-            echo "          [--prompt-a FILE] [--prompt-b FILE] [--label-a TEXT] [--label-b TEXT]" >&2
-            echo "          [--single] [--score-only FILE] [--no-score] [--scoring-model MODEL]" >&2
-            echo "          [--brief-a FILE --brief-b FILE]  # score existing briefs, skip generation" >&2
+            echo "Usage: $0 [--topic SLUG|N] [--model MODEL] [--prompt FILE] [--label TEXT] [--brief FILE]" >&2
+            echo "          [--compare-model MODEL] [--compare-prompt FILE] [--compare-label TEXT]" >&2
+            echo "          [--compare-brief FILE] [--no-score] [--scoring-model MODEL]" >&2
             exit 1
             ;;
     esac
 done
 
-# Default prompt-b to prompt-a if not set
-PROMPT_B="${PROMPT_B:-$PROMPT_A}"
+LABEL="${LABEL:-$MODEL}"
+COMPARE_PROMPT="${COMPARE_PROMPT:-$PROMPT}"
 
-# Default labels to model names
-LABEL_A="${LABEL_A:-$MODEL_A}"
-LABEL_B="${LABEL_B:-$MODEL_B}"
+COMPARE_ENABLED=false
+if [[ -n "$COMPARE_MODEL" ]] || [[ -n "$COMPARE_BRIEF_FILE" ]]; then
+    COMPARE_ENABLED=true
+fi
 
-# ---------------------------------------------------------------------------
-# Prerequisite checks
-# ---------------------------------------------------------------------------
-if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+if [[ "$COMPARE_ENABLED" == true ]]; then
+    if [[ -n "$COMPARE_MODEL" ]] && [[ -n "$COMPARE_BRIEF_FILE" ]]; then
+        echo "[ERROR] Use either --compare-model or --compare-brief, not both." >&2
+        exit 1
+    fi
+    if [[ -n "$COMPARE_BRIEF_FILE" ]]; then
+        COMPARE_LABEL="${COMPARE_LABEL:-$(basename "$COMPARE_BRIEF_FILE")}"
+    else
+        COMPARE_LABEL="${COMPARE_LABEL:-$COMPARE_MODEL}"
+    fi
+fi
+
+NEEDS_GENERATION=false
+if [[ -z "$BRIEF_FILE" ]] || ([[ "$COMPARE_ENABLED" == true ]] && [[ -z "$COMPARE_BRIEF_FILE" ]]); then
+    NEEDS_GENERATION=true
+fi
+
+NEEDS_API_KEY=false
+if [[ "$NEEDS_GENERATION" == true ]] || [[ "$NO_SCORE" == false ]]; then
+    NEEDS_API_KEY=true
+fi
+
+if [[ "$NEEDS_API_KEY" == true ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
     echo "[ERROR] ANTHROPIC_API_KEY environment variable is not set." >&2
     exit 1
 fi
@@ -117,9 +143,6 @@ if [[ ! -f "$AGENT_CLI" ]]; then
     exit 1
 fi
 
-# ---------------------------------------------------------------------------
-# Resolve topic slug (default: current rotation topic)
-# ---------------------------------------------------------------------------
 TOPICS_FILE="$SCRIPT_DIR/topics.json"
 STATE_FILE="$SCRIPT_DIR/.topic-index"
 TOPIC_ARGS=()
@@ -133,12 +156,26 @@ TOPIC_INFO_JSON="$("$PYTHON_BIN" "$AGENT_CLI" resolve-topic \
 TOPIC_SLUG="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.slug')"
 TOPIC_LABEL="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.label')"
 
-# ---------------------------------------------------------------------------
-# Create session directory
-# ---------------------------------------------------------------------------
 SESSION_ID="$(date +%Y%m%d-%H%M%S)"
 EVAL_DIR="$SCRIPT_DIR/eval-runs/$SESSION_ID"
+if [[ -e "$EVAL_DIR" ]]; then
+    SESSION_ID="${SESSION_ID}-$$"
+    EVAL_DIR="$SCRIPT_DIR/eval-runs/$SESSION_ID"
+fi
 mkdir -p "$EVAL_DIR"
+
+PRIMARY_BRIEF_OUT="$EVAL_DIR/run.md"
+PRIMARY_SCORE_OUT="$EVAL_DIR/scores.json"
+PRIMARY_SCORE_REPORT_OUT="$EVAL_DIR/scores.md"
+PRIMARY_METADATA_OUT="$EVAL_DIR/run.metadata.json"
+PRIMARY_PROMPT_DIFF_OUT="$EVAL_DIR/run.prompt.diff.patch"
+COMPARE_BRIEF_OUT="$EVAL_DIR/compare.md"
+COMPARE_SCORE_OUT="$EVAL_DIR/compare-scores.json"
+COMPARE_SCORE_REPORT_OUT="$EVAL_DIR/compare-scores.md"
+COMPARE_METADATA_OUT="$EVAL_DIR/compare.metadata.json"
+COMPARE_PROMPT_DIFF_OUT="$EVAL_DIR/compare.prompt.diff.patch"
+RECORDED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
+GIT_HEAD="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2>/dev/null || echo "")"
 
 log() { echo "[eval $SESSION_ID] $*"; }
 
@@ -148,42 +185,54 @@ log "Topic: $TOPIC_LABEL ($TOPIC_SLUG)"
 log "Output: $EVAL_DIR"
 log "=========================================="
 
-# ---------------------------------------------------------------------------
-# Write session config
-# ---------------------------------------------------------------------------
-{
-    echo "# Eval Session: $SESSION_ID"
-    echo ""
-    echo "**Date:** $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "**Topic:** $TOPIC_LABEL (\`$TOPIC_SLUG\`)"
-    echo ""
-    echo "## Variant Configuration"
-    echo ""
-    echo "| | Run A | Run B |"
-    echo "|--|-------|-------|"
-    if [[ "$SINGLE" == true ]]; then
-        echo "| Label | $LABEL_A | *(not run)* |"
-        echo "| Model | $MODEL_A | *(not run)* |"
-        echo "| Prompt | $(basename "$PROMPT_A") | *(not run)* |"
-    else
-        echo "| Label | $LABEL_A | $LABEL_B |"
-        echo "| Model | $MODEL_A | $MODEL_B |"
-        echo "| Prompt | $(basename "$PROMPT_A") | $(basename "$PROMPT_B") |"
-    fi
-    echo ""
-    echo "**Scoring model:** $SCORING_MODEL"
-} > "$EVAL_DIR/config.md"
+write_config() {
+    {
+        echo "# Eval Session: $SESSION_ID"
+        echo ""
+        echo "**Date:** $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "**Topic:** $TOPIC_LABEL (\`$TOPIC_SLUG\`)"
+        echo ""
+        echo "## Primary Run"
+        echo ""
+        echo "| Field | Value |"
+        echo "|-------|-------|"
+        echo "| Label | $LABEL |"
+        echo "| Model | $MODEL |"
+        echo "| Prompt | $(basename "$PROMPT") |"
+        if [[ -n "$BRIEF_FILE" ]]; then
+            echo "| Source | existing brief: $(basename "$BRIEF_FILE") |"
+        else
+            echo "| Source | generated |"
+        fi
+        echo ""
+        if [[ "$COMPARE_ENABLED" == true ]]; then
+            echo "## Comparison Run"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Label | $COMPARE_LABEL |"
+            if [[ -n "$COMPARE_BRIEF_FILE" ]]; then
+                echo "| Source | existing brief: $(basename "$COMPARE_BRIEF_FILE") |"
+                echo "| Model | *(not run)* |"
+                echo "| Prompt | *(not run)* |"
+            else
+                echo "| Source | generated |"
+                echo "| Model | $COMPARE_MODEL |"
+                echo "| Prompt | $(basename "$COMPARE_PROMPT") |"
+            fi
+            echo ""
+        fi
+        echo "**Scoring model:** $SCORING_MODEL"
+    } > "$EVAL_DIR/config.md"
+}
 
-# ---------------------------------------------------------------------------
-# Helper: run one research variant
-# ---------------------------------------------------------------------------
-run_variant() {
+run_brief() {
     local label="$1"
     local model="$2"
     local prompt_file="$3"
     local out_file="$4"
 
-    log "Running variant $label (model=$model, prompt=$(basename "$prompt_file"))..."
+    log "Running $label (model=$model, prompt=$(basename "$prompt_file"))..."
     ANTHROPIC_MODEL="$model" \
         "$SCRIPT_DIR/research.sh" \
         --eval-output "$out_file" \
@@ -192,24 +241,31 @@ run_variant() {
         2> >(sed "s/^/  [${label}] /" >&2)
 
     if [[ ! -f "$out_file" ]]; then
-        echo "[ERROR] Variant $label did not produce output at $out_file" >&2
+        echo "[ERROR] $label did not produce output at $out_file" >&2
         exit 1
     fi
 
     local size
     size="$(wc -c < "$out_file")"
-    log "Variant $label complete: $size bytes -> $out_file"
+    log "$label complete: $size bytes -> $out_file"
 }
 
-# ---------------------------------------------------------------------------
-# Helper: score one brief
-# ---------------------------------------------------------------------------
-score_variant() {
+use_existing_brief() {
+    local source_file="$1"
+    local dest_file="$2"
+    local label="$3"
+
+    cp "$source_file" "$dest_file"
+    log "Using existing $label brief: $source_file"
+}
+
+score_brief_file() {
     local label="$1"
     local brief_file="$2"
     local scores_file="$3"
+    local report_file="$4"
 
-    log "Scoring variant $label..."
+    log "Scoring $label..."
     SCORING_MODEL="$SCORING_MODEL" \
         "$PYTHON_BIN" "$SCRIPT_DIR/score_brief.py" \
         "$brief_file" \
@@ -219,79 +275,161 @@ score_variant() {
         2> >(sed "s/^/  [score-${label}] /" >&2)
 
     if [[ ! -f "$scores_file" ]]; then
-        echo "[ERROR] Scoring variant $label failed" >&2
+        echo "[ERROR] Scoring $label failed" >&2
         exit 1
     fi
-    local weighted
-    weighted="$(jq '.weighted_score' "$scores_file")"
-    log "Variant $label score: $weighted/100"
+    "$PYTHON_BIN" "$AGENT_CLI" render-score-report \
+        --score-json "$scores_file" \
+        --brief-file "$brief_file" \
+        --topic-label "$TOPIC_LABEL" \
+        --output "$report_file"
+    log "$label score: $(jq '.weighted_score' "$scores_file")/100"
 }
 
-# ---------------------------------------------------------------------------
-# Run variant(s)
-# ---------------------------------------------------------------------------
-if [[ -n "$BRIEF_A_FILE" ]] && [[ -n "$BRIEF_B_FILE" ]]; then
-    # Score-only mode: use caller-supplied briefs, skip generation entirely
-    cp "$BRIEF_A_FILE" "$EVAL_DIR/run-a.md"
-    cp "$BRIEF_B_FILE" "$EVAL_DIR/run-b.md"
-    log "Using existing briefs: $(basename "$BRIEF_A_FILE") and $(basename "$BRIEF_B_FILE")"
-elif [[ -n "$SCORE_ONLY_FILE" ]]; then
-    cp "$SCORE_ONLY_FILE" "$EVAL_DIR/run-a.md"
-    log "Using existing brief: $SCORE_ONLY_FILE"
+annotate_brief_file() {
+    local brief_file="$1"
+    local metadata_file="$2"
+    local role="$3"
+    local label="$4"
+    local model="$5"
+    local prompt_file="$6"
+    local source_type="$7"
+    local source_file="${8:-}"
+    local prompt_git_commit="${9:-}"
+    local prompt_git_status="${10:-}"
+    local prompt_diff="${11:-}"
+
+    local cmd=(
+        "$PYTHON_BIN" "$AGENT_CLI" annotate-brief
+        --brief "$brief_file" \
+        --metadata-output "$metadata_file" \
+        --session-id "$SESSION_ID" \
+        --recorded-at "$RECORDED_AT" \
+        --role "$role" \
+        --topic-slug "$TOPIC_SLUG" \
+        --topic-label "$TOPIC_LABEL" \
+        --label "$label" \
+        --source-type "$source_type" \
+        --scoring-model "$SCORING_MODEL"
+    )
+    if [[ -n "$model" ]]; then
+        cmd+=(--model "$model")
+    fi
+    if [[ -n "$prompt_file" ]]; then
+        cmd+=(--prompt "$prompt_file")
+        cmd+=(--prompt-path "$prompt_file")
+    fi
+    if [[ -n "$GIT_HEAD" ]]; then
+        cmd+=(--git-head "$GIT_HEAD")
+    fi
+    if [[ -n "$prompt_git_commit" ]]; then
+        cmd+=(--prompt-git-commit "$prompt_git_commit")
+    fi
+    if [[ -n "$prompt_git_status" ]]; then
+        cmd+=(--prompt-git-status "$prompt_git_status")
+    fi
+    if [[ -n "$prompt_diff" ]]; then
+        cmd+=(--prompt-diff "$prompt_diff")
+    fi
+    if [[ -n "$source_file" ]]; then
+        cmd+=(--source-file "$source_file")
+    fi
+    "${cmd[@]}"
+}
+
+capture_prompt_provenance() {
+    local prompt_file="$1"
+    local diff_out="$2"
+    local -n prompt_commit_ref="$3"
+    local -n prompt_status_ref="$4"
+    local -n prompt_diff_ref="$5"
+    local prompt_git_path="$prompt_file"
+
+    prompt_commit_ref=""
+    prompt_status_ref=""
+    prompt_diff_ref=""
+
+    if [[ "$prompt_git_path" == "$SCRIPT_DIR/"* ]]; then
+        prompt_git_path="${prompt_git_path#$SCRIPT_DIR/}"
+    fi
+
+    if git -C "$SCRIPT_DIR" ls-files --error-unmatch -- "$prompt_git_path" >/dev/null 2>&1; then
+        prompt_commit_ref="$(git -C "$SCRIPT_DIR" rev-list -1 HEAD -- "$prompt_git_path" 2>/dev/null || true)"
+        if ! git -C "$SCRIPT_DIR" diff --quiet -- "$prompt_git_path"; then
+            prompt_status_ref="modified"
+            git -C "$SCRIPT_DIR" diff -- "$prompt_git_path" > "$diff_out"
+            prompt_diff_ref="$diff_out"
+        else
+            prompt_status_ref="clean"
+            rm -f "$diff_out"
+        fi
+    else
+        prompt_status_ref="untracked"
+        rm -f "$diff_out"
+    fi
+}
+
+write_config
+
+if [[ -n "$BRIEF_FILE" ]]; then
+    use_existing_brief "$BRIEF_FILE" "$PRIMARY_BRIEF_OUT" "primary"
+    annotate_brief_file "$PRIMARY_BRIEF_OUT" "$PRIMARY_METADATA_OUT" "primary" "$LABEL" "" "" "existing-brief" "$BRIEF_FILE"
 else
-    run_variant "A" "$MODEL_A" "$PROMPT_A" "$EVAL_DIR/run-a.md"
-    if [[ "$SINGLE" == false ]]; then
-        run_variant "B" "$MODEL_B" "$PROMPT_B" "$EVAL_DIR/run-b.md"
+    PRIMARY_PROMPT_COMMIT=""
+    PRIMARY_PROMPT_STATUS=""
+    PRIMARY_PROMPT_DIFF=""
+    capture_prompt_provenance "$PROMPT" "$PRIMARY_PROMPT_DIFF_OUT" PRIMARY_PROMPT_COMMIT PRIMARY_PROMPT_STATUS PRIMARY_PROMPT_DIFF
+    run_brief "$LABEL" "$MODEL" "$PROMPT" "$PRIMARY_BRIEF_OUT"
+    annotate_brief_file "$PRIMARY_BRIEF_OUT" "$PRIMARY_METADATA_OUT" "primary" "$LABEL" "$MODEL" "$PROMPT" "generated" "" "$PRIMARY_PROMPT_COMMIT" "$PRIMARY_PROMPT_STATUS" "$PRIMARY_PROMPT_DIFF"
+fi
+
+if [[ "$COMPARE_ENABLED" == true ]]; then
+    if [[ -n "$COMPARE_BRIEF_FILE" ]]; then
+        use_existing_brief "$COMPARE_BRIEF_FILE" "$COMPARE_BRIEF_OUT" "comparison"
+        annotate_brief_file "$COMPARE_BRIEF_OUT" "$COMPARE_METADATA_OUT" "comparison" "$COMPARE_LABEL" "" "" "existing-brief" "$COMPARE_BRIEF_FILE"
+    else
+        COMPARE_PROMPT_COMMIT=""
+        COMPARE_PROMPT_STATUS=""
+        COMPARE_PROMPT_DIFF=""
+        capture_prompt_provenance "$COMPARE_PROMPT" "$COMPARE_PROMPT_DIFF_OUT" COMPARE_PROMPT_COMMIT COMPARE_PROMPT_STATUS COMPARE_PROMPT_DIFF
+        run_brief "$COMPARE_LABEL" "$COMPARE_MODEL" "$COMPARE_PROMPT" "$COMPARE_BRIEF_OUT"
+        annotate_brief_file "$COMPARE_BRIEF_OUT" "$COMPARE_METADATA_OUT" "comparison" "$COMPARE_LABEL" "$COMPARE_MODEL" "$COMPARE_PROMPT" "generated" "" "$COMPARE_PROMPT_COMMIT" "$COMPARE_PROMPT_STATUS" "$COMPARE_PROMPT_DIFF"
     fi
 fi
 
-# ---------------------------------------------------------------------------
-# Score variant(s)
-# ---------------------------------------------------------------------------
 if [[ "$NO_SCORE" == false ]]; then
-    score_variant "A" "$EVAL_DIR/run-a.md" "$EVAL_DIR/scores-a.json"
-    if [[ "$SINGLE" == false ]]; then
-        score_variant "B" "$EVAL_DIR/run-b.md" "$EVAL_DIR/scores-b.json"
+    score_brief_file "$LABEL" "$PRIMARY_BRIEF_OUT" "$PRIMARY_SCORE_OUT" "$PRIMARY_SCORE_REPORT_OUT"
+    if [[ "$COMPARE_ENABLED" == true ]]; then
+        score_brief_file "$COMPARE_LABEL" "$COMPARE_BRIEF_OUT" "$COMPARE_SCORE_OUT" "$COMPARE_SCORE_REPORT_OUT"
     fi
 fi
 
-# ---------------------------------------------------------------------------
-# Generate comparison report (only when both variants ran and were scored)
-# ---------------------------------------------------------------------------
-if [[ "$SINGLE" == false ]] && [[ "$NO_SCORE" == false ]]; then
+if [[ "$COMPARE_ENABLED" == true ]] && [[ "$NO_SCORE" == false ]]; then
     log "Generating comparison report..."
-
-    SCORE_A="$(jq '.weighted_score' "$EVAL_DIR/scores-a.json")"
-    SCORE_B="$(jq '.weighted_score' "$EVAL_DIR/scores-b.json")"
-
     "$PYTHON_BIN" "$AGENT_CLI" render-comparison \
         --session-id "$SESSION_ID" \
         --topic-label "$TOPIC_LABEL" \
-        --label-a "$LABEL_A" \
-        --label-b "$LABEL_B" \
-        --model-a "$MODEL_A" \
-        --model-b "$MODEL_B" \
-        --prompt-a "$PROMPT_A" \
-        --prompt-b "$PROMPT_B" \
+        --label-a "$LABEL" \
+        --label-b "$COMPARE_LABEL" \
+        --model-a "$MODEL" \
+        --model-b "${COMPARE_MODEL:-existing-brief}" \
+        --prompt-a "$PROMPT" \
+        --prompt-b "$COMPARE_PROMPT" \
         --scoring-model "$SCORING_MODEL" \
-        --scores-a "$EVAL_DIR/scores-a.json" \
-        --scores-b "$EVAL_DIR/scores-b.json" \
+        --scores-a "$PRIMARY_SCORE_OUT" \
+        --scores-b "$COMPARE_SCORE_OUT" \
         --output "$EVAL_DIR/comparison.md"
-
     log "Comparison report: $EVAL_DIR/comparison.md"
 fi
 
-# ---------------------------------------------------------------------------
-# Summary
-# ---------------------------------------------------------------------------
 log "=========================================="
 log "Session complete: $EVAL_DIR"
 echo ""
 echo "Results:"
 if [[ "$NO_SCORE" == false ]]; then
-    echo "  Run A ($LABEL_A): $(jq '.weighted_score' "$EVAL_DIR/scores-a.json")/100"
-    if [[ "$SINGLE" == false ]]; then
-        echo "  Run B ($LABEL_B): $(jq '.weighted_score' "$EVAL_DIR/scores-b.json")/100"
+    echo "  $LABEL: $(jq '.weighted_score' "$PRIMARY_SCORE_OUT")/100"
+    if [[ "$COMPARE_ENABLED" == true ]]; then
+        echo "  $COMPARE_LABEL: $(jq '.weighted_score' "$COMPARE_SCORE_OUT")/100"
         echo "  Comparison: $EVAL_DIR/comparison.md"
     fi
 fi
