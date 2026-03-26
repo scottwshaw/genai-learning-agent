@@ -27,6 +27,13 @@ def log(msg):
     print(f"[run_research] {msg}", file=sys.stderr, flush=True)
 
 
+def extract_text(response) -> str:
+    return "\n".join(
+        block.text for block in response.content
+        if getattr(block, "type", None) == "text"
+    ).strip()
+
+
 def main():
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
@@ -75,22 +82,17 @@ def main():
             sys.exit(1)
 
         log(f"stop_reason={response.stop_reason}, blocks={len(response.content)}")
+        text_output = extract_text(response)
 
         if response.stop_reason == "end_turn":
-            # Concatenate all text blocks then split at the first '#'.
-            # Everything before it is reasoning/narration — log it; everything
-            # from '#' onward is the markdown brief — write it to stdout.
-            full_text = "\n".join(
-                block.text for block in response.content
-                if getattr(block, "type", None) == "text"
-            )
-            marker = full_text.find("#")
+            # Everything before the first markdown heading is reasoning/narration.
+            marker = text_output.find("#")
             if marker == -1:
                 print("ERROR: No markdown content found in response (no '#' heading)", file=sys.stderr)
-                log(f"[full response] {full_text}")
+                log(f"[full response] {text_output}")
                 sys.exit(1)
-            reasoning = full_text[:marker].strip()
-            brief = full_text[marker:].strip()
+            reasoning = text_output[:marker].strip()
+            brief = text_output[marker:].strip()
             if reasoning:
                 log(f"[reasoning]\n{reasoning}")
             print(brief)
@@ -124,12 +126,12 @@ def main():
 
         elif response.stop_reason == "max_tokens":
             log("WARNING: hit max_tokens — outputting partial response")
-            print("\n".join(text_parts).strip())
+            print(text_output)
             return
 
         else:
             log(f"Unexpected stop_reason: {response.stop_reason} — outputting available text")
-            print("\n".join(text_parts).strip())
+            print(text_output)
             return
 
     print("ERROR: Hit maximum iteration limit (20)", file=sys.stderr)

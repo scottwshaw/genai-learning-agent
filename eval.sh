@@ -37,6 +37,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENT_CLI="$SCRIPT_DIR/agent_cli.py"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -111,38 +112,26 @@ if [[ -z "$PYTHON_BIN" ]]; then
     exit 1
 fi
 
+if [[ ! -f "$AGENT_CLI" ]]; then
+    echo "[ERROR] agent_cli.py not found at $AGENT_CLI" >&2
+    exit 1
+fi
+
 # ---------------------------------------------------------------------------
 # Resolve topic slug (default: current rotation topic)
 # ---------------------------------------------------------------------------
 TOPICS_FILE="$SCRIPT_DIR/topics.json"
 STATE_FILE="$SCRIPT_DIR/.topic-index"
-NUM_TOPICS="$(jq '.topics | length' "$TOPICS_FILE")"
-
-if [[ -z "$TOPIC_SLUG" ]]; then
-    # Default: current rotation topic
-    IDX=0
-    if [[ -f "$STATE_FILE" ]]; then
-        val="$(cat "$STATE_FILE")"
-        if [[ "$val" =~ ^[0-9]+$ ]] && (( val < NUM_TOPICS )); then
-            IDX="$val"
-        fi
-    fi
-    TOPIC_SLUG="$(jq -r ".topics[$IDX].slug" "$TOPICS_FILE")"
-elif [[ "$TOPIC_SLUG" =~ ^[0-9]+$ ]]; then
-    # Numeric 1-based index
-    N=$(( TOPIC_SLUG - 1 ))
-    if (( N < 0 || N >= NUM_TOPICS )); then
-        echo "[ERROR] --topic $TOPIC_SLUG is out of range (1-${NUM_TOPICS})" >&2
-        exit 1
-    fi
-    TOPIC_SLUG="$(jq -r ".topics[$N].slug" "$TOPICS_FILE")"
+TOPIC_ARGS=()
+if [[ -n "$TOPIC_SLUG" ]]; then
+    TOPIC_ARGS=(--topic "$TOPIC_SLUG")
 fi
-
-TOPIC_LABEL="$(jq -r --arg slug "$TOPIC_SLUG" '.topics[] | select(.slug==$slug) | .label' "$TOPICS_FILE")"
-if [[ -z "$TOPIC_LABEL" ]]; then
-    echo "[ERROR] Topic '$TOPIC_SLUG' not found in topics.json" >&2
-    exit 1
-fi
+TOPIC_INFO_JSON="$("$PYTHON_BIN" "$AGENT_CLI" resolve-topic \
+    --topics-file "$TOPICS_FILE" \
+    --state-file "$STATE_FILE" \
+    "${TOPIC_ARGS[@]}")"
+TOPIC_SLUG="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.slug')"
+TOPIC_LABEL="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.label')"
 
 # ---------------------------------------------------------------------------
 # Create session directory
@@ -275,93 +264,19 @@ if [[ "$SINGLE" == false ]] && [[ "$NO_SCORE" == false ]]; then
     SCORE_A="$(jq '.weighted_score' "$EVAL_DIR/scores-a.json")"
     SCORE_B="$(jq '.weighted_score' "$EVAL_DIR/scores-b.json")"
 
-    # Determine winner
-    if (( $(echo "$SCORE_A > $SCORE_B" | bc -l) )); then
-        WINNER="Run A ($LABEL_A) — $SCORE_A vs $SCORE_B"
-    elif (( $(echo "$SCORE_B > $SCORE_A" | bc -l) )); then
-        WINNER="Run B ($LABEL_B) — $SCORE_B vs $SCORE_A"
-    else
-        WINNER="Tie — $SCORE_A each"
-    fi
-
-    {
-        echo "# Eval Comparison — $SESSION_ID"
-        echo ""
-        echo "**Topic:** $TOPIC_LABEL"
-        echo "**Winner:** $WINNER"
-        echo ""
-        echo "## Configuration"
-        echo ""
-        echo "| | Run A | Run B |"
-        echo "|--|-------|-------|"
-        echo "| Label | $LABEL_A | $LABEL_B |"
-        echo "| Model | $MODEL_A | $MODEL_B |"
-        echo "| Prompt | $(basename "$PROMPT_A") | $(basename "$PROMPT_B") |"
-        echo ""
-        echo "## Score Comparison"
-        echo ""
-        echo "| Dimension | Wt | A | A pts | B | B pts | Delta |"
-        echo "|-----------|-----|---|-------|---|-------|-------|"
-
-        # Build score table row by row using jq
-        python3 - "$EVAL_DIR/scores-a.json" "$EVAL_DIR/scores-b.json" <<'PYEOF'
-import json, sys
-
-DIMS = [
-    ("recency_novelty",       "Recency And Novelty",                                     20),
-    ("topic_boundary",        "Topic Boundary Discipline",                               15),
-    ("cross_topic_synthesis", "Cross-Topic Trend Synthesis",                             15),
-    ("source_quality",        "Source Quality And Source Discipline",                    15),
-    ("readability",           "AI-Executive Readability",                                15),
-    ("audience_relevance",    "Audience Relevance",                                      10),
-    ("analytical_strength",   "Analytical Strength And Synthesis",                       10),
-    ("format_compliance",     "Format Compliance And Structural Execution",               5),
-]
-
-a = json.load(open(sys.argv[1]))["scores"]
-b = json.load(open(sys.argv[2]))["scores"]
-
-for key, label, wt in DIMS:
-    sa = a.get(key, {}).get("score", 0)
-    sb = b.get(key, {}).get("score", 0)
-    pa = round(sa * wt / 5, 1)
-    pb = round(sb * wt / 5, 1)
-    delta = round(pb - pa, 1)
-    delta_str = f"+{delta}" if delta > 0 else str(delta)
-    print(f"| {label} | {wt}% | {sa}/5 | {pa} | {sb}/5 | {pb} | {delta_str} |")
-
-# Totals
-ta = json.load(open(sys.argv[1]))["weighted_score"]
-tb = json.load(open(sys.argv[2]))["weighted_score"]
-td = round(tb - ta, 1)
-td_str = f"+{td}" if td > 0 else str(td)
-print(f"| **TOTAL** | **100%** | | **{ta}** | | **{tb}** | **{td_str}** |")
-PYEOF
-
-        echo ""
-        echo "## Run A — $LABEL_A"
-        echo ""
-        echo "**Score:** $SCORE_A/100"
-        echo ""
-        jq -r '"**Top Strength:** " + .top_strength' "$EVAL_DIR/scores-a.json"
-        echo ""
-        jq -r '"**Top Weakness:** " + .top_weakness' "$EVAL_DIR/scores-a.json"
-        echo ""
-        jq -r '"**Overall:** " + .overall_observations' "$EVAL_DIR/scores-a.json"
-        echo ""
-        echo "## Run B — $LABEL_B"
-        echo ""
-        echo "**Score:** $SCORE_B/100"
-        echo ""
-        jq -r '"**Top Strength:** " + .top_strength' "$EVAL_DIR/scores-b.json"
-        echo ""
-        jq -r '"**Top Weakness:** " + .top_weakness' "$EVAL_DIR/scores-b.json"
-        echo ""
-        jq -r '"**Overall:** " + .overall_observations' "$EVAL_DIR/scores-b.json"
-        echo ""
-        echo "---"
-        echo "*Session: $SESSION_ID | Scoring model: $SCORING_MODEL*"
-    } > "$EVAL_DIR/comparison.md"
+    "$PYTHON_BIN" "$AGENT_CLI" render-comparison \
+        --session-id "$SESSION_ID" \
+        --topic-label "$TOPIC_LABEL" \
+        --label-a "$LABEL_A" \
+        --label-b "$LABEL_B" \
+        --model-a "$MODEL_A" \
+        --model-b "$MODEL_B" \
+        --prompt-a "$PROMPT_A" \
+        --prompt-b "$PROMPT_B" \
+        --scoring-model "$SCORING_MODEL" \
+        --scores-a "$EVAL_DIR/scores-a.json" \
+        --scores-b "$EVAL_DIR/scores-b.json" \
+        --output "$EVAL_DIR/comparison.md"
 
     log "Comparison report: $EVAL_DIR/comparison.md"
 fi

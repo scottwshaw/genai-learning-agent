@@ -22,23 +22,13 @@ import re
 import sys
 from pathlib import Path
 
+from agent_utils import RUBRIC_DIMENSIONS, compute_weighted_score
+
 try:
     import anthropic
 except ImportError:
     print("ERROR: anthropic package not installed. Run: pip install anthropic", file=sys.stderr)
     sys.exit(1)
-
-
-RUBRIC_DIMENSIONS = [
-    {"key": "recency_novelty",       "label": "Recency And Novelty",                                    "weight": 20},
-    {"key": "topic_boundary",        "label": "Topic Boundary Discipline",                              "weight": 15},
-    {"key": "cross_topic_synthesis", "label": "Cross-Topic Trend Synthesis",                            "weight": 15},
-    {"key": "source_quality",        "label": "Source Quality And Source Discipline",                   "weight": 15},
-    {"key": "readability",           "label": "AI-Executive Readability With Controlled Technical Depth", "weight": 15},
-    {"key": "audience_relevance",    "label": "Audience Relevance",                                     "weight": 10},
-    {"key": "analytical_strength",   "label": "Analytical Strength And Synthesis",                      "weight": 10},
-    {"key": "format_compliance",     "label": "Format Compliance And Structural Execution",             "weight": 5},
-]
 
 
 def build_scoring_prompt(brief: str, rubric: str, topic_label: str) -> str:
@@ -70,17 +60,6 @@ Return ONLY a valid JSON object — no markdown fences, no extra prose.
 
 ## Brief to Evaluate
 {brief}"""
-
-
-def compute_weighted_score(scores: dict) -> float:
-    total = 0.0
-    for dim in RUBRIC_DIMENSIONS:
-        entry = scores.get(dim["key"], {})
-        score = entry.get("score", 0) if isinstance(entry, dict) else 0
-        total += score * dim["weight"] / 5
-    return round(total, 1)
-
-
 def format_text_report(result: dict, topic_label: str, brief_file: str) -> str:
     scores = result["scores"]
     weighted = result.get("weighted_score", compute_weighted_score(scores))

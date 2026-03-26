@@ -83,6 +83,7 @@ done
 # Paths
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENT_CLI="$SCRIPT_DIR/agent_cli.py"
 BRIEFS_DIR="$SCRIPT_DIR/briefs"
 LEARNING_LOG="$SCRIPT_DIR/learning-log.md"
 STATE_FILE="$SCRIPT_DIR/.topic-index"
@@ -111,6 +112,11 @@ fi
 
 if [[ ! -f "$PROMPT_TEMPLATE" ]]; then
     echo "[ERROR] Prompt template not found at $PROMPT_TEMPLATE" >&2
+    exit 1
+fi
+
+if [[ ! -f "$AGENT_CLI" ]]; then
+    echo "[ERROR] agent_cli.py not found at $AGENT_CLI" >&2
     exit 1
 fi
 
@@ -160,37 +166,12 @@ log() {
 }
 
 # ---------------------------------------------------------------------------
-# Topic rotation (round-robin, driven by topics.json)
-# ---------------------------------------------------------------------------
-NUM_TOPICS="$(jq '.topics | length' "$TOPICS_FILE")"
-
-get_topic_index() {
-    if [[ -f "$STATE_FILE" ]]; then
-        local val
-        val="$(cat "$STATE_FILE")"
-        # Validate it's a number in range
-        if [[ "$val" =~ ^[0-9]+$ ]] && (( val < NUM_TOPICS )); then
-            echo "$val"
-            return
-        fi
-    fi
-    echo "0"
-}
-
-# ---------------------------------------------------------------------------
 # List topics mode
 # ---------------------------------------------------------------------------
 if [[ "$LIST_TOPICS" == true ]]; then
-    CURRENT_IDX="$(get_topic_index)"
-    echo "Topics (round-robin order):"
-    for i in $(seq 0 $(( NUM_TOPICS - 1 ))); do
-        label="$(jq -r ".topics[$i].label" "$TOPICS_FILE")"
-        if (( i == CURRENT_IDX )); then
-            echo "  -> $(( i + 1 )). $label  [next]"
-        else
-            echo "     $(( i + 1 )). $label"
-        fi
-    done
+    "$PYTHON_BIN" "$AGENT_CLI" list-topics \
+        --topics-file "$TOPICS_FILE" \
+        --state-file "$STATE_FILE"
     exit 0
 fi
 
@@ -201,69 +182,29 @@ mkdir -p "$BRIEFS_DIR"
 
 if [[ ! -f "$LEARNING_LOG" ]]; then
     log "Initializing learning-log.md"
-    cat > "$LEARNING_LOG" <<'LOGEOF'
-# GenAI Learning Log
-
-Tracks daily research briefs to ensure broad topic coverage and avoid repetition.
-The agent rotates through six priority areas in round-robin order.
-
-## Priority Areas
-
-| # | Area | Focus |
-|---|------|-------|
-| 1 | Safety, Assurance & Governance | Governance frameworks, regulation, auditing, compliance |
-| 2 | Enterprise GenAI Adoption | Case studies, ROI, large-scale deployments, vendor landscape |
-| 3 | Agentic Systems | Frameworks, multi-agent, tool use, planning |
-| 4 | Frontier Research | Latest papers & model releases from major labs |
-| 5 | GenAI Products & Platforms | New releases, enterprise platforms, API updates |
-| 6 | MLOps & LLMOps | Deployment, monitoring, fine-tuning infra, evaluation |
-| 7 | Inference Optimization | Quantization, serving, latency, hardware kernels |
-
-## Research History
-
-| Date | Topic | Brief |
-|------|-------|-------|
-LOGEOF
+    "$PYTHON_BIN" "$AGENT_CLI" ensure-learning-log \
+        --learning-log "$LEARNING_LOG" \
+        --topics-file "$TOPICS_FILE" \
+        >/dev/null
 fi
 
 # ---------------------------------------------------------------------------
 # Determine today's topic
 # ---------------------------------------------------------------------------
-IDX="$(get_topic_index)"
-
-# --topic / --topic-slug override: resolve to an index
+TOPIC_ARGS=()
 if [[ -n "$TOPIC_SLUG_OVERRIDE" ]]; then
-    FOUND_IDX=""
-    # Accept 1-based numeric index (e.g. --topic 3)
-    if [[ "$TOPIC_SLUG_OVERRIDE" =~ ^[0-9]+$ ]]; then
-        N=$(( TOPIC_SLUG_OVERRIDE - 1 ))
-        if (( N >= 0 && N < NUM_TOPICS )); then
-            FOUND_IDX="$N"
-        else
-            echo "[ERROR] --topic $TOPIC_SLUG_OVERRIDE is out of range (1-${NUM_TOPICS})" >&2
-            exit 1
-        fi
-    else
-        # Accept slug string
-        for i in $(seq 0 $(( NUM_TOPICS - 1 ))); do
-            if [[ "$(jq -r ".topics[$i].slug" "$TOPICS_FILE")" == "$TOPIC_SLUG_OVERRIDE" ]]; then
-                FOUND_IDX="$i"
-                break
-            fi
-        done
-        if [[ -z "$FOUND_IDX" ]]; then
-            echo "[ERROR] Topic slug '$TOPIC_SLUG_OVERRIDE' not found in topics.json" >&2
-            exit 1
-        fi
-    fi
-    IDX="$FOUND_IDX"
+    TOPIC_ARGS=(--topic "$TOPIC_SLUG_OVERRIDE")
 fi
 
-NEXT_IDX=$(( (IDX + 1) % NUM_TOPICS ))
-
-TOPIC_SLUG="$(jq -r ".topics[$IDX].slug" "$TOPICS_FILE")"
-TOPIC_LABEL="$(jq -r ".topics[$IDX].label" "$TOPICS_FILE")"
-TOPIC_FOCUS_TEXT="$(jq -r ".topics[$IDX].focus" "$TOPICS_FILE")"
+TOPIC_INFO_JSON="$("$PYTHON_BIN" "$AGENT_CLI" resolve-topic \
+    --topics-file "$TOPICS_FILE" \
+    --state-file "$STATE_FILE" \
+    "${TOPIC_ARGS[@]}")"
+IDX="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.index')"
+NEXT_IDX="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.next_index')"
+NUM_TOPICS="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.count')"
+TOPIC_SLUG="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.slug')"
+TOPIC_LABEL="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.label')"
 
 # In eval mode use the caller-specified output path; otherwise use briefs/
 if [[ -n "$EVAL_OUTPUT" ]]; then
@@ -285,69 +226,19 @@ if [[ -z "$EVAL_OUTPUT" ]] && [[ -f "$BRIEF_FILE" ]]; then
     exit 0
 fi
 
-# ---------------------------------------------------------------------------
-# Determine previous brief date for the same topic (for recency filtering)
-# ---------------------------------------------------------------------------
-PREVIOUS_BRIEF_DATE="$(ls "$BRIEFS_DIR"/*-"${TOPIC_SLUG}".md 2>/dev/null \
-    | sort | tail -1 \
-    | xargs -I{} basename {} \
-    | sed "s/-${TOPIC_SLUG}\.md//" \
-    || echo "")"
-
-if [[ -z "$PREVIOUS_BRIEF_DATE" ]]; then
-    # No prior brief — default to 14 days ago
-    PREVIOUS_BRIEF_DATE="$(date -d '14 days ago' +%Y-%m-%d 2>/dev/null \
-        || date -v-14d +%Y-%m-%d)"
-fi
+PROMPT_DATA_JSON="$("$PYTHON_BIN" "$AGENT_CLI" render-prompt \
+    --prompt-template "$PROMPT_TEMPLATE" \
+    --briefs-dir "$BRIEFS_DIR" \
+    --date "$DATE" \
+    --topics-file "$TOPICS_FILE" \
+    --state-file "$STATE_FILE" \
+    --topic "$TOPIC_SLUG")"
+PREVIOUS_BRIEF_DATE="$(printf '%s' "$PROMPT_DATA_JSON" | jq -r '.previous_brief_date')"
+RECENT_BRIEFS_COUNT="$(printf '%s' "$PROMPT_DATA_JSON" | jq -r '.recent_briefs_count')"
+RESEARCH_PROMPT="$(printf '%s' "$PROMPT_DATA_JSON" | jq -r '.prompt')"
 
 log "Previous brief date for this topic: $PREVIOUS_BRIEF_DATE"
-
-# ---------------------------------------------------------------------------
-# Load recent briefs across ALL topics — used as a coverage baseline so the
-# agent avoids repeating developments already surfaced in any brief, and can
-# track trends holistically across the full landscape.
-# We include the last 28 briefs (~4 full topic rotations / ~1 month of coverage).
-# ---------------------------------------------------------------------------
-RECENT_BRIEFS_CONTENT=""
-RECENT_BRIEFS_COUNT=0
-while IFS= read -r brief_path; do
-    [[ -z "$brief_path" ]] && continue
-    brief_name="$(basename "$brief_path" .md)"
-    RECENT_BRIEFS_CONTENT+="### ${brief_name}
-$(cat "$brief_path")
-
----
-
-"
-    RECENT_BRIEFS_COUNT=$(( RECENT_BRIEFS_COUNT + 1 ))
-done < <(ls "$BRIEFS_DIR"/*.md 2>/dev/null | sort | tail -28 || true)
-
-if [[ -z "$RECENT_BRIEFS_CONTENT" ]]; then
-    RECENT_BRIEFS_CONTENT="(No prior briefs exist yet — this is the first run.)"
-fi
-
 log "Loaded ${RECENT_BRIEFS_COUNT} recent brief(s) as coverage context"
-
-# ---------------------------------------------------------------------------
-# Build the research prompt
-# Prompt loaded from prompts/research-prompt.md — can also be used by API-based runners
-# Recent briefs are appended after the template (avoids sed multiline issues).
-# ---------------------------------------------------------------------------
-RESEARCH_PROMPT="$(sed \
-    -e "s/{{DATE}}/${DATE}/g" \
-    -e "s/{{TOPIC_LABEL}}/${TOPIC_LABEL}/g" \
-    -e "s/{{PREVIOUS_BRIEF_DATE}}/${PREVIOUS_BRIEF_DATE}/g" \
-    -e "s|{{TOPIC_FOCUS}}|${TOPIC_FOCUS_TEXT}|g" \
-    "$PROMPT_TEMPLATE")
-
----
-
-## CONTEXT: Recent Briefs (Last ${RECENT_BRIEFS_COUNT} Runs Across All Topics)
-
-The following briefs represent what has already been covered in recent days.
-Use them to: avoid repeating developments already surfaced; track how trends are evolving across the full landscape; spot connections that cross topic boundaries.
-
-${RECENT_BRIEFS_CONTENT}"
 
 # ---------------------------------------------------------------------------
 # Run research via Anthropic API (run_research.py)
