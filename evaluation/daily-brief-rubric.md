@@ -66,7 +66,7 @@ Assesses whether the brief stays centered on its assigned topic and avoids poach
 - Could the same "new information" have appeared unchanged in another topic's brief?
 - Is the brief discovering topic-specific developments, not just topic-adjacent news?
 
-### 3. Cross-Topic Trend Synthesis — 15%
+### 3. Cross-Topic Trend Synthesis — 10%
 
 Assesses whether the brief uses other recent briefs to identify broader patterns without duplicating their discoveries.
 
@@ -147,36 +147,66 @@ Assesses whether the brief is useful to the intended reader: a senior ML enginee
 - Does the significance framing match the reader's role?
 - Would this brief help someone making practical enterprise judgments?
 
-### 6. AI-Executive Readability With Controlled Technical Depth — 15%
+### 6. Executive Scanability Of Key Developments — 10%
 
-Assesses whether the brief operates at the right level of abstraction for a senior AI leader: easy to scan at the top, technically informative in the prose, but not overloaded or overly tool-parochial.
+Assesses whether the top section functions as a fast executive scan rather than a compressed long-form summary.
 
 **Score 5**
 
-- `Key Developments` are easy for an AI-literate executive to scan quickly.
-- Standard field terminology is used precisely where it improves clarity.
+- Each `Key Developments` item is quickly skimmable.
 - Headlines communicate significance, not just events.
-- Technical details are informative without collapsing into release-note detail or implementation-level density.
-- The deep-dive adds real substance without becoming an implementation document.
+- The body under each headline is brief: usually `1-2` short sentences and roughly `60-90` words max excluding the headline.
+- Each item includes only the essential fact, why it matters, and at most `1-2` supporting details or numbers.
+- Detailed mechanism, caveats, and extended evidence are deferred to the `Technical Deep-Dive`, `Landscape Trends`, tables, or sources.
+
+**Score 3**
+
+- Headlines are strong, but several items are too long or too dense.
+- Some bullets read like compressed mini-essays, include too many metrics, or begin duplicating later sections.
+- A reader can understand the section, but not quickly.
+
+**Score 1**
+
+- `Key Developments` reads like a set of mini-essays.
+- Multiple items are long enough that the section no longer supports rapid scanning.
+- Important points are buried in explanatory prose rather than surfaced immediately.
+
+**What to look for**
+
+- Can an AI-literate executive skim the section in under `90` seconds?
+- Does each item state the point before the evidence?
+- Is the total reading burden low enough that the section works as a scan layer, not a second deep-dive?
+- Do not award a high score based on strong bolded headlines alone; evaluate the full body text under each bullet.
+
+### 7. Controlled Technical Depth In Deep-Dive And Landscape Trends — 5%
+
+Assesses whether the `Technical Deep-Dive` and `Landscape Trends` are substantively useful without becoming overloaded, implementation-level, or repetitive.
+
+**Score 5**
+
+- The `Technical Deep-Dive` adds real substance beyond the top section.
+- `Landscape Trends` stays analytical and synthetic rather than re-reporting the same facts.
+- Technical detail is informative, precise, and appropriately scoped for a senior AI leader or senior ML engineer.
 - The references, not the prose, carry the burden of exhaustive detail.
 
 **Score 3**
 
-- The brief is understandable for the intended audience, but some sections are too dense, too tool-specific, too thin, or too detailed.
-- The abstraction level is inconsistent.
+- The section quality is mixed: useful overall, but either too thin, too detailed, or somewhat repetitive.
+- Some material that belongs in the sources or table is pulled into the prose unnecessarily.
 
 **Score 1**
 
-- The brief is either too vague for an informed AI leader or too deep in the weeds to function as a strategic brief.
-- Headlines read like changelogs or assume product-specific context without framing.
+- The deep-dive is either superficial or overloaded.
+- `Landscape Trends` mostly repeats earlier sections.
+- The prose reads more like release notes, a product explainer, or an implementation document than a strategic brief.
 
 **What to look for**
 
-- Can an AI-literate executive understand the top section quickly?
-- Does the brief use standard field jargon productively rather than performatively?
-- Can a technical reader still learn something meaningful without reading the sources?
+- Does the deep-dive teach the reader something meaningful beyond the top bullets?
+- Is the detail concentrated where it is most valuable?
+- Do `Landscape Trends` synthesize rather than restate?
 
-### 7. Analytical Strength And Synthesis — 10%
+### 8. Analytical Strength And Synthesis — 10%
 
 Assesses whether the brief interprets developments and explains why they matter, rather than merely summarizing announcements or papers.
 
@@ -205,7 +235,7 @@ Assesses whether the brief interprets developments and explains why they matter,
 - Are conclusions drawn from evidence rather than asserted vaguely?
 - Does the brief distinguish "important product signal" from "category leader" or "market winner"?
 
-### 8. Format Compliance And Structural Execution — 5%
+### 9. Format Compliance And Structural Execution — 5%
 
 Assesses whether the brief follows the required structure and uses each section properly.
 
@@ -213,11 +243,13 @@ Assesses whether the brief follows the required structure and uses each section 
 
 - All required sections are present and correctly used.
 - `Key Developments`, `Technical Deep-Dive`, `Landscape Trends`, and `Sources` all perform their intended roles.
+- `Key Developments` summarizes rather than absorbing the work of the `Technical Deep-Dive` or `Landscape Trends`.
 - The brief is easy to scan and internally coherent.
 
 **Score 3**
 
 - Minor format deviations or uneven section quality.
+- One section is structurally correct but doing too much of another section's job.
 - Structure is mostly intact but some sections underperform.
 
 **Score 1**
@@ -228,14 +260,16 @@ Assesses whether the brief follows the required structure and uses each section 
 
 - Did the model follow the brief format exactly?
 - Are sections distinct, or do they collapse into the same kind of content?
+- Do any `Key Developments` bullets function like mini deep-dives?
 
 ## Suggested Weighted Scorecard
 
 - Recency And Novelty: `20`
 - Topic Boundary Discipline: `15`
-- Cross-Topic Trend Synthesis: `15`
+- Cross-Topic Trend Synthesis: `10`
 - Source Quality And Source Discipline: `15`
-- AI-Executive Readability With Controlled Technical Depth: `15`
+- Executive Scanability Of Key Developments: `10`
+- Controlled Technical Depth In Deep-Dive And Landscape Trends: `5`
 - Audience Relevance: `10`
 - Analytical Strength And Synthesis: `10`
 - Format Compliance And Structural Execution: `5`
@@ -251,8 +285,8 @@ For each brief, an evaluator should be able to answer these quickly:
 - Did it connect to broader trends across topics where appropriate?
 - Were the sources credible and used with discipline?
 - Did it avoid unsupported "leading / most complete / best-in-class" claims?
-- Was the top of the brief readable to an AI-literate executive?
-- Was the technical prose substantive without becoming excessive?
+- Was the top of the brief genuinely scannable, not just well-headlined?
+- Was the deep-dive and landscape analysis substantive without becoming excessive?
 - Did the brief explain why the developments matter?
 - Did it follow the required structure cleanly?
 
