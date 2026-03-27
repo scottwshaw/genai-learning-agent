@@ -15,9 +15,10 @@ Use this worksheet to score a single brief quickly. Score each dimension from `1
 |-----------|--------|-------------|----------------|-------|
 | Recency And Novelty | 20 |  |  |  |
 | Topic Boundary Discipline | 15 |  |  |  |
-| Cross-Topic Trend Synthesis | 15 |  |  |  |
+| Cross-Topic Trend Synthesis | 10 |  |  |  |
 | Source Quality And Source Discipline | 15 |  |  |  |
-| AI-Executive Readability With Controlled Technical Depth | 15 |  |  |  |
+| Executive Scanability Of Key Developments | 10 |  |  |  |
+| Controlled Technical Depth In Deep-Dive And Landscape Trends | 5 |  |  |  |
 | Audience Relevance | 10 |  |  |  |
 | Analytical Strength And Synthesis | 10 |  |  |  |
 | Format Compliance And Structural Execution | 5 |  |  |  |
@@ -30,8 +31,10 @@ Use this worksheet to score a single brief quickly. Score each dimension from `1
 - Did it still connect its findings to larger cross-topic trends where appropriate?
 - Were the most important claims grounded in strong sources?
 - Did it avoid unsupported comparative claims such as "leading", "most complete", or "best-in-class"?
-- Could an AI-literate executive understand the `Key Developments` section quickly?
-- Was the `Technical Deep-Dive` substantive without becoming too detailed?
+- Could an AI-literate executive scan the `Key Developments` section in under 90 seconds?
+- Did each `Key Developments` bullet contain one main claim, why it matters, and no more than 1-2 supporting facts?
+- Did any `Key Developments` bullets read like mini deep-dives?
+- Were the `Technical Deep-Dive` and `Landscape Trends` substantive without becoming too detailed or repetitive?
 - Did the brief explain why the developments matter for the intended reader?
 - Did it follow the expected structure cleanly?
 

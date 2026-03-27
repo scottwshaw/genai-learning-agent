@@ -12,12 +12,17 @@ from pathlib import Path
 RUBRIC_DIMENSIONS = [
     {"key": "recency_novelty", "label": "Recency And Novelty", "weight": 20},
     {"key": "topic_boundary", "label": "Topic Boundary Discipline", "weight": 15},
-    {"key": "cross_topic_synthesis", "label": "Cross-Topic Trend Synthesis", "weight": 15},
+    {"key": "cross_topic_synthesis", "label": "Cross-Topic Trend Synthesis", "weight": 10},
     {"key": "source_quality", "label": "Source Quality And Source Discipline", "weight": 15},
     {
-        "key": "readability",
-        "label": "AI-Executive Readability With Controlled Technical Depth",
-        "weight": 15,
+        "key": "executive_scanability",
+        "label": "Executive Scanability Of Key Developments",
+        "weight": 10,
+    },
+    {
+        "key": "controlled_depth",
+        "label": "Controlled Technical Depth In Deep-Dive And Landscape Trends",
+        "weight": 5,
     },
     {"key": "audience_relevance", "label": "Audience Relevance", "weight": 10},
     {"key": "analytical_strength", "label": "Analytical Strength And Synthesis", "weight": 10},
