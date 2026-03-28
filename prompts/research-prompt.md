@@ -127,13 +127,20 @@ Produce a well-structured research brief in the following **exact** markdown for
 
 ## Key Developments
 
-(3–4 developments only — the most significant ones. For each, write a **bold thesis headline** that states the significance (not just the event), followed by exactly `2` short sentences of plain English explanation. Sentence 1 should explain what changed and why it matters. Sentence 2 should explain what it signals, with at most `1-2` supporting facts or numbers total across the bullet. Target roughly `45-75` words total per bullet excluding the headline. Do not write changelog entries or feature lists. Do not paste or lightly paraphrase raw text from search results — synthesise in your own words. Each bullet should read like a briefing to an executive, not a release note.)
+(3–4 developments only — the most significant ones. For each, write a **bold thesis headline** that states the significance (not just the event), followed by a short executive-scan summary in exactly `2` short sentences. Sentence 1 should explain what changed and why it matters. Sentence 2 should explain what it signals. Target roughly `40-65` words total per bullet excluding the headline. Use only the minimum factual support needed to understand the point. Do not write changelog entries or feature lists. Do not paste or lightly paraphrase raw text from search results — synthesise in your own words. Each bullet should read like a briefing to an executive, not a release note.)
 
 Do not present a vendor release as evidence that a category is mature or a problem is solved unless independent sources support that conclusion.
 
 Write each `Key Development` for a senior AI leader who is familiar with GenAI concepts, tooling categories, and major vendors. Use standard field terminology where it improves precision, but avoid unnecessary density, product-specific jargon without framing, or changelog-style prose. The headline and first sentence should make the significance clear quickly to a reader who already knows the domain.
 
 Treat `Key Developments` as the scan layer of the brief.
+
+Each bullet should contain:
+- one development
+- one main implication
+- only the minimum factual support needed to understand that implication
+
+If a bullet contains a second strategic angle, competitive angle, or rollout angle, cut it or move it to `Landscape Trends`.
 
 Do not:
 - include more than `2` supporting facts or numbers in any bullet
@@ -143,8 +150,12 @@ Do not:
 - let any bullet read like a compressed mini-brief
 - use block quotes or quoted source language in this section
 - include more than `1` implication in a single bullet
+- include architecture detail, pricing mechanics, commission structure, rollout restrictions, deployment constraints, or market-structure analysis here
+- include leak mechanics, CMS/document-count details, or source-specific background unless essential to the main point
+- include competitive displacement analysis unless it is the single main implication of the bullet
+- combine product detail, market structure, and competitive strategy in the same bullet
 
-If a bullet exceeds roughly `75` words excluding the headline, shorten it. If the headline is doing most of the readability work and the body still feels dense, rewrite it.
+If a bullet exceeds roughly `65` words excluding the headline, shorten it. If the headline is doing most of the readability work and the body still feels dense, rewrite it.
 If a `Key Developments` bullet reads like a mini-essay, it is wrong even if the headline is strong.
 
 Hard constraints for each `Key Developments` bullet:
@@ -154,6 +165,7 @@ Hard constraints for each `Key Developments` bullet:
 - Do not include more than `2` concrete facts, numbers, or named examples total.
 - Do not include more than `1` implication per bullet.
 - If a point needs caveats, market reaction, or extended interpretation, move it to `Landscape Trends` or `Technical Deep-Dive`.
+- If a detail is interesting but not necessary for a fast scan, move it out of this section.
 
 ### Negative Examples
 
@@ -195,6 +207,10 @@ Better:
 Better:
 - **Apple is turning Siri into a multi-model distribution layer, weakening assistant exclusivity on iOS.** iOS 27 is expected to let Claude, Gemini, and ChatGPT plug into Siri through an Extensions framework. This lowers switching costs for users and increases commoditization pressure on assistant providers. (Bloomberg, Mar 26, 2026)
 
+Bad:
+- **Apple's iOS 27 plan restructures AI consumer distribution.** Siri may support Claude, Gemini, and ChatGPT, while Google could both power Apple Intelligence and compete inside Siri, and Apple may still take commissions on some transactions. This weakens OpenAI exclusivity, pressures assistant margins, and changes the balance of power across the consumer AI stack. (Bloomberg, Mar 26, 2026)
+Why bad: this bundles product mechanics, market structure, and competitive displacement into one mini-essay instead of one development plus one implication.
+
 Do not:
 - turn feature lists into `Key Developments`
 - infer category maturity from vendor launches alone
@@ -204,6 +220,7 @@ Do not:
 - overload a bullet with caveats, benchmarks, and mechanism detail that belong later in the brief
 - combine multiple developments and multiple implications into one bullet
 - include market-reaction detail, quote stacks, or extended source setup in `Key Developments`
+- include rollout strategy, commission mechanics, architecture explanation, or source-specific setup detail in `Key Developments`
 
 **Self-check each Key Development before writing it:**
 1. Does the headline state a consequence or signal — not a product event or version number?
@@ -219,6 +236,9 @@ Do not:
 11. Does this bullet contain only `1` development and `1` implication?
 12. Does the body avoid direct quotes, stacked caveats, and market-reaction detail?
 13. If this bullet feels like a mini-essay, did you cut it down before proceeding?
+14. Does this bullet contain architecture detail, rollout restriction, pricing mechanic, or source-specific setup that can be moved later?
+15. Is every detail necessary for a reader scanning quickly?
+16. Does this bullet include only one main implication, with any secondary angle removed or moved later?
 If any check fails, rewrite before proceeding.
 
 - **[Bold thesis stating the significance]** — [Exactly `2` short sentences explaining what changed, why it matters, and what it signals for the field. Include at most `1-2` supporting facts total. Date and source in parentheses at the end.]
