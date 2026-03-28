@@ -127,11 +127,33 @@ Produce a well-structured research brief in the following **exact** markdown for
 
 ## Key Developments
 
-(3–4 developments only — the most significant ones. For each, write a **bold thesis headline** that states the significance (not just the event), followed by 2–3 sentences of plain English explanation covering what happened, why it matters, and what it signals. Do not write changelog entries or feature lists. Do not paste or lightly paraphrase raw text from search results — synthesise in your own words. Each bullet should read like a briefing to an executive, not a release note.)
+(3–4 developments only — the most significant ones. For each, write a **bold thesis headline** that states the significance (not just the event), followed by exactly `2` short sentences of plain English explanation. Sentence 1 should explain what changed and why it matters. Sentence 2 should explain what it signals, with at most `1-2` supporting facts or numbers total across the bullet. Target roughly `45-75` words total per bullet excluding the headline. Do not write changelog entries or feature lists. Do not paste or lightly paraphrase raw text from search results — synthesise in your own words. Each bullet should read like a briefing to an executive, not a release note.)
 
 Do not present a vendor release as evidence that a category is mature or a problem is solved unless independent sources support that conclusion.
 
 Write each `Key Development` for a senior AI leader who is familiar with GenAI concepts, tooling categories, and major vendors. Use standard field terminology where it improves precision, but avoid unnecessary density, product-specific jargon without framing, or changelog-style prose. The headline and first sentence should make the significance clear quickly to a reader who already knows the domain.
+
+Treat `Key Developments` as the scan layer of the brief.
+
+Do not:
+- include more than `2` supporting facts or numbers in any bullet
+- stack multiple caveats into the same bullet
+- explain mechanism, architecture, or benchmark nuance in detail here
+- repeat material that belongs in `Technical Deep-Dive` or `Landscape Trends`
+- let any bullet read like a compressed mini-brief
+- use block quotes or quoted source language in this section
+- include more than `1` implication in a single bullet
+
+If a bullet exceeds roughly `75` words excluding the headline, shorten it. If the headline is doing most of the readability work and the body still feels dense, rewrite it.
+If a `Key Developments` bullet reads like a mini-essay, it is wrong even if the headline is strong.
+
+Hard constraints for each `Key Developments` bullet:
+- The body must be exactly `2` complete sentences.
+- The body must be a single continuous paragraph under the bullet.
+- Do not use block quotes or quoted source language in this section.
+- Do not include more than `2` concrete facts, numbers, or named examples total.
+- Do not include more than `1` implication per bullet.
+- If a point needs caveats, market reaction, or extended interpretation, move it to `Landscape Trends` or `Technical Deep-Dive`.
 
 ### Negative Examples
 
@@ -170,12 +192,18 @@ Better:
 Better:
 - "The release is operationally relevant for teams already using this stack, but independent evidence is still limited on whether it changes enterprise practice more broadly."
 
+Better:
+- **Apple is turning Siri into a multi-model distribution layer, weakening assistant exclusivity on iOS.** iOS 27 is expected to let Claude, Gemini, and ChatGPT plug into Siri through an Extensions framework. This lowers switching costs for users and increases commoditization pressure on assistant providers. (Bloomberg, Mar 26, 2026)
+
 Do not:
 - turn feature lists into `Key Developments`
 - infer category maturity from vendor launches alone
 - use vendor terminology as if it were settled industry language
 - describe a product category as solved, standard, or dominant without independent support
 - make market-leadership or "most complete" claims without explicit Tier 1 comparative evidence
+- overload a bullet with caveats, benchmarks, and mechanism detail that belong later in the brief
+- combine multiple developments and multiple implications into one bullet
+- include market-reaction detail, quote stacks, or extended source setup in `Key Developments`
 
 **Self-check each Key Development before writing it:**
 1. Does the headline state a consequence or signal — not a product event or version number?
@@ -184,10 +212,16 @@ Do not:
 4. Would an AI-literate executive who doesn't follow this vendor understand the significance from the headline alone?
 5. Would this bullet still make sense unchanged in another topic brief? If yes, reject it or rewrite it around the unique topic-specific implication.
 6. Are you making an implicit ranking or "best available" claim? If yes, either cite Tier 1 comparative evidence or weaken the language.
-
+7. Is the body still concise if the reader ignores the bold headline?
+8. Does the body contain no more than `2` supporting facts or numbers?
+9. Have you removed mechanism, caveats, and benchmark detail that belong later?
+10. Could this bullet be read in under `10` seconds?
+11. Does this bullet contain only `1` development and `1` implication?
+12. Does the body avoid direct quotes, stacked caveats, and market-reaction detail?
+13. If this bullet feels like a mini-essay, did you cut it down before proceeding?
 If any check fails, rewrite before proceeding.
 
-- **[Bold thesis stating the significance]** — [2–3 sentences explaining what happened, why it matters, and what it signals for the field. Date and source in parentheses at the end.]
+- **[Bold thesis stating the significance]** — [Exactly `2` short sentences explaining what changed, why it matters, and what it signals for the field. Include at most `1-2` supporting facts total. Date and source in parentheses at the end.]
 
 ## Notable Papers / Models / Tools
 

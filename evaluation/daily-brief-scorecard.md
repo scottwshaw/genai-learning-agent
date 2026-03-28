@@ -32,8 +32,11 @@ Use this worksheet to score a single brief quickly. Score each dimension from `1
 - Were the most important claims grounded in strong sources?
 - Did it avoid unsupported comparative claims such as "leading", "most complete", or "best-in-class"?
 - Could an AI-literate executive scan the `Key Developments` section in under 90 seconds?
-- Did each `Key Developments` bullet contain one main claim, why it matters, and no more than 1-2 supporting facts?
+- Did each `Key Developments` bullet contain one main claim, why it matters, and only the minimum supporting detail needed?
 - Did any `Key Developments` bullets read like mini deep-dives?
+- Are strong headlines masking body text that is still too long to scan quickly?
+- If you removed the bolded headlines, would the remaining body still feel concise?
+- Are bullets inefficient because of repeated setup, stacked implications, or unnecessary texture even if they are only 2-3 sentences?
 - Were the `Technical Deep-Dive` and `Landscape Trends` substantive without becoming too detailed or repetitive?
 - Did the brief explain why the developments matter for the intended reader?
 - Did it follow the expected structure cleanly?

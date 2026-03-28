@@ -149,21 +149,30 @@ Assesses whether the brief is useful to the intended reader: a senior ML enginee
 
 ### 6. Executive Scanability Of Key Developments — 10%
 
-Assesses whether the top section functions as a fast executive scan rather than a compressed long-form summary.
+Assesses whether the top section functions as a fast executive scan rather than a compressed long-form summary. Judge scan efficiency, not raw sentence count alone.
 
 **Score 5**
 
 - Each `Key Developments` item is quickly skimmable.
 - Headlines communicate significance, not just events.
-- The body under each headline is brief: usually `1-2` short sentences and roughly `60-90` words max excluding the headline.
-- Each item includes only the essential fact, why it matters, and at most `1-2` supporting details or numbers.
+- The body under each headline is concise and efficient; `2-3` short sentences can still score highly if each sentence does distinct work.
+- Each item includes only the essential fact, why it matters, and a small number of supporting details or numbers.
 - Detailed mechanism, caveats, and extended evidence are deferred to the `Technical Deep-Dive`, `Landscape Trends`, tables, or sources.
+- Bullets avoid redundancy, repeated source setup, and mini-deep-dive behavior.
+- A brief should not receive `5` if any `Key Developments` item reads like a mini-essay or requires rereading to extract the point.
 
 **Score 3**
 
-- Headlines are strong, but several items are too long or too dense.
+- Headlines are strong, but several items contain extra setup, repeated framing, or more detail than needed for a scan section.
 - Some bullets read like compressed mini-essays, include too many metrics, or begin duplicating later sections.
 - A reader can understand the section, but not quickly.
+- This is the default score when the section is readable overall but inefficient to scan.
+
+**Score 2**
+
+- Most `Key Developments` items require sustained reading because they combine multiple implications, repeated factual setup, or too much supporting detail.
+- Strong headlines are doing most of the readability work while the body text remains hard to scan.
+- Multiple bullets would be better split between `Key Developments` and later sections.
 
 **Score 1**
 
@@ -175,8 +184,10 @@ Assesses whether the top section functions as a fast executive scan rather than 
 
 - Can an AI-literate executive skim the section in under `90` seconds?
 - Does each item state the point before the evidence?
-- Is the total reading burden low enough that the section works as a scan layer, not a second deep-dive?
+- Is the section efficient to scan, or does it require rereading because of redundancy or stacked implications?
 - Do not award a high score based on strong bolded headlines alone; evaluate the full body text under each bullet.
+- Do not penalize a bullet just for having `3` concise sentences; penalize redundancy, repeated setup, and detail that belongs later in the brief.
+- If one or more bullets clearly function as compressed deep-dives, cap the score at `3`; if this is true for most bullets, score `2` or below.
 
 ### 7. Controlled Technical Depth In Deep-Dive And Landscape Trends — 5%
 
@@ -245,6 +256,7 @@ Assesses whether the brief follows the required structure and uses each section 
 - `Key Developments`, `Technical Deep-Dive`, `Landscape Trends`, and `Sources` all perform their intended roles.
 - `Key Developments` summarizes rather than absorbing the work of the `Technical Deep-Dive` or `Landscape Trends`.
 - The brief is easy to scan and internally coherent.
+- Do not award `5` if the top section is structurally correct but functionally overloaded.
 
 **Score 3**
 
@@ -261,6 +273,7 @@ Assesses whether the brief follows the required structure and uses each section 
 - Did the model follow the brief format exactly?
 - Are sections distinct, or do they collapse into the same kind of content?
 - Do any `Key Developments` bullets function like mini deep-dives?
+- If `Key Developments` is doing the work of the deep-dive, reduce this score even if the headings are present.
 
 ## Suggested Weighted Scorecard
 
