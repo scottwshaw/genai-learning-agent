@@ -52,8 +52,9 @@ def main():
     # The extract_text() helper already filters to type=="text" blocks, so thinking
     # blocks are automatically excluded from the final brief.
     thinking_budget = int(os.environ.get("THINKING_BUDGET", "10000"))
+    max_tokens = int(os.environ.get("MAX_TOKENS", "32000"))
 
-    log(f"Starting: model={model}, prompt_chars={len(prompt)}, thinking_budget={thinking_budget}")
+    log(f"Starting: model={model}, prompt_chars={len(prompt)}, thinking_budget={thinking_budget}, max_tokens={max_tokens}")
 
     messages = [{"role": "user", "content": prompt}]
 
@@ -68,16 +69,19 @@ def main():
         response = None
         for attempt in range(5):
             try:
-                response = client.messages.create(
+                # Use streaming to avoid SDK timeout on long requests,
+                # then collect the full response at the end.
+                with client.messages.stream(
                     model=model,
-                    max_tokens=16000,
+                    max_tokens=max_tokens,
                     thinking={
                         "type": "enabled",
                         "budget_tokens": thinking_budget,
                     },
                     tools=tools,
                     messages=messages,
-                )
+                ) as stream:
+                    response = stream.get_final_message()
                 break
             except anthropic.APIStatusError as e:
                 if e.status_code == 529 and attempt < 4:

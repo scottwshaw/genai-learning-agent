@@ -199,7 +199,7 @@ fi
 TOPIC_INFO_JSON="$("$PYTHON_BIN" "$AGENT_CLI" resolve-topic \
     --topics-file "$TOPICS_FILE" \
     --state-file "$STATE_FILE" \
-    "${TOPIC_ARGS[@]}")"
+    ${TOPIC_ARGS[@]+"${TOPIC_ARGS[@]}"})"
 IDX="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.index')"
 NEXT_IDX="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.next_index')"
 NUM_TOPICS="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.count')"
