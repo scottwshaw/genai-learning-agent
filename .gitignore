@@ -3,3 +3,4 @@ agent.log
 .venv/
 \#*\#
 eval-runs/
+*/.DS_Store
