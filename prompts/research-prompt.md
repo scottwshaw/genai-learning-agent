@@ -257,26 +257,13 @@ Do not:
 - include market-reaction detail, quote stacks, or extended source setup in `Key Developments`
 - include rollout strategy, commission mechanics, architecture explanation, or source-specific setup detail in `Key Developments`
 
-**Self-check each Key Development before writing it:**
-0. Is this development within the past 30 days? If not, it cannot be a Key Development — move it or drop it.
-1. Does the headline state a consequence or signal — not a product event or version number?
-2. Is the first sentence explaining *why it matters*, not *what was released*?
-3. Have you used "changelog", "release notes", "v4.X", or a version bump as your framing? If so, reframe around the operational or market implication instead.
-4. Would an AI-literate executive who doesn't follow this vendor understand the significance from the headline alone?
-5. Would this bullet still make sense unchanged in another topic brief? If yes, reject it or rewrite it around the unique topic-specific implication.
-6. Are you making an implicit ranking or "best available" claim? If yes, either cite Tier 1 comparative evidence or weaken the language.
-7. Does each field fit within 20 words and form a single independent clause?
-8. Does "What changed" contain at most `1` supporting fact, and "Why it matters" at most `1` implication?
-9. Have you removed mechanism, caveats, and benchmark detail that belong later?
-10. Could this bullet be read in under `10` seconds?
-11. Does this bullet contain only `1` development and `1` implication?
-12. Does the body avoid direct quotes, stacked caveats, and market-reaction detail?
-13. If this bullet feels like a mini-essay, did you cut it down before proceeding?
-14. Does this bullet contain architecture detail, rollout restriction, pricing mechanic, or source-specific setup that can be moved later?
-15. Is every detail necessary for a reader scanning quickly?
-16. Does this bullet include only one main implication, with any secondary angle removed or moved later?
-17. Does the body avoid stacked sub-points, inline source attributions, and mechanism detail?
-If any check fails, rewrite before proceeding.
+**Silent self-check before writing each Key Development** (do not include these checks in your output):
+1. Is this development within the past 30 days and not already covered in a prior brief?
+2. Does the headline state a consequence or signal — not a product event or version number?
+3. Does each field stay within 20 words, with one fact in "What changed" and one implication in "Why it matters"?
+4. Would this bullet still make sense unchanged in another topic brief? If yes, reject or rewrite.
+5. Have you removed mechanism detail, caveats, and benchmark numbers that belong in Technical Deep-Dive?
+6. Are you making an unsupported comparative claim ("most complete", "leading")? If yes, weaken or cite Tier 1 evidence.
 
 - **[Signal or consequence in 8–12 words — not an event name]**
   - **What changed:** [One sentence, max 20 words. What happened + at most one fact.]

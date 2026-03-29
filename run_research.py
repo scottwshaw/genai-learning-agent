@@ -48,7 +48,12 @@ def main():
     model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     client = anthropic.Anthropic(api_key=api_key)
 
-    log(f"Starting: model={model}, prompt_chars={len(prompt)}")
+    # Budget for extended thinking — keeps all deliberation out of the output text.
+    # The extract_text() helper already filters to type=="text" blocks, so thinking
+    # blocks are automatically excluded from the final brief.
+    thinking_budget = int(os.environ.get("THINKING_BUDGET", "10000"))
+
+    log(f"Starting: model={model}, prompt_chars={len(prompt)}, thinking_budget={thinking_budget}")
 
     messages = [{"role": "user", "content": prompt}]
 
@@ -65,7 +70,11 @@ def main():
             try:
                 response = client.messages.create(
                     model=model,
-                    max_tokens=8096,
+                    max_tokens=16000,
+                    thinking={
+                        "type": "enabled",
+                        "budget_tokens": thinking_budget,
+                    },
                     tools=tools,
                     messages=messages,
                 )
@@ -85,17 +94,20 @@ def main():
         text_output = extract_text(response)
 
         if response.stop_reason == "end_turn":
-            # Everything before the first markdown heading is reasoning/narration.
+            # With extended thinking enabled, text blocks should contain only
+            # the brief. Strip any leading non-markdown preamble as a safety net.
             marker = text_output.find("#")
             if marker == -1:
-                print("ERROR: No markdown content found in response (no '#' heading)", file=sys.stderr)
-                log(f"[full response] {text_output}")
-                sys.exit(1)
-            reasoning = text_output[:marker].strip()
-            brief = text_output[marker:].strip()
-            if reasoning:
-                log(f"[reasoning]\n{reasoning}")
-            print(brief)
+                # No markdown heading found — output whatever we have.
+                log("WARNING: No markdown heading found in response; outputting raw text")
+                print(text_output)
+            elif marker > 0:
+                preamble = text_output[:marker].strip()
+                if preamble:
+                    log(f"[stripped preamble] {preamble[:500]}")
+                print(text_output[marker:].strip())
+            else:
+                print(text_output)
             return
 
         if response.stop_reason == "tool_use":
