@@ -8,6 +8,12 @@ Today's date is {{DATE}}. Your task is to research the LATEST developments (idea
 
 Focus specifically on: {{TOPIC_FOCUS}}
 
+### Priority Sources for This Topic
+
+In addition to your general web search across all source tiers, make sure you specifically check these sources for this topic. These supplement — not replace — your broader research. Continue to survey the full landscape using general web search as before.
+
+{{TOPIC_SOURCES}}
+
 ### Topic Ownership Rule
 
 You are responsible for finding developments that are newly discoverable within this topic, not for repeating adjacent-topic news with different wording.

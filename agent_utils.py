@@ -37,6 +37,7 @@ class Topic:
     label: str
     focus: str
     count: int
+    sources: list[dict] | None = None
 
 
 def _load_topics(topics_file: Path) -> list[dict]:
@@ -80,6 +81,7 @@ def resolve_topic(topics_file: Path, state_file: Path, requested: str | None = N
         label=topic["label"],
         focus=topic["focus"],
         count=count,
+        sources=topic.get("sources"),
     )
 
 
@@ -114,11 +116,17 @@ def render_research_prompt(
     recent_content: str,
 ) -> str:
     base = prompt_template.read_text()
+    topic_sources = ""
+    if topic.sources:
+        lines = [f"- {s['name']} — {s['url']}" for s in topic.sources]
+        topic_sources = "\n".join(lines)
+
     substitutions = {
         "{{DATE}}": run_date,
         "{{TOPIC_LABEL}}": topic.label,
         "{{PREVIOUS_BRIEF_DATE}}": previous_date,
         "{{TOPIC_FOCUS}}": topic.focus,
+        "{{TOPIC_SOURCES}}": topic_sources,
     }
     for placeholder, value in substitutions.items():
         base = base.replace(placeholder, value)

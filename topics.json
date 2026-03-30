@@ -3,32 +3,79 @@
     {
       "slug": "safety-assurance-and-governance",
       "label": "Safety, Assurance & Governance",
-      "focus": "This topic covers two equally important pillars — balance coverage across both in every brief. PILLAR 1: AI SAFETY RESEARCH & TECHNIQUES — alignment research (RLHF, constitutional AI, scalable oversight); interpretability and mechanistic interpretability advances; red-teaming methodologies and adversarial robustness; evaluation evasion and intent laundering; jailbreak research and mitigation; responsible AI tooling (guardrails, content filtering, bias detection); AI auditing methodologies and assurance tooling; and safety benchmarks. Search arXiv, lab blogs (Anthropic, OpenAI, DeepMind, ARC, MIRI, Redwood Research), and safety-focused outlets explicitly. PILLAR 2: GOVERNANCE & COMPLIANCE — formal AI governance frameworks (EU AI Act enforcement, NIST AI RMF, ISO 42001); multi-jurisdiction regulatory developments (not just EU — also cover US state legislation, UK AI Safety Institute, Asia-Pacific regulation); enterprise risk management for LLM deployments; and corporate AI ethics programs with measurable outcomes. BALANCE RULE: At least one Key Development must come from each pillar. If web search returns mostly regulatory news, actively search for safety research papers and techniques before finalizing."
+      "focus": "This topic covers two equally important pillars — balance coverage across both in every brief. PILLAR 1: AI SAFETY RESEARCH & TECHNIQUES — alignment research (RLHF, constitutional AI, scalable oversight); interpretability and mechanistic interpretability advances; red-teaming methodologies and adversarial robustness; evaluation evasion and intent laundering; jailbreak research and mitigation; responsible AI tooling (guardrails, content filtering, bias detection); AI auditing methodologies and assurance tooling; and safety benchmarks. Search arXiv, lab blogs (Anthropic, OpenAI, DeepMind, ARC, MIRI, Redwood Research), and safety-focused outlets explicitly. PILLAR 2: GOVERNANCE & COMPLIANCE — formal AI governance frameworks (EU AI Act enforcement, NIST AI RMF, ISO 42001); multi-jurisdiction regulatory developments (not just EU — also cover US state legislation, UK AI Safety Institute, Asia-Pacific regulation); enterprise risk management for LLM deployments; and corporate AI ethics programs with measurable outcomes. BALANCE RULE: At least one Key Development must come from each pillar. If web search returns mostly regulatory news, actively search for safety research papers and techniques before finalizing.",
+      "sources": [
+        {"name": "Anthropic Research Blog", "url": "https://research.anthropic.com"},
+        {"name": "OpenAI Safety", "url": "https://openai.com/safety"},
+        {"name": "Google DeepMind Safety", "url": "https://deepmind.google/safety"},
+        {"name": "MIRI", "url": "https://intelligence.org/research/"},
+        {"name": "ARC Evals", "url": "https://metr.org/blog/"},
+        {"name": "UK AI Safety Institute", "url": "https://www.aisi.gov.uk/"},
+        {"name": "NIST AI RMF", "url": "https://www.nist.gov/artificial-intelligence"}
+      ]
     },
     {
       "slug": "enterprise-genai-adoption",
       "label": "Enterprise GenAI Adoption",
-      "focus": "how enterprises are deploying GenAI at scale including specific case studies with ROI data, productivity metrics, and failure modes; organizational and workforce change management; build-vs-buy and vendor selection decisions; large-scale regulated industry adoption (financial services, healthcare, legal, government); barriers to production deployment; and analyst forecasts from IDC, Gartner, Forrester, and McKinsey on enterprise AI spend and readiness"
+      "focus": "how enterprises are deploying GenAI at scale including specific case studies with ROI data, productivity metrics, and failure modes; organizational and workforce change management; build-vs-buy and vendor selection decisions; large-scale regulated industry adoption (financial services, healthcare, legal, government); barriers to production deployment; and analyst forecasts from IDC, Gartner, Forrester, and McKinsey on enterprise AI spend and readiness",
+      "sources": [
+        {"name": "McKinsey AI Insights", "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights"},
+        {"name": "Gartner AI Research", "url": "https://www.gartner.com/en/topics/artificial-intelligence"},
+        {"name": "Harvard Business Review AI", "url": "https://hbr.org/topic/subject/ai-and-machine-learning"},
+        {"name": "MIT Sloan Management Review", "url": "https://sloanreview.mit.edu/topic/artificial-intelligence-and-business-strategy/"}
+      ]
     },
     {
       "slug": "agentic-systems",
       "label": "Agentic Systems",
-      "focus": "Agent frameworks and agent-specific system design: autonomous agent frameworks (LangGraph, AutoGen, CrewAI, Mastra, etc.) and their production readiness; multi-agent coordination protocols (MCP, A2A) and ecosystem adoption; tool use, planning, delegation, long-horizon task reliability, and memory architectures (episodic, semantic, procedural) for persistent agent state; agent evaluation benchmarks and failure-mode taxonomies; agentic workflow design patterns; and AgentOps only where the development is specifically about agent behavior, orchestration, or non-deterministic agent evaluation. EXCLUDE FROM THIS TOPIC — generic LLM observability platforms, general-purpose eval tools, serving-framework releases, inference optimization, and broad production infrastructure unless the primary significance is clearly agent-specific (for example: tool-use tracing for agents, multi-agent orchestration, agent memory management, or agent protocol adoption). If the same item would read unchanged in the LLM Production Infrastructure brief, it does not belong here."
+      "focus": "Agent frameworks and agent-specific system design: autonomous agent frameworks (LangGraph, AutoGen, CrewAI, Mastra, etc.) and their production readiness; multi-agent coordination protocols (MCP, A2A) and ecosystem adoption; tool use, planning, delegation, long-horizon task reliability, and memory architectures (episodic, semantic, procedural) for persistent agent state; agent evaluation benchmarks and failure-mode taxonomies; agentic workflow design patterns; and AgentOps only where the development is specifically about agent behavior, orchestration, or non-deterministic agent evaluation. EXCLUDE FROM THIS TOPIC — generic LLM observability platforms, general-purpose eval tools, serving-framework releases, inference optimization, and broad production infrastructure unless the primary significance is clearly agent-specific (for example: tool-use tracing for agents, multi-agent orchestration, agent memory management, or agent protocol adoption). If the same item would read unchanged in the LLM Production Infrastructure brief, it does not belong here.",
+      "sources": [
+        {"name": "Anthropic MCP Spec", "url": "https://modelcontextprotocol.io/"},
+        {"name": "Google A2A Protocol", "url": "https://google.github.io/A2A/"},
+        {"name": "arXiv cs.AI (Agents)", "url": "https://arxiv.org/list/cs.AI/recent"},
+        {"name": "arXiv cs.MA (Multi-Agent)", "url": "https://arxiv.org/list/cs.MA/recent"},
+        {"name": "The Information", "url": "https://www.theinformation.com/"},
+        {"name": "MIT Technology Review", "url": "https://www.technologyreview.com/topic/artificial-intelligence/"}
+      ]
     },
     {
       "slug": "models-and-market",
       "label": "Models & Market",
-      "focus": "two distinct but related areas covered together: (1) FRONTIER CAPABILITIES — latest model releases and benchmark results from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, DeepSeek, xAI, and others; significant research breakthroughs; independent benchmark evaluations (SWE-bench, GPQA, ARC-AGI, MMMU); context window advances; reasoning and coding capability gaps; and (2) MARKET & PRODUCTS — commercial product launches, API changes, pricing shifts, platform integrations, and competitive positioning; the open-weight vs. closed model dynamic; enterprise platform updates from Microsoft, AWS, Google Cloud, Salesforce; and analyst views on market structure. Cover both lenses in each brief — capability without market context, or market without capability grounding, misses the full picture"
+      "focus": "two distinct but related areas covered together: (1) FRONTIER CAPABILITIES — latest model releases and benchmark results from OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, DeepSeek, xAI, and others; significant research breakthroughs; independent benchmark evaluations (SWE-bench, GPQA, ARC-AGI, MMMU); context window advances; reasoning and coding capability gaps; and (2) MARKET & PRODUCTS — commercial product launches, API changes, pricing shifts, platform integrations, and competitive positioning; the open-weight vs. closed model dynamic; enterprise platform updates from Microsoft, AWS, Google Cloud, Salesforce; and analyst views on market structure. Cover both lenses in each brief — capability without market context, or market without capability grounding, misses the full picture",
+      "sources": [
+        {"name": "arXiv cs.CL", "url": "https://arxiv.org/list/cs.CL/recent"},
+        {"name": "arXiv cs.LG", "url": "https://arxiv.org/list/cs.LG/recent"},
+        {"name": "LMSYS Chatbot Arena", "url": "https://lmarena.ai/"},
+        {"name": "The Information", "url": "https://www.theinformation.com/"},
+        {"name": "MIT Technology Review", "url": "https://www.technologyreview.com/topic/artificial-intelligence/"},
+        {"name": "Gartner AI Research", "url": "https://www.gartner.com/en/topics/artificial-intelligence"}
+      ]
     },
     {
       "slug": "llm-production-infrastructure",
       "label": "LLM Production Infrastructure",
-      "focus": "The full LLM production stack, with priority determined by the reader's role in LLM observability, evaluation, and governance at enterprise scale. Structure coverage accordingly: LEAD WITH (and use for Technical Deep-Dive) — observability and monitoring platforms (Langfuse, Arize Phoenix, Braintrust, etc.); evaluation frameworks for quality, safety, hallucination, and policy compliance; LLMOps tooling and deployment pipelines; production monitoring including drift detection, multi-turn evaluation, and eval-driven alerting; fine-tuning and PEFT workflows; vendor landscape for LLM ops. ALSO COVER (Key Developments bullets, no deep dive needed) — serving framework releases (vLLM, SGLang, TGI) and inference efficiency developments including kernel optimisation, KV cache compression, quantisation — surface what changed and why it matters operationally, but do not deep-dive into implementation details. EXCLUDE FROM THIS TOPIC — AI safety research, alignment, regulatory frameworks, and governance policy (those belong in Safety & Governance); model benchmark results and capability research (those belong in Models & Market)"
+      "focus": "The full LLM production stack, with priority determined by the reader's role in LLM observability, evaluation, and governance at enterprise scale. Structure coverage accordingly: LEAD WITH (and use for Technical Deep-Dive) — observability and monitoring platforms (Langfuse, Arize Phoenix, Braintrust, etc.); evaluation frameworks for quality, safety, hallucination, and policy compliance; LLMOps tooling and deployment pipelines; production monitoring including drift detection, multi-turn evaluation, and eval-driven alerting; fine-tuning and PEFT workflows; vendor landscape for LLM ops. ALSO COVER (Key Developments bullets, no deep dive needed) — serving framework releases (vLLM, SGLang, TGI) and inference efficiency developments including kernel optimisation, KV cache compression, quantisation — surface what changed and why it matters operationally, but do not deep-dive into implementation details. EXCLUDE FROM THIS TOPIC — AI safety research, alignment, regulatory frameworks, and governance policy (those belong in Safety & Governance); model benchmark results and capability research (those belong in Models & Market)",
+      "sources": [
+        {"name": "InfoQ AI/ML", "url": "https://www.infoq.com/ai-ml-data-eng/"},
+        {"name": "arXiv cs.SE (Software Engineering)", "url": "https://arxiv.org/list/cs.SE/recent"},
+        {"name": "ACM Queue", "url": "https://queue.acm.org/"},
+        {"name": "IEEE Spectrum AI", "url": "https://spectrum.ieee.org/topic/artificial-intelligence/"},
+        {"name": "Forrester AI Research", "url": "https://www.forrester.com/research/artificial-intelligence/"},
+        {"name": "OpenTelemetry GenAI Project", "url": "https://github.com/open-telemetry/community/blob/main/projects/gen-ai.md"}
+      ]
     },
     {
       "slug": "ai-infrastructure-and-geopolitics",
       "label": "AI Infrastructure & Geopolitics",
-      "focus": "the physical and geopolitical substrate that determines AI capacity: semiconductor supply chains (TSMC, ASML, HBM memory, CoWoS packaging) and disruption risks; GPU and TPU availability, allocation, and waitlists; energy supply for AI — power consumption trends, data center energy sourcing, nuclear and renewable commitments by hyperscalers; new data center announcements and buildout timelines; sovereign compute initiatives and hyperscaler regional expansion, with particular focus on Australia and Asia-Pacific (when will AWS, Azure, Google, Oracle put meaningful GPU capacity into Australian sovereign territory?); US and allied export controls on advanced chips and their downstream effects on training and inference capacity; geopolitical risks to the AI supply chain (Taiwan, China, trade policy); and macroeconomic factors affecting AI infrastructure investment. Preferred sources: Epoch AI, SemiAnalysis, The Information, IEEE Spectrum, official hyperscaler infrastructure announcements, and energy/policy outlets"
+      "focus": "the physical and geopolitical substrate that determines AI capacity: semiconductor supply chains (TSMC, ASML, HBM memory, CoWoS packaging) and disruption risks; GPU and TPU availability, allocation, and waitlists; energy supply for AI — power consumption trends, data center energy sourcing, nuclear and renewable commitments by hyperscalers; new data center announcements and buildout timelines; sovereign compute initiatives and hyperscaler regional expansion, with particular focus on Australia and Asia-Pacific (when will AWS, Azure, Google, Oracle put meaningful GPU capacity into Australian sovereign territory?); US and allied export controls on advanced chips and their downstream effects on training and inference capacity; geopolitical risks to the AI supply chain (Taiwan, China, trade policy); and macroeconomic factors affecting AI infrastructure investment. Preferred sources: Epoch AI, SemiAnalysis, The Information, IEEE Spectrum, official hyperscaler infrastructure announcements, and energy/policy outlets",
+      "sources": [
+        {"name": "SemiAnalysis", "url": "https://www.semianalysis.com/"},
+        {"name": "Epoch AI", "url": "https://epoch.ai/blog"},
+        {"name": "The Information", "url": "https://www.theinformation.com/"},
+        {"name": "IEEE Spectrum Semiconductors", "url": "https://spectrum.ieee.org/topic/semiconductors/"},
+        {"name": "Ars Technica AI", "url": "https://arstechnica.com/ai/"},
+        {"name": "Reuters Technology", "url": "https://www.reuters.com/technology/"}
+      ]
     }
   ]
 }
