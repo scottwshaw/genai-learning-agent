@@ -11,6 +11,7 @@ from agent_utils import (
     compute_weighted_score,
     ensure_learning_log,
     format_score_report,
+    load_rubric_dimensions,
     next_topic_index,
     previous_brief_date,
     recent_briefs_context,
@@ -75,10 +76,11 @@ def command_render_prompt(args: argparse.Namespace) -> int:
 
 
 def command_render_comparison(args: argparse.Namespace) -> int:
+    dimensions = load_rubric_dimensions(Path(args.rubric))
     result_a = json.loads(Path(args.scores_a).read_text())
     result_b = json.loads(Path(args.scores_b).read_text())
-    result_a["weighted_score"] = result_a.get("weighted_score", compute_weighted_score(result_a["scores"]))
-    result_b["weighted_score"] = result_b.get("weighted_score", compute_weighted_score(result_b["scores"]))
+    result_a["weighted_score"] = result_a.get("weighted_score", compute_weighted_score(result_a["scores"], dimensions))
+    result_b["weighted_score"] = result_b.get("weighted_score", compute_weighted_score(result_b["scores"], dimensions))
     output = render_comparison_markdown(
         session_id=args.session_id,
         topic_label=args.topic_label,
@@ -91,6 +93,7 @@ def command_render_comparison(args: argparse.Namespace) -> int:
         scoring_model=args.scoring_model,
         result_a=result_a,
         result_b=result_b,
+        dimensions=dimensions,
     )
     Path(args.output).write_text(output)
     return 0
@@ -125,9 +128,10 @@ def command_annotate_brief(args: argparse.Namespace) -> int:
 
 
 def command_render_score_report(args: argparse.Namespace) -> int:
+    dimensions = load_rubric_dimensions(Path(args.rubric))
     result = json.loads(Path(args.score_json).read_text())
-    result["weighted_score"] = result.get("weighted_score", compute_weighted_score(result["scores"]))
-    output = format_score_report(result, args.topic_label, args.brief_file)
+    result["weighted_score"] = result.get("weighted_score", compute_weighted_score(result["scores"], dimensions))
+    output = format_score_report(result, args.topic_label, args.brief_file, dimensions)
     Path(args.output).write_text(output)
     return 0
 
@@ -173,6 +177,7 @@ def build_parser() -> argparse.ArgumentParser:
     comparison_parser.add_argument("--scoring-model", required=True)
     comparison_parser.add_argument("--scores-a", required=True)
     comparison_parser.add_argument("--scores-b", required=True)
+    comparison_parser.add_argument("--rubric", default=str(Path(__file__).parent / "evaluation" / "daily-brief-rubric.md"))
     comparison_parser.add_argument("--output", required=True)
     comparison_parser.set_defaults(func=command_render_comparison)
 
@@ -201,6 +206,7 @@ def build_parser() -> argparse.ArgumentParser:
     score_report_parser.add_argument("--score-json", required=True)
     score_report_parser.add_argument("--brief-file", required=True)
     score_report_parser.add_argument("--topic-label", required=True)
+    score_report_parser.add_argument("--rubric", default=str(Path(__file__).parent / "evaluation" / "daily-brief-rubric.md"))
     score_report_parser.add_argument("--output", required=True)
     score_report_parser.set_defaults(func=command_render_score_report)
 

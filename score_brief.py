@@ -22,7 +22,7 @@ import re
 import sys
 from pathlib import Path
 
-from agent_utils import RUBRIC_DIMENSIONS, compute_weighted_score, format_score_report
+from agent_utils import compute_weighted_score, format_score_report, load_rubric_dimensions
 
 try:
     import anthropic
@@ -31,10 +31,10 @@ except ImportError:
     sys.exit(1)
 
 
-def build_scoring_prompt(brief: str, rubric: str, topic_label: str) -> str:
+def build_scoring_prompt(brief: str, rubric: str, topic_label: str, dimensions: list[dict]) -> str:
     dim_lines = "\n".join(
         f'    "{d["key"]}": {{ "score": <1-5 integer>, "rationale": "<1-2 sentence justification>" }}'
-        for d in RUBRIC_DIMENSIONS
+        for d in dimensions
     )
     return f"""You are an expert evaluator assessing a GenAI research brief.
 
@@ -75,11 +75,12 @@ def main():
 
     model = os.environ.get("SCORING_MODEL", os.environ.get("ANTHROPIC_MODEL", "claude-opus-4-6"))
 
-    rubric_path = args.rubric or (Path(__file__).parent / "evaluation" / "daily-brief-rubric.md")
-    rubric = Path(rubric_path).read_text()
+    rubric_path = Path(args.rubric or (Path(__file__).parent / "evaluation" / "daily-brief-rubric.md"))
+    dimensions = load_rubric_dimensions(rubric_path)
+    rubric = rubric_path.read_text()
     brief = Path(args.brief_file).read_text()
 
-    prompt = build_scoring_prompt(brief, rubric, args.topic_label)
+    prompt = build_scoring_prompt(brief, rubric, args.topic_label, dimensions)
 
     client = anthropic.Anthropic(api_key=api_key)
     print(f"[score_brief] Scoring with {model}...", file=sys.stderr)
@@ -102,14 +103,14 @@ def main():
             print(f"[ERROR] Could not parse JSON from model response:\n{raw}", file=sys.stderr)
             sys.exit(1)
 
-    result["weighted_score"] = compute_weighted_score(result["scores"])
+    result["weighted_score"] = compute_weighted_score(result["scores"], dimensions)
     result["brief_file"] = str(args.brief_file)
     result["topic_label"] = args.topic_label
 
     if args.output == "json":
         print(json.dumps(result, indent=2))
     else:
-        print(format_score_report(result, args.topic_label, args.brief_file))
+        print(format_score_report(result, args.topic_label, args.brief_file, dimensions))
 
 
 if __name__ == "__main__":

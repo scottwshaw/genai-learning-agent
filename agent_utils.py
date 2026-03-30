@@ -4,30 +4,43 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
 
-RUBRIC_DIMENSIONS = [
-    {"key": "recency_novelty", "label": "Recency And Novelty", "weight": 20},
-    {"key": "topic_boundary", "label": "Topic Boundary Discipline", "weight": 15},
-    {"key": "cross_topic_synthesis", "label": "Cross-Topic Trend Synthesis", "weight": 10},
-    {"key": "source_quality", "label": "Source Quality And Source Discipline", "weight": 15},
-    {
-        "key": "executive_scanability",
-        "label": "Executive Scanability Of Key Developments",
-        "weight": 10,
-    },
-    {
-        "key": "controlled_depth",
-        "label": "Controlled Technical Depth In Deep-Dive And Landscape Trends",
-        "weight": 5,
-    },
-    {"key": "audience_relevance", "label": "Audience Relevance", "weight": 10},
-    {"key": "analytical_strength", "label": "Analytical Strength And Synthesis", "weight": 10},
-    {"key": "format_compliance", "label": "Format Compliance And Structural Execution", "weight": 5},
-]
+DEFAULT_RUBRIC_PATH = Path(__file__).parent / "evaluation" / "daily-brief-rubric.md"
+
+
+def load_rubric_dimensions(rubric_path: Path = DEFAULT_RUBRIC_PATH) -> list[dict]:
+    """Load rubric dimensions from the YAML frontmatter of a rubric markdown file."""
+    text = rubric_path.read_text()
+    match = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
+    if not match:
+        raise ValueError(f"No YAML frontmatter found in {rubric_path}")
+
+    frontmatter = match.group(1)
+    dimensions = []
+    current: dict | None = None
+
+    for line in frontmatter.splitlines():
+        line = line.rstrip()
+        if line.startswith("  - key:"):
+            if current is not None:
+                dimensions.append(current)
+            current = {"key": line.split(":", 1)[1].strip()}
+        elif current is not None and line.startswith("    label:"):
+            current["label"] = line.split(":", 1)[1].strip().strip('"')
+        elif current is not None and line.startswith("    weight:"):
+            current["weight"] = int(line.split(":", 1)[1].strip())
+
+    if current is not None:
+        dimensions.append(current)
+
+    if not dimensions:
+        raise ValueError(f"No dimensions found in frontmatter of {rubric_path}")
+    return dimensions
 
 
 @dataclass
@@ -171,18 +184,18 @@ def ensure_learning_log(learning_log: Path, topics_file: Path) -> bool:
     return True
 
 
-def compute_weighted_score(scores: dict) -> float:
+def compute_weighted_score(scores: dict, dimensions: list[dict]) -> float:
     total = 0.0
-    for dim in RUBRIC_DIMENSIONS:
+    for dim in dimensions:
         entry = scores.get(dim["key"], {})
         score = entry.get("score", 0) if isinstance(entry, dict) else 0
         total += score * dim["weight"] / 5
     return round(total, 1)
 
 
-def format_score_report(result: dict, topic_label: str, brief_file: str) -> str:
+def format_score_report(result: dict, topic_label: str, brief_file: str, dimensions: list[dict]) -> str:
     scores = result["scores"]
-    weighted = result.get("weighted_score", compute_weighted_score(scores))
+    weighted = result.get("weighted_score", compute_weighted_score(scores, dimensions))
 
     lines = [
         f"# Brief Evaluation: {Path(brief_file).name}",
@@ -193,7 +206,7 @@ def format_score_report(result: dict, topic_label: str, brief_file: str) -> str:
         "| Dimension | Weight | Score | Pts |",
         "|-----------|--------|-------|-----|",
     ]
-    for dim in RUBRIC_DIMENSIONS:
+    for dim in dimensions:
         entry = scores.get(dim["key"], {})
         score = entry.get("score", "—") if isinstance(entry, dict) else "—"
         pts = round(score * dim["weight"] / 5, 1) if isinstance(score, int) else "—"
@@ -201,7 +214,7 @@ def format_score_report(result: dict, topic_label: str, brief_file: str) -> str:
     lines.append(f"| **TOTAL** | **100%** | | **{weighted}** |")
 
     lines += ["", "## Dimension Rationale"]
-    for dim in RUBRIC_DIMENSIONS:
+    for dim in dimensions:
         entry = scores.get(dim["key"], {})
         score = entry.get("score", "—") if isinstance(entry, dict) else "—"
         rationale = entry.get("rationale", "") if isinstance(entry, dict) else ""
@@ -243,6 +256,7 @@ def render_comparison_markdown(
     scoring_model: str,
     result_a: dict,
     result_b: dict,
+    dimensions: list[dict],
 ) -> str:
     score_a = result_a["weighted_score"]
     score_b = result_b["weighted_score"]
@@ -272,7 +286,7 @@ def render_comparison_markdown(
         "| Dimension | Wt | A | A pts | B | B pts | Delta |",
         "|-----------|-----|---|-------|---|-------|-------|",
     ]
-    for dim in RUBRIC_DIMENSIONS:
+    for dim in dimensions:
         lines.append(format_score_comparison_row(result_a["scores"], result_b["scores"], dim))
 
     total_delta = round(score_b - score_a, 1)

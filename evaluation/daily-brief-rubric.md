@@ -1,3 +1,34 @@
+---
+dimensions:
+  - key: recency_novelty
+    label: "Recency And Novelty"
+    weight: 20
+  - key: topic_boundary
+    label: "Topic Boundary Discipline"
+    weight: 15
+  - key: cross_topic_synthesis
+    label: "Cross-Topic Trend Synthesis"
+    weight: 10
+  - key: source_quality
+    label: "Source Quality And Source Discipline"
+    weight: 15
+  - key: executive_scanability
+    label: "Executive Scanability Of Key Developments"
+    weight: 10
+  - key: controlled_depth
+    label: "Controlled Technical Depth In Deep-Dive And Landscape Trends"
+    weight: 5
+  - key: audience_relevance
+    label: "Audience Relevance"
+    weight: 10
+  - key: analytical_strength
+    label: "Analytical Strength And Synthesis"
+    weight: 10
+  - key: format_compliance
+    label: "Format Compliance And Structural Execution"
+    weight: 5
+---
+
 # Daily Brief Evaluation Rubric
 
 This rubric is designed to assess how well each brief fulfills the intent of the current research prompt, not just whether it is well-written. It emphasizes novelty, topic discipline, source quality, useful synthesis, and the right level of abstraction for a senior technical reader who also needs executive-scan readability.
