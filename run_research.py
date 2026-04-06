@@ -13,6 +13,7 @@ Environment variables:
 """
 
 import os
+import re
 import sys
 import time
 
@@ -34,6 +35,20 @@ def extract_text(response) -> str:
     ).strip()
 
 
+def strip_preamble(text_output: str) -> tuple[str, int]:
+    """Anchor on the first line-start H1 heading and return (brief, preamble_len).
+
+    ``^# \\S`` (hash, space, non-whitespace at line start) reliably matches a
+    markdown H1 without colliding with inline ``#1``/``#2`` in reasoning prose.
+    Returns the original text unchanged with preamble_len=0 if no H1 is found.
+    """
+    match = re.search(r"^# \S", text_output, re.MULTILINE)
+    if match is None:
+        return text_output, 0
+    marker = match.start()
+    return text_output[marker:].strip(), marker
+
+
 def main():
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
@@ -51,7 +66,7 @@ def main():
     # Budget for extended thinking — keeps all deliberation out of the output text.
     # The extract_text() helper already filters to type=="text" blocks, so thinking
     # blocks are automatically excluded from the final brief.
-    thinking_budget = int(os.environ.get("THINKING_BUDGET", "10000"))
+    thinking_budget = int(os.environ.get("THINKING_BUDGET", "20000"))
     max_tokens = int(os.environ.get("MAX_TOKENS", "32000"))
 
     log(f"Starting: model={model}, prompt_chars={len(prompt)}, thinking_budget={thinking_budget}, max_tokens={max_tokens}")
@@ -99,19 +114,16 @@ def main():
 
         if response.stop_reason == "end_turn":
             # With extended thinking enabled, text blocks should contain only
-            # the brief. Strip any leading non-markdown preamble as a safety net.
-            marker = text_output.find("#")
-            if marker == -1:
-                # No markdown heading found — output whatever we have.
-                log("WARNING: No markdown heading found in response; outputting raw text")
-                print(text_output)
-            elif marker > 0:
-                preamble = text_output[:marker].strip()
-                if preamble:
-                    log(f"[stripped preamble] {preamble[:500]}")
-                print(text_output[marker:].strip())
-            else:
-                print(text_output)
+            # the brief, but the model sometimes emits reasoning/draft prose
+            # before the H1. Strip anything before the first line-start H1.
+            brief, preamble_len = strip_preamble(text_output)
+            if preamble_len == 0 and not text_output.lstrip().startswith("# "):
+                log("ERROR: No H1 heading found in model output — refusing to write broken brief")
+                log(f"[raw output head] {text_output[:1000]}")
+                sys.exit(2)
+            if preamble_len > 0:
+                log(f"[stripped preamble, {preamble_len} chars] {text_output[:500]}")
+            print(brief)
             return
 
         if response.stop_reason == "tool_use":
@@ -142,12 +154,18 @@ def main():
 
         elif response.stop_reason == "max_tokens":
             log("WARNING: hit max_tokens — outputting partial response")
-            print(text_output)
+            brief, preamble_len = strip_preamble(text_output)
+            if preamble_len > 0:
+                log(f"[stripped preamble, {preamble_len} chars] {text_output[:500]}")
+            print(brief)
             return
 
         else:
             log(f"Unexpected stop_reason: {response.stop_reason} — outputting available text")
-            print(text_output)
+            brief, preamble_len = strip_preamble(text_output)
+            if preamble_len > 0:
+                log(f"[stripped preamble, {preamble_len} chars] {text_output[:500]}")
+            print(brief)
             return
 
     print("ERROR: Hit maximum iteration limit (20)", file=sys.stderr)
