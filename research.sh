@@ -269,7 +269,7 @@ log "Brief saved (${BRIEF_SIZE} bytes): $BRIEF_FILE"
 # ---------------------------------------------------------------------------
 # Update learning log  (skipped in eval mode)
 # ---------------------------------------------------------------------------
-if [[ -z "$EVAL_OUTPUT" ]]; then
+if [[ -z "$EVAL_OUTPUT" ]] && [[ "$NO_COMMIT" == false ]]; then
     BRIEF_BASENAME="$(basename "$BRIEF_FILE")"
     printf "| %s | %s | [%s](briefs/%s) |\n" \
         "$DATE" "$TOPIC_LABEL" "$BRIEF_BASENAME" "$BRIEF_BASENAME" \
