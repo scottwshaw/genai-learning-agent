@@ -109,6 +109,34 @@ def previous_brief_date(briefs_dir: Path, topic_slug: str, fallback_days: int = 
     return (date.today() - timedelta(days=fallback_days)).isoformat()
 
 
+def _summarize_brief(text: str) -> str:
+    """Extract only Key Developments and Notable Papers/Models/Tools sections.
+
+    Keeps the H1 title line and the two sections needed for deduplication.
+    Drops Technical Deep-Dive, Landscape Trends, Vendor Landscape, and Sources.
+    """
+    lines = text.split("\n")
+    out: list[str] = []
+    # Keep sections whose H2 heading starts with these prefixes
+    keep_prefixes = ("## Key Developments", "## Key Releases",
+                     "## Notable Papers")
+    keeping = False
+
+    for line in lines:
+        # Always keep the H1 title line
+        if line.startswith("# ") and not line.startswith("## "):
+            out.append(line)
+            keeping = False
+            continue
+        # H2 heading: decide whether to keep this section
+        if line.startswith("## "):
+            keeping = any(line.startswith(p) for p in keep_prefixes)
+        if keeping:
+            out.append(line)
+
+    return "\n".join(out).strip()
+
+
 def recent_briefs_context(briefs_dir: Path, limit: int = 28) -> tuple[int, str]:
     briefs = sorted(briefs_dir.glob("*.md"))[-limit:]
     if not briefs:
@@ -116,7 +144,8 @@ def recent_briefs_context(briefs_dir: Path, limit: int = 28) -> tuple[int, str]:
 
     parts = []
     for brief in briefs:
-        parts.append(f"### {brief.stem}\n{brief.read_text()}\n\n---\n")
+        summary = _summarize_brief(brief.read_text())
+        parts.append(f"### {brief.stem}\n{summary}\n\n---\n")
     return len(briefs), "\n".join(parts).rstrip()
 
 
