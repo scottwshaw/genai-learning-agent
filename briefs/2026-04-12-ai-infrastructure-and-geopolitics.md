@@ -2,25 +2,20 @@
 
 ## Key Developments
 
-- **The Strait of Hormuz crisis has exposed TSMC's LNG dependency as a direct AI supply-chain vulnerability**
-  - **What changed:** Iran's closure of the Strait since March 4 cut off ~30% of Taiwan's LNG supply; TSIA formally called for helium and LNG strategic reserves as Taiwan's stockpile fell to roughly 11 days.
-  - **Why it matters:** Any production slowdown at TSMC directly throttles the global pipeline for Nvidia GPUs, AMD AI chips, and all advanced AI silicon.
+- **Hormuz closure leaves TSMC with 11-day LNG buffer**
+  - **What changed:** Iran's Strait closure since March 4 cut Taiwan's LNG supply by ~30%, leaving TSMC with ~11 days of reserves.
+  - **Why it matters:** Any TSMC slowdown directly throttles global supply of Nvidia, AMD, and all advanced AI silicon.
   - *(Tom's Hardware / Atlantic Council / TSIA, April 8–9, 2026)*
 
-- **TSMC reported 45% YoY March revenue growth on April 10, confirming AI demand has not yet hit a supply ceiling**
-  - **What changed:** TSMC disclosed March 2026 revenue of NT$415.19 billion — a 45.2% YoY and 30.7% sequential increase — with Q1 2026 totalling NT$1,134.10 billion, beating Bloomberg consensus.
-  - **Why it matters:** Record demand met by a booked-out foundry confirms that AI compute supply is constrained at the wafer level, not the capital or demand level.
-  - *(TSMC official filing / SemiWiki / Invezz, April 10, 2026)*
+- **TSMC record Q1 revenue confirms wafer-level AI compute constraint**
+  - **What changed:** TSMC disclosed Q1 2026 revenue of NT$1,134 billion, a 35% YoY increase beating Bloomberg consensus.
+  - **Why it matters:** A booked-out foundry at record revenue confirms AI compute is constrained at the wafer level.
+  - *(TSMC official filing / SemiWiki, April 10, 2026) [Tier 2 sources only]*
 
-- **BIS staffing attrition is creating a bureaucratic bottleneck that now threatens the chip export expansion Trump wants**
-  - **What changed:** Bloomberg reported on April 10 that licensing bottlenecks and staff attrition at the Bureau of Industry and Security are undermining the administration's goal of boosting global US chip sales.
-  - **Why it matters:** Even where policy permits exports — to the Middle East, to allied nations — the administrative machinery to approve them is degrading, creating delays that advantage non-US suppliers.
-  - *(Bloomberg, April 10, 2026)*
-
-- **NSW fast-tracked A$51.9 billion in data center projects via its Investment Delivery Authority, the largest sovereign AI infrastructure commitment in the Asia-Pacific**
-  - **What changed:** The NSW government endorsed 15 data center projects worth A$51.9 billion through its Investment Delivery Authority on approximately March 27, including NextDC's S7 facility and the S4 and S5 campuses.
-  - **Why it matters:** Paired with the federal government's March 23 Expectations framework, Australia now has both approved project pipelines and regulatory conditions for sovereign AI infrastructure at meaningful scale.
-  - *(NSW Government / W.Media / Govtech Review, March 27, 2026)*
+- **NSW endorses A$51.9 billion sovereign data centre pipeline**
+  - **What changed:** NSW's Investment Delivery Authority endorsed 15 data centre projects totalling A$51.9 billion on March 27.
+  - **Why it matters:** Combined with the March 23 federal Expectations framework, Australia now has sovereign AI infrastructure pipelines and conditions aligned.
+  - *(NSW Government / W.Media, March 27, 2026) [Tier 2 sources only]*
 
 ---
 
@@ -103,7 +98,7 @@ Trump's goal of significantly boosting global sales of American AI chips risks b
 
 - **Broadcom** has been confirmed through a Broadcom SEC filing as the lead design partner for Google's next-generation TPU ("Ironwood," 7th-gen, 3nm process), and as the implementation layer delivering 3.5 GW of that compute to Anthropic from 2027. A separate 10 GW co-development deal with OpenAI announced in October 2025 makes Broadcom the common silicon implementation layer for both leading US frontier labs — a structural competitive position against Nvidia. Broadcom shares rose over 6% on April 7.
 
-- **NextDC** secured NSW IDA endorsement for three projects (S7 Eastern Creek, S4 Fairfield, S5 Ryde) as part of the A$51.9 billion tranche. The S7 facility, co-developed with OpenAI, targets up to 650 MW of Tier IV capacity. NextDC's M4 Fishermans Bend (Melbourne, 150 MW liquid-cooled) received final approval in January 2026 and is the current leading near-term Blackwell-density location in sovereign Australian territory.
+- **NextDC** secured NSW IDA endorsement for three projects (S7 Eastern Creek, S4 Fairfield, S5 Ryde) as part of the A$51.9 billion tranche. The S7 facility, co-developed with OpenAI, targets up to 650 MW of Tier IV capacity. NextDC's M4 Fishermans Bend (Melbourne, 150 MW liquid-cooled) received final approval January 2026 and is one of the earliest sovereign Australian sites capable of Blackwell-density workloads.
 
 - **Sharon AI / Lenovo** (covered in March 30 brief): the 1,000-GPU B200 Melbourne cluster at NEXTDC M3 remains the only confirmed Blackwell-class sovereign Australian deployment known to be in delivery. The Sharon AI + Cisco 1,024-GPU Blackwell Ultra Secure AI Factory (February 23) represents a second near-term option for enterprises requiring Australian sovereign GPU capacity ahead of hyperscaler regions.
 

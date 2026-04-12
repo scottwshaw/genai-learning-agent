@@ -35,6 +35,7 @@ EVAL_OUTPUT=""          # --eval-output FILE  : write brief here; skip all side 
 TOPIC_SLUG_OVERRIDE=""  # --topic-slug SLUG / --topic N : override rotation
 LOCK_ROTATION=false     # set true when topic is manually selected (don't advance index)
 PROMPT_FILE_OVERRIDE="" # --prompt-file FILE  : override prompt template
+CRITIC_BRIEF=""         # --brief FILE        : skip generation, run critic on existing brief
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -69,11 +70,16 @@ while [[ $# -gt 0 ]]; do
             PROMPT_FILE_OVERRIDE="${2:?--prompt-file requires a file path}"
             shift 2
             ;;
+        --brief)
+            CRITIC_BRIEF="${2:?--brief requires a file path}"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1" >&2
             echo "Usage: $0 [--reset|--topics|--no-commit]" >&2
             echo "       $0 [--topic N|SLUG] [--no-commit]   # N is 1-based topic number" >&2
             echo "       $0 --eval-output FILE [--topic-slug SLUG] [--prompt-file FILE]" >&2
+            echo "       $0 --brief FILE [--no-commit]        # critic-only on existing brief" >&2
             exit 1
             ;;
     esac
@@ -218,6 +224,27 @@ log "Daily GenAI Learning Agent starting"
 log "Topic ($((IDX + 1))/${NUM_TOPICS}): $TOPIC_LABEL"
 log "Output: $BRIEF_FILE"
 log "=========================================="
+
+# ---------------------------------------------------------------------------
+# Critic-only mode: skip generation, run critic→revise on existing brief
+# ---------------------------------------------------------------------------
+if [[ -n "$CRITIC_BRIEF" ]]; then
+    if [[ ! -f "$CRITIC_BRIEF" ]]; then
+        log "ERROR: Brief file not found: $CRITIC_BRIEF"
+        exit 1
+    fi
+    BRIEF_FILE="$CRITIC_BRIEF"
+    log "Critic-only mode: running critic on $CRITIC_BRIEF"
+    if ! ENABLE_CRITIC=1 ANTHROPIC_MODEL="$MODEL" \
+        "$PYTHON_BIN" "$SCRIPT_DIR/run_research.py" --brief "$CRITIC_BRIEF" \
+        > "${CRITIC_BRIEF%.md}-revised.md" 2>>"$LOG_FILE"; then
+        log "ERROR: critic run failed"
+        exit 1
+    fi
+    REVISED_SIZE="$(wc -c < "${CRITIC_BRIEF%.md}-revised.md")"
+    log "Revised brief saved (${REVISED_SIZE} bytes): ${CRITIC_BRIEF%.md}-revised.md"
+    exit 0
+fi
 
 # Skip if today's brief already exists (idempotent re-runs) — skipped in eval mode
 if [[ -z "$EVAL_OUTPUT" ]] && [[ -f "$BRIEF_FILE" ]]; then
