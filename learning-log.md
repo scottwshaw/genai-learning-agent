@@ -56,3 +56,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-04-12 | AI Infrastructure & Geopolitics | [2026-04-12-ai-infrastructure-and-geopolitics.md](briefs/2026-04-12-ai-infrastructure-and-geopolitics.md) |
 | 2026-04-12 | Safety, Assurance & Governance | [2026-04-12-safety-assurance-and-governance.md](briefs/2026-04-12-safety-assurance-and-governance.md) |
 | 2026-04-13 | Enterprise GenAI Adoption | [2026-04-13-enterprise-genai-adoption.md](briefs/2026-04-13-enterprise-genai-adoption.md) |
+| 2026-04-14 | Agentic Systems | [2026-04-14-agentic-systems.md](briefs/2026-04-14-agentic-systems.md) |
