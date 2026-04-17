@@ -1,0 +1,25 @@
+[Unit]
+Description=Daily GenAI Research Agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=agent
+Group=agent
+
+ExecStart=/opt/research-agent/scripts/run-agent.sh
+
+# Expose the 1Password service account token via $CREDENTIALS_DIRECTORY/op-token.
+# The file is encrypted at rest using a machine-specific key (via systemd-creds).
+# Only systemd on this specific machine can decrypt it.
+LoadCredentialEncrypted=op-token:/etc/research-agent/op-token
+
+# The API call + web search + PR creation can take several minutes
+TimeoutStartSec=900
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

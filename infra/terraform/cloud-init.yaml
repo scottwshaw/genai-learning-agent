@@ -1,0 +1,99 @@
+#cloud-config
+
+package_update: true
+
+packages:
+  - docker.io
+  - fail2ban
+  - jq
+  - unattended-upgrades
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+
+# Harden SSH
+ssh_pwauth: false
+
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      X11Forwarding no
+      MaxAuthTries 3
+    permissions: "0644"
+
+  - path: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      mode = aggressive
+      maxretry = 3
+      bantime = 3600
+      findtime = 600
+    permissions: "0644"
+
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+    permissions: "0644"
+
+users:
+  - name: deploy
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ${SSH_PUBLIC_KEY}
+
+  - name: agent
+    groups: docker
+    shell: /bin/bash
+    system: true
+
+runcmd:
+  # Ensure agent home directory exists (create_home may not work with system users)
+  - mkdir -p /home/agent && chown agent:agent /home/agent
+
+  # Enable Docker
+  - systemctl enable --now docker
+
+  # Install 1Password CLI
+  - curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
+  - echo "deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" > /etc/apt/sources.list.d/1password.list
+  - mkdir -p /etc/debsig/policies/AC2D62742012EA22/ /usr/share/debsig/keyrings/AC2D62742012EA22/
+  - curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol > /etc/debsig/policies/AC2D62742012EA22/1password.pol
+  - curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+  - apt-get update && apt-get install -y 1password-cli
+
+  # Install GitHub CLI
+  - curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+  - chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+  - echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+  - apt-get update && apt-get install -y gh
+
+  # Create directories
+  - mkdir -p /opt/research-agent/repo /opt/research-agent/scripts /etc/research-agent
+
+  # Clone the repo (public read via HTTPS, no credentials needed)
+  - git clone https://github.com/scottwshaw/genai-learning-agent.git /opt/research-agent/repo
+
+  # Set git identity for the agent user
+  - git -C /opt/research-agent/repo config user.name "Research Agent"
+  - git -C /opt/research-agent/repo config user.email "agent@noreply"
+
+  # Set remote to HTTPS (plain, no credentials embedded)
+  - git -C /opt/research-agent/repo remote set-url origin https://github.com/scottwshaw/genai-learning-agent.git
+
+  # Set ownership
+  - chown -R agent:agent /opt/research-agent
+
+  # Restart SSH to pick up hardening config
+  - systemctl restart sshd
+
+  # Enable fail2ban
+  - systemctl enable --now fail2ban
