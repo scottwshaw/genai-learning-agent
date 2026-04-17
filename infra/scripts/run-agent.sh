@@ -64,6 +64,10 @@ TOPIC_SLUG="$(python3 agent_cli.py resolve-topic \
     | jq -r '.slug')"
 BRANCH="research/${DATE}-${TOPIC_SLUG}"
 
+# Ensure we're on main before starting (clean up from any prior failed run)
+git checkout main 2>/dev/null || true
+git branch -D "$BRANCH" 2>/dev/null || true
+
 log "Creating branch: ${BRANCH}"
 git checkout -b "$BRANCH"
 
