@@ -5,3 +5,8 @@ agent.log
 \#*\#
 eval-runs/
 */.DS_Store
+
+# Terraform
+infra/terraform/.terraform/
+infra/terraform/*.tfstate*
+infra/terraform/.terraform.lock.hcl

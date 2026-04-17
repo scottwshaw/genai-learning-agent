@@ -98,7 +98,9 @@ Flag missing or out-of-order sections.
 
 ## Output
 
-Call the `report_violations` tool with your findings. Use these rule identifiers: `non_event_rule`, `topic_boundary`, `format_structure`, `word_count`, `sentence_simplicity`, `source_tier_flag`, `quiet_week`, `vendor_source_gate`, `cross_topic_requirement`, `prior_brief_callback`, `comparative_claim`, `section_structure`.
+Call the `report_violations` tool with your findings. You MUST follow the tool's input schema exactly. Each item in the `violations` array must be a JSON object with these required string fields: `rule`, `location`, `description`, `fix_suggestion`. Do NOT return violations as plain strings — every violation must be a structured object.
+
+Use these rule identifiers for the `rule` field: `non_event_rule`, `topic_boundary`, `format_structure`, `word_count`, `sentence_simplicity`, `source_tier_flag`, `quiet_week`, `vendor_source_gate`, `cross_topic_requirement`, `prior_brief_callback`, `comparative_claim`, `section_structure`.
 
 ---
 
