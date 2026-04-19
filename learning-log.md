@@ -58,3 +58,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-04-13 | Enterprise GenAI Adoption | [2026-04-13-enterprise-genai-adoption.md](briefs/2026-04-13-enterprise-genai-adoption.md) |
 | 2026-04-14 | Agentic Systems | [2026-04-14-agentic-systems.md](briefs/2026-04-14-agentic-systems.md) |
 | 2026-04-17 | LLM Production Infrastructure | [2026-04-17-llm-production-infrastructure.md](briefs/2026-04-17-llm-production-infrastructure.md) |
+| 2026-04-19 | Safety, Assurance & Governance | [2026-04-19-safety-assurance-and-governance.md](briefs/2026-04-19-safety-assurance-and-governance.md) |
