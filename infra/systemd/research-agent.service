@@ -15,8 +15,8 @@ ExecStart=/opt/research-agent/scripts/run-agent.sh
 # Only systemd on this specific machine can decrypt it.
 LoadCredentialEncrypted=op-token:/etc/research-agent/op-token
 
-# The API call + web search + PR creation can take several minutes
-TimeoutStartSec=900
+# Research + critic + revision + push can take 20+ minutes
+TimeoutStartSec=1800
 
 StandardOutput=journal
 StandardError=journal

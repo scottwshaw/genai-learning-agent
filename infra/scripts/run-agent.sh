@@ -47,11 +47,15 @@ export ANTHROPIC_API_KEY GITHUB_PAT
 # ---------------------------------------------------------------------------
 # 3. Pull latest changes (prompt tweaks pushed from Mac)
 # ---------------------------------------------------------------------------
-log "Pulling latest changes..."
 export GIT_ASKPASS="${SCRIPTS_DIR}/git-askpass.sh"
 export GH_TOKEN="$GITHUB_PAT"
 
 cd "$REPO_DIR"
+
+# Ensure we're on main before pulling (clean up from any prior failed run)
+git checkout main 2>/dev/null || true
+
+log "Pulling latest changes..."
 git pull --ff-only
 
 # ---------------------------------------------------------------------------
@@ -64,8 +68,7 @@ TOPIC_SLUG="$(python3 agent_cli.py resolve-topic \
     | jq -r '.slug')"
 BRANCH="research/${DATE}-${TOPIC_SLUG}"
 
-# Ensure we're on main before starting (clean up from any prior failed run)
-git checkout main 2>/dev/null || true
+# Delete stale branch from a prior failed run if it exists
 git branch -D "$BRANCH" 2>/dev/null || true
 
 log "Creating branch: ${BRANCH}"
