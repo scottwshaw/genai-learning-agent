@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
-# run-agent.sh — Daily research agent wrapper
+# run-agent.sh — Bootstrap wrapper (deployed once to /opt/research-agent/scripts/)
 # =============================================================================
-# Called by systemd (research-agent.service). Fetches secrets from 1Password,
-# runs the containerised research agent, then pushes results as a PR.
+# Called by systemd (research-agent.service). Reads credentials, pulls the
+# latest repo, then hands off to run-remote.sh in the repo for all app logic.
 #
-# Secrets flow:
-#   1Password SA token (systemd LoadCredential) → op read → env vars → container
-#   PAT never touches disk — git auth via GIT_ASKPASS, gh auth via GH_TOKEN.
+# This script should rarely need updating. All research logic lives in the
+# repo and is kept current via git pull.
 # =============================================================================
 
 set -euo pipefail
@@ -45,7 +44,7 @@ fi
 export ANTHROPIC_API_KEY GITHUB_PAT
 
 # ---------------------------------------------------------------------------
-# 3. Pull latest changes (prompt tweaks pushed from Mac)
+# 3. Pull latest repo (prompt tweaks, script changes pushed from Mac)
 # ---------------------------------------------------------------------------
 export GIT_ASKPASS="${SCRIPTS_DIR}/git-askpass.sh"
 export GH_TOKEN="$GITHUB_PAT"
@@ -59,62 +58,6 @@ log "Pulling latest changes..."
 git pull --ff-only
 
 # ---------------------------------------------------------------------------
-# 4. Determine today's topic for the branch name
+# 4. Hand off to repo script for all application logic
 # ---------------------------------------------------------------------------
-DATE="$(date +%Y-%m-%d)"
-TOPIC_SLUG="$(python3 agent_cli.py resolve-topic \
-    --topics-file topics.json \
-    --state-file .topic-index \
-    | jq -r '.slug')"
-BRANCH="research/${DATE}-${TOPIC_SLUG}"
-
-# Delete stale branch from a prior failed run if it exists
-git branch -D "$BRANCH" 2>/dev/null || true
-
-log "Creating branch: ${BRANCH}"
-git checkout -b "$BRANCH"
-
-# ---------------------------------------------------------------------------
-# 5. Run the containerised research agent
-# ---------------------------------------------------------------------------
-log "Starting research container..."
-
-docker run --rm \
-    --read-only \
-    --tmpfs /tmp \
-    -e ANTHROPIC_API_KEY \
-    -e ENABLE_CRITIC=1 \
-    -v "${REPO_DIR}:/workspace" \
-    research-agent:latest \
-    ./research.sh
-
-log "Research container finished"
-
-# ---------------------------------------------------------------------------
-# 6. Push branch and create PR
-# ---------------------------------------------------------------------------
-log "Pushing branch..."
-git push -u origin "$BRANCH"
-
-log "Creating pull request..."
-TOPIC_LABEL="$(python3 agent_cli.py resolve-topic \
-    --topics-file topics.json \
-    --state-file .topic-index \
-    | jq -r '.label')"
-
-gh pr create \
-    --title "research(${DATE}): ${TOPIC_LABEL}" \
-    --body "Daily research brief on **${TOPIC_LABEL}** (${DATE}).
-
-Generated automatically by the research agent." \
-    --base main
-
-log "Pull request created"
-
-# ---------------------------------------------------------------------------
-# 7. Clean up — return to main for next run
-# ---------------------------------------------------------------------------
-git checkout main
-git branch -d "$BRANCH"
-
-log "Done"
+exec ./run-remote.sh
