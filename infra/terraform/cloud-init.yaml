@@ -56,31 +56,48 @@ users:
     system: true
 
 runcmd:
+  # --- Progress logging helper ---
+  - &log_progress |
+    log_progress() { echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') CLOUD-INIT: $1" | tee -a /var/log/cloud-init-progress.log; }
+  - log_progress "runcmd started"
+
+  # Restart SSH early so deploy user can connect while the rest runs
+  - log_progress "restarting sshd (early)"
+  - systemctl restart sshd
+
   # Ensure agent home directory exists (create_home may not work with system users)
+  - log_progress "creating agent home"
   - mkdir -p /home/agent && chown agent:agent /home/agent
 
   # Enable Docker
+  - log_progress "enabling docker"
   - systemctl enable --now docker
 
   # Install 1Password CLI
+  - log_progress "installing 1password-cli"
   - curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
   - echo "deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" > /etc/apt/sources.list.d/1password.list
   - mkdir -p /etc/debsig/policies/AC2D62742012EA22/ /usr/share/debsig/keyrings/AC2D62742012EA22/
   - curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol > /etc/debsig/policies/AC2D62742012EA22/1password.pol
   - curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
   - apt-get update && apt-get install -y 1password-cli
+  - log_progress "1password-cli done"
 
   # Install GitHub CLI
+  - log_progress "installing github-cli"
   - curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
   - chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
   - echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
   - apt-get update && apt-get install -y gh
+  - log_progress "github-cli done"
 
   # Create directories
   - mkdir -p /opt/research-agent/repo /opt/research-agent/scripts /etc/research-agent
 
   # Clone the repo (public read via HTTPS, no credentials needed)
+  - log_progress "cloning repo"
   - git clone https://github.com/scottwshaw/genai-learning-agent.git /opt/research-agent/repo
+  - log_progress "repo cloned"
 
   # Set git identity for the agent user
   - git -C /opt/research-agent/repo config user.name "Research Agent"
@@ -92,8 +109,11 @@ runcmd:
   # Set ownership
   - chown -R agent:agent /opt/research-agent
 
-  # Restart SSH to pick up hardening config
+  # Restart SSH again to pick up hardening config written in write_files
+  - log_progress "restarting sshd (final, with hardening)"
   - systemctl restart sshd
 
   # Enable fail2ban
   - systemctl enable --now fail2ban
+
+  - log_progress "cloud-init runcmd COMPLETE"
