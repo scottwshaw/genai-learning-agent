@@ -5,12 +5,34 @@ from __future__ import annotations
 
 import json
 import re
+import sys
+import time
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
 
 DEFAULT_RUBRIC_PATH = Path(__file__).parent / "evaluation" / "daily-brief-rubric.md"
+
+
+def retry_on_overload(fn, max_attempts=5, label="api"):
+    """Retry a callable on HTTP 529 (API overloaded) with exponential backoff."""
+    for attempt in range(max_attempts):
+        try:
+            return fn()
+        except Exception as e:
+            if getattr(e, "status_code", None) == 529 and attempt < max_attempts - 1:
+                wait = 30 * (2 ** attempt)
+                print(
+                    f"[{label}] API overloaded (529), retrying in {wait}s "
+                    f"(attempt {attempt + 1}/{max_attempts})...",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                time.sleep(wait)
+            else:
+                raise
+    raise RuntimeError(f"[{label}] All {max_attempts} retry attempts exhausted")
 
 
 def load_rubric_dimensions(rubric_path: Path = DEFAULT_RUBRIC_PATH) -> list[dict]:

@@ -17,10 +17,6 @@
 #   3. Run once manually to verify: ANTHROPIC_API_KEY=sk-ant-... ./research.sh --no-commit
 #   4. Add to crontab (e.g. 07:00 daily), injecting the key:
 #        0 7 * * * ANTHROPIC_API_KEY=sk-ant-... /path/to/research.sh >> /path/to/agent.log 2>&1
-#
-# PREREQUISITES:
-#   - python3 + anthropic package (pip install anthropic)
-#   - jq (apt install jq / brew install jq)
 # =============================================================================
 
 set -euo pipefail
@@ -86,27 +82,23 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ---------------------------------------------------------------------------
-# Paths
+# Shared setup (python, jq, agent_cli, topic resolution helper)
 # ---------------------------------------------------------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENT_CLI="$SCRIPT_DIR/agent_cli.py"
-BRIEFS_DIR="$SCRIPT_DIR/briefs"
-LEARNING_LOG="$SCRIPT_DIR/learning-log.md"
-STATE_FILE="$SCRIPT_DIR/.topic-index"
-LOG_FILE="$SCRIPT_DIR/agent.log"
-TOPICS_FILE="$SCRIPT_DIR/topics.json"
-PROMPT_TEMPLATE="$SCRIPT_DIR/prompts/research-prompt.md"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+# ---------------------------------------------------------------------------
+# Local paths and settings
+# ---------------------------------------------------------------------------
+BRIEFS_DIR="$REPO_ROOT/briefs"
+LEARNING_LOG="$REPO_ROOT/learning-log.md"
+LOG_FILE="$REPO_ROOT/agent.log"
+PROMPT_TEMPLATE="$REPO_ROOT/prompts/research-prompt.md"
 DATE="$(date +%Y-%m-%d)"
 MODEL="${ANTHROPIC_MODEL:-claude-sonnet-4-6}"
 
 # ---------------------------------------------------------------------------
-# Prerequisite checks
+# Remaining prerequisite checks
 # ---------------------------------------------------------------------------
-if ! command -v jq &>/dev/null; then
-    echo "[ERROR] 'jq' is required but not found. Install with: apt install jq  OR  brew install jq" >&2
-    exit 1
-fi
-
 if [[ ! -f "$TOPICS_FILE" ]]; then
     echo "[ERROR] topics.json not found at $TOPICS_FILE" >&2
     exit 1
@@ -121,10 +113,17 @@ if [[ ! -f "$PROMPT_TEMPLATE" ]]; then
     exit 1
 fi
 
-if [[ ! -f "$AGENT_CLI" ]]; then
-    echo "[ERROR] agent_cli.py not found at $AGENT_CLI" >&2
+if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+    echo "[ERROR] ANTHROPIC_API_KEY environment variable is not set." >&2
     exit 1
 fi
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
 
 # ---------------------------------------------------------------------------
 # Reset mode — wipe state and briefs for a clean test run
@@ -145,31 +144,6 @@ if [[ "$RESET_MODE" == true ]]; then
     echo "Run ./research.sh to start fresh."
     exit 0
 fi
-
-# ---------------------------------------------------------------------------
-# Resolve python3 — prefer the project venv if present
-# ---------------------------------------------------------------------------
-if [[ -x "$SCRIPT_DIR/.venv/bin/python3" ]]; then
-    PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python3"
-else
-    PYTHON_BIN="$(command -v python3 2>/dev/null || true)"
-fi
-if [[ -z "$PYTHON_BIN" ]]; then
-    echo "[ERROR] 'python3' not found. Create a venv: python3 -m venv .venv && .venv/bin/pip install anthropic" >&2
-    exit 1
-fi
-
-if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-    echo "[ERROR] ANTHROPIC_API_KEY environment variable is not set." >&2
-    exit 1
-fi
-
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
-}
 
 # ---------------------------------------------------------------------------
 # List topics mode
@@ -197,20 +171,7 @@ fi
 # ---------------------------------------------------------------------------
 # Determine today's topic
 # ---------------------------------------------------------------------------
-TOPIC_ARGS=()
-if [[ -n "$TOPIC_SLUG_OVERRIDE" ]]; then
-    TOPIC_ARGS=(--topic "$TOPIC_SLUG_OVERRIDE")
-fi
-
-TOPIC_INFO_JSON="$("$PYTHON_BIN" "$AGENT_CLI" resolve-topic \
-    --topics-file "$TOPICS_FILE" \
-    --state-file "$STATE_FILE" \
-    ${TOPIC_ARGS[@]+"${TOPIC_ARGS[@]}"})"
-IDX="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.index')"
-NEXT_IDX="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.next_index')"
-NUM_TOPICS="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.count')"
-TOPIC_SLUG="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.slug')"
-TOPIC_LABEL="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.label')"
+resolve_topic "$TOPIC_SLUG_OVERRIDE"
 
 # In eval mode use the caller-specified output path; otherwise use briefs/
 if [[ -n "$EVAL_OUTPUT" ]]; then
@@ -221,7 +182,7 @@ fi
 
 log "=========================================="
 log "Daily GenAI Learning Agent starting"
-log "Topic ($((IDX + 1))/${NUM_TOPICS}): $TOPIC_LABEL"
+log "Topic ($((TOPIC_IDX + 1))/${TOPIC_COUNT}): $TOPIC_LABEL"
 log "Output: $BRIEF_FILE"
 log "=========================================="
 
@@ -236,7 +197,7 @@ if [[ -n "$CRITIC_BRIEF" ]]; then
     BRIEF_FILE="$CRITIC_BRIEF"
     log "Critic-only mode: running critic on $CRITIC_BRIEF"
     if ! ENABLE_CRITIC=1 ANTHROPIC_MODEL="$MODEL" \
-        "$PYTHON_BIN" "$SCRIPT_DIR/run_research.py" --brief "$CRITIC_BRIEF" \
+        "$PYTHON_BIN" "$REPO_ROOT/run_research.py" --brief "$CRITIC_BRIEF" \
         > "${CRITIC_BRIEF%.md}-revised.md" 2>>"$LOG_FILE"; then
         log "ERROR: critic run failed"
         exit 1
@@ -274,7 +235,8 @@ log "Loaded ${RECENT_BRIEFS_COUNT} recent brief(s) as coverage context"
 log "Invoking: python3 run_research.py (model=$MODEL)"
 
 if ! echo "$RESEARCH_PROMPT" \
-    | ANTHROPIC_MODEL="$MODEL" "$PYTHON_BIN" "$SCRIPT_DIR/run_research.py" \
+    | ANTHROPIC_MODEL="$MODEL" "$PYTHON_BIN" "$REPO_ROOT/run_research.py" \
+    --topic-label "$TOPIC_LABEL" --date "$DATE" --topic-focus "$TOPIC_FOCUS" \
     > "$BRIEF_FILE" 2>>"$LOG_FILE"; then
     log "ERROR: run_research.py exited with non-zero status"
     # Remove partial output so a re-run starts fresh
@@ -309,9 +271,9 @@ fi
 # Skipped in eval mode or when topic was manually selected (--topic N|SLUG)
 # ---------------------------------------------------------------------------
 if [[ -z "$EVAL_OUTPUT" ]] && [[ "$LOCK_ROTATION" == false ]]; then
-    echo "$NEXT_IDX" > "$STATE_FILE"
-    NEXT_LABEL="$(jq -r ".topics[$NEXT_IDX].label" "$TOPICS_FILE")"
-    log "Next topic: $NEXT_LABEL (index $NEXT_IDX)"
+    echo "$TOPIC_NEXT_IDX" > "$STATE_FILE"
+    NEXT_LABEL="$(jq -r ".topics[$TOPIC_NEXT_IDX].label" "$TOPICS_FILE")"
+    log "Next topic: $NEXT_LABEL (index $TOPIC_NEXT_IDX)"
 fi
 
 # ---------------------------------------------------------------------------
@@ -322,7 +284,7 @@ if [[ -n "$EVAL_OUTPUT" ]]; then
 elif [[ "$NO_COMMIT" == true ]]; then
     log "Skipping git commit (--no-commit flag set). Brief saved but not staged."
 else
-    cd "$SCRIPT_DIR"
+    cd "$REPO_ROOT"
 
     git add "$BRIEF_FILE" "$LEARNING_LOG"
 
@@ -332,7 +294,7 @@ else
     else
         git commit -m "research(${DATE}): ${TOPIC_LABEL}
 
-Daily brief on '${TOPIC_LABEL}' (area $((IDX + 1))/${NUM_TOPICS}).
+Daily brief on '${TOPIC_LABEL}' (area $((TOPIC_IDX + 1))/${TOPIC_COUNT}).
 Generated by learning-agent on $(hostname)."
         log "Git committed: research(${DATE}): ${TOPIC_LABEL}"
     fi
@@ -343,6 +305,6 @@ if [[ -n "$EVAL_OUTPUT" ]]; then
 elif [[ "$LOCK_ROTATION" == true ]]; then
     log "Done (rotation locked via --topic; .topic-index not advanced)."
 else
-    log "Done. Run $(( NEXT_IDX + 1 ))/${NUM_TOPICS} next time: $NEXT_LABEL"
+    log "Done. Run $(( TOPIC_NEXT_IDX + 1 ))/${TOPIC_COUNT} next time: $NEXT_LABEL"
 fi
 log "=========================================="

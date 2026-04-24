@@ -11,21 +11,16 @@
 # =============================================================================
 
 set -euo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_PREFIX="[run-remote]"
-
 log() { echo "${LOG_PREFIX} $(date '+%Y-%m-%d %H:%M:%S') $*"; }
 
 # ---------------------------------------------------------------------------
 # 1. Determine today's topic (resolved once, used everywhere)
 # ---------------------------------------------------------------------------
 DATE="$(date +%Y-%m-%d)"
-TOPIC_JSON="$(python3 agent_cli.py resolve-topic \
-    --topics-file topics.json \
-    --state-file .topic-index)"
-TOPIC_SLUG="$(printf '%s' "$TOPIC_JSON" | jq -r '.slug')"
-TOPIC_LABEL="$(printf '%s' "$TOPIC_JSON" | jq -r '.label')"
+resolve_topic
 BRANCH="research/${DATE}-${TOPIC_SLUG}"
 
 # Delete stale branch from a prior failed run if it exists
@@ -44,7 +39,7 @@ docker run --rm \
     --tmpfs /tmp \
     -e ANTHROPIC_API_KEY \
     -e ENABLE_CRITIC=1 \
-    -v "${REPO_DIR}:/workspace" \
+    -v "${REPO_ROOT}:/workspace" \
     research-agent:latest \
     ./research.sh --topic-slug "$TOPIC_SLUG"
 

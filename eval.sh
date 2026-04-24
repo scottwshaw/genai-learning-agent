@@ -28,12 +28,6 @@
 #   --no-score           Generate brief(s) but skip scoring
 #   --scoring-model M    Model to use for rubric scoring
 #
-# Backward-compatible aliases:
-#   --model-a/--prompt-a/--label-a map to primary run
-#   --model-b/--prompt-b/--label-b map to comparison run
-#   --score-only maps to --brief
-#   --single is accepted but ignored
-#
 # Outputs (in eval-runs/YYYYMMDD-HHMMSS/):
 #   config.md            Session config summary
 #   run.md               Primary brief
@@ -47,12 +41,12 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENT_CLI="$SCRIPT_DIR/agent_cli.py"
-
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
 TOPIC_SLUG=""
 MODEL="claude-sonnet-4-6"
-PROMPT="$SCRIPT_DIR/prompts/research-prompt.md"
+PROMPT=""  # default set after sourcing common.sh
 LABEL=""
 BRIEF_FILE=""
 
@@ -67,15 +61,14 @@ SCORING_MODEL="${SCORING_MODEL:-claude-opus-4-6}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --topic)          TOPIC_SLUG="${2:?--topic requires a slug or index}"; shift 2 ;;
-        --model|--model-a) MODEL="${2:?--model requires a value}"; shift 2 ;;
-        --prompt|--prompt-a) PROMPT="${2:?--prompt requires a file}"; shift 2 ;;
-        --label|--label-a) LABEL="${2:?--label requires a value}"; shift 2 ;;
-        --brief|--score-only) BRIEF_FILE="${2:?--brief requires a file}"; shift 2 ;;
-        --compare-model|--model-b) COMPARE_MODEL="${2:?--compare-model requires a value}"; shift 2 ;;
-        --compare-prompt|--prompt-b) COMPARE_PROMPT="${2:?--compare-prompt requires a file}"; shift 2 ;;
-        --compare-label|--label-b) COMPARE_LABEL="${2:?--compare-label requires a value}"; shift 2 ;;
+        --model)          MODEL="${2:?--model requires a value}"; shift 2 ;;
+        --prompt)         PROMPT="${2:?--prompt requires a file}"; shift 2 ;;
+        --label)          LABEL="${2:?--label requires a value}"; shift 2 ;;
+        --brief)          BRIEF_FILE="${2:?--brief requires a file}"; shift 2 ;;
+        --compare-model)  COMPARE_MODEL="${2:?--compare-model requires a value}"; shift 2 ;;
+        --compare-prompt) COMPARE_PROMPT="${2:?--compare-prompt requires a file}"; shift 2 ;;
+        --compare-label)  COMPARE_LABEL="${2:?--compare-label requires a value}"; shift 2 ;;
         --compare-brief)  COMPARE_BRIEF_FILE="${2:?--compare-brief requires a file}"; shift 2 ;;
-        --single)         shift ;;
         --no-score)       NO_SCORE=true; shift ;;
         --scoring-model)  SCORING_MODEL="${2:?--scoring-model requires a value}"; shift 2 ;;
         *)
@@ -88,6 +81,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# ---------------------------------------------------------------------------
+# Shared setup (python, jq, agent_cli, topic resolution helper)
+# ---------------------------------------------------------------------------
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+# ---------------------------------------------------------------------------
+# Defaults that depend on REPO_ROOT
+# ---------------------------------------------------------------------------
+PROMPT="${PROMPT:-$REPO_ROOT/prompts/research-prompt.md}"
 LABEL="${LABEL:-$MODEL}"
 COMPARE_PROMPT="${COMPARE_PROMPT:-$PROMPT}"
 
@@ -123,44 +125,16 @@ if [[ "$NEEDS_API_KEY" == true ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
     exit 1
 fi
 
-if ! command -v jq &>/dev/null; then
-    echo "[ERROR] 'jq' is required but not found." >&2
-    exit 1
-fi
-
-if [[ -x "$SCRIPT_DIR/.venv/bin/python3" ]]; then
-    PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python3"
-else
-    PYTHON_BIN="$(command -v python3 2>/dev/null || true)"
-fi
-if [[ -z "$PYTHON_BIN" ]]; then
-    echo "[ERROR] python3 not found." >&2
-    exit 1
-fi
-
-if [[ ! -f "$AGENT_CLI" ]]; then
-    echo "[ERROR] agent_cli.py not found at $AGENT_CLI" >&2
-    exit 1
-fi
-
-TOPICS_FILE="$SCRIPT_DIR/topics.json"
-STATE_FILE="$SCRIPT_DIR/.topic-index"
-TOPIC_ARGS=()
-if [[ -n "$TOPIC_SLUG" ]]; then
-    TOPIC_ARGS=(--topic "$TOPIC_SLUG")
-fi
-TOPIC_INFO_JSON="$("$PYTHON_BIN" "$AGENT_CLI" resolve-topic \
-    --topics-file "$TOPICS_FILE" \
-    --state-file "$STATE_FILE" \
-    "${TOPIC_ARGS[@]}")"
-TOPIC_SLUG="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.slug')"
-TOPIC_LABEL="$(printf '%s' "$TOPIC_INFO_JSON" | jq -r '.label')"
+# ---------------------------------------------------------------------------
+# Resolve topic
+# ---------------------------------------------------------------------------
+resolve_topic "$TOPIC_SLUG"
 
 SESSION_ID="$(date +%Y%m%d-%H%M%S)"
-EVAL_DIR="$SCRIPT_DIR/eval-runs/$SESSION_ID"
+EVAL_DIR="$REPO_ROOT/eval-runs/$SESSION_ID"
 if [[ -e "$EVAL_DIR" ]]; then
     SESSION_ID="${SESSION_ID}-$$"
-    EVAL_DIR="$SCRIPT_DIR/eval-runs/$SESSION_ID"
+    EVAL_DIR="$REPO_ROOT/eval-runs/$SESSION_ID"
 fi
 mkdir -p "$EVAL_DIR"
 
@@ -175,7 +149,7 @@ COMPARE_SCORE_REPORT_OUT="$EVAL_DIR/compare-scores.md"
 COMPARE_METADATA_OUT="$EVAL_DIR/compare.metadata.json"
 COMPARE_PROMPT_DIFF_OUT="$EVAL_DIR/compare.prompt.diff.patch"
 RECORDED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
-GIT_HEAD="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2>/dev/null || echo "")"
+GIT_HEAD="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || echo "")"
 
 log() { echo "[eval $SESSION_ID] $*"; }
 
@@ -234,7 +208,7 @@ run_brief() {
 
     log "Running $label (model=$model, prompt=$(basename "$prompt_file"))..."
     ANTHROPIC_MODEL="$model" \
-        "$SCRIPT_DIR/research.sh" \
+        "$REPO_ROOT/research.sh" \
         --eval-output "$out_file" \
         --topic-slug "$TOPIC_SLUG" \
         --prompt-file "$prompt_file" \
@@ -267,7 +241,7 @@ score_brief_file() {
 
     log "Scoring $label..."
     SCORING_MODEL="$SCORING_MODEL" \
-        "$PYTHON_BIN" "$SCRIPT_DIR/score_brief.py" \
+        "$PYTHON_BIN" "$REPO_ROOT/score_brief.py" \
         "$brief_file" \
         --topic-label "$TOPIC_LABEL" \
         --output json \
@@ -345,15 +319,15 @@ capture_prompt_provenance() {
     local prompt_status_ref=""
     local prompt_diff_ref=""
 
-    if [[ "$prompt_git_path" == "$SCRIPT_DIR/"* ]]; then
-        prompt_git_path="${prompt_git_path#$SCRIPT_DIR/}"
+    if [[ "$prompt_git_path" == "$REPO_ROOT/"* ]]; then
+        prompt_git_path="${prompt_git_path#$REPO_ROOT/}"
     fi
 
-    if git -C "$SCRIPT_DIR" ls-files --error-unmatch -- "$prompt_git_path" >/dev/null 2>&1; then
-        prompt_commit_ref="$(git -C "$SCRIPT_DIR" rev-list -1 HEAD -- "$prompt_git_path" 2>/dev/null || true)"
-        if ! git -C "$SCRIPT_DIR" diff --quiet -- "$prompt_git_path"; then
+    if git -C "$REPO_ROOT" ls-files --error-unmatch -- "$prompt_git_path" >/dev/null 2>&1; then
+        prompt_commit_ref="$(git -C "$REPO_ROOT" rev-list -1 HEAD -- "$prompt_git_path" 2>/dev/null || true)"
+        if ! git -C "$REPO_ROOT" diff --quiet -- "$prompt_git_path"; then
             prompt_status_ref="modified"
-            git -C "$SCRIPT_DIR" diff -- "$prompt_git_path" > "$diff_out"
+            git -C "$REPO_ROOT" diff -- "$prompt_git_path" > "$diff_out"
             prompt_diff_ref="$diff_out"
         else
             prompt_status_ref="clean"

@@ -21,7 +21,6 @@ import json
 import os
 import re
 import sys
-import time
 from pathlib import Path
 
 try:
@@ -29,6 +28,8 @@ try:
 except ImportError:
     print("ERROR: anthropic package not installed. Run: pip install anthropic", file=sys.stderr)
     sys.exit(1)
+
+from agent_utils import retry_on_overload
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -62,7 +63,7 @@ def call_api(client, model, max_tokens, messages, thinking_budget,
              tools=None, label="api"):
     """Make an API call with retry-on-529 and streaming.
 
-    Returns the final response message, or exits on exhausted retries.
+    Returns the final response message, or raises on exhausted retries.
     """
     kwargs = dict(
         model=model,
@@ -73,25 +74,11 @@ def call_api(client, model, max_tokens, messages, thinking_budget,
     if tools:
         kwargs["tools"] = tools
 
-    response = None
-    for attempt in range(5):
-        try:
-            with client.messages.stream(**kwargs) as stream:
-                response = stream.get_final_message()
-            break
-        except anthropic.APIStatusError as e:
-            if e.status_code == 529 and attempt < 4:
-                wait = 30 * (2 ** attempt)
-                log(f"[{label}] API overloaded (529), retrying in {wait}s (attempt {attempt + 1}/5)...")
-                time.sleep(wait)
-            else:
-                raise
+    def _call():
+        with client.messages.stream(**kwargs) as stream:
+            return stream.get_final_message()
 
-    if response is None:
-        log(f"[{label}] ERROR: All retry attempts exhausted")
-        sys.exit(1)
-
-    return response
+    return retry_on_overload(_call, label=label)
 
 
 def load_prompt(name: str) -> str:
@@ -261,20 +248,22 @@ def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
 
 
 def critique_and_revise(client, brief, prompt, critic_model,
-                        critic_thinking_budget):
+                        critic_thinking_budget, topic_label=None,
+                        date_str=None, topic_focus=None):
     """Run critic→revise on a brief. Returns the (possibly revised) brief."""
-    # Extract topic label and date from the brief's H1 line
-    h1_match = re.match(r"^# (.+?) — Research Brief \((\d{4}-\d{2}-\d{2})\)",
-                        brief)
-    topic_label = h1_match.group(1) if h1_match else "Unknown"
-    date_str = h1_match.group(2) if h1_match else ""
+    # Use provided metadata, or fall back to parsing from the brief/prompt
+    if not topic_label or not date_str:
+        h1_match = re.match(r"^# (.+?) — Research Brief \((\d{4}-\d{2}-\d{2})\)",
+                            brief)
+        topic_label = topic_label or (h1_match.group(1) if h1_match else "Unknown")
+        date_str = date_str or (h1_match.group(2) if h1_match else "")
 
-    # Extract topic focus from the original prompt if available
-    topic_focus = ""
-    if prompt:
-        focus_match = re.search(r"Focus specifically on:\s*(.+?)(?:\n###|\n\n)",
-                                prompt, re.DOTALL)
-        topic_focus = focus_match.group(1).strip() if focus_match else ""
+    if topic_focus is None:
+        topic_focus = ""
+        if prompt:
+            focus_match = re.search(r"Focus specifically on:\s*(.+?)(?:\n###|\n\n)",
+                                    prompt, re.DOTALL)
+            topic_focus = focus_match.group(1).strip() if focus_match else ""
 
     critic_result = run_critic(client, critic_model, brief, topic_label,
                                topic_focus, critic_thinking_budget)
@@ -304,6 +293,12 @@ def main():
     parser = argparse.ArgumentParser(description="Generate or critique a research brief")
     parser.add_argument("--brief", type=str, default=None,
                         help="Path to existing brief — skip generation, run critic only")
+    parser.add_argument("--topic-label", default=None,
+                        help="Topic label (avoids parsing from brief H1)")
+    parser.add_argument("--date", default=None,
+                        help="Brief date (avoids parsing from brief H1)")
+    parser.add_argument("--topic-focus", default=None,
+                        help="Topic focus text (avoids parsing from prompt)")
     args = parser.parse_args()
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -327,7 +322,10 @@ def main():
         brief = brief_path.read_text().strip()
         log(f"Critic-only mode: brief={args.brief}, model={critic_model}")
         brief = critique_and_revise(client, brief, "", critic_model,
-                                    critic_thinking_budget)
+                                    critic_thinking_budget,
+                                    topic_label=args.topic_label,
+                                    date_str=args.date,
+                                    topic_focus=args.topic_focus)
         print(brief)
         return
 
@@ -353,7 +351,10 @@ def main():
     # --- Critic loop (optional) ---
     if enable_critic:
         brief = critique_and_revise(client, brief, prompt, critic_model,
-                                    critic_thinking_budget)
+                                    critic_thinking_budget,
+                                    topic_label=args.topic_label,
+                                    date_str=args.date,
+                                    topic_focus=args.topic_focus)
 
     print(brief)
 

@@ -22,7 +22,7 @@ import re
 import sys
 from pathlib import Path
 
-from agent_utils import compute_weighted_score, format_score_report, load_rubric_dimensions
+from agent_utils import compute_weighted_score, format_score_report, load_rubric_dimensions, retry_on_overload
 
 try:
     import anthropic
@@ -85,10 +85,13 @@ def main():
     client = anthropic.Anthropic(api_key=api_key)
     print(f"[score_brief] Scoring with {model}...", file=sys.stderr)
 
-    response = client.messages.create(
-        model=model,
-        max_tokens=2048,
-        messages=[{"role": "user", "content": prompt}],
+    response = retry_on_overload(
+        lambda: client.messages.create(
+            model=model,
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}],
+        ),
+        label="scoring",
     )
 
     raw = response.content[0].text.strip()
