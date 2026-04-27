@@ -3,15 +3,18 @@
     {
       "slug": "safety-assurance-and-governance",
       "label": "Safety, Assurance & Governance",
-      "focus": "This topic covers two equally important pillars — balance coverage across both in every brief. PILLAR 1: AI SAFETY RESEARCH & TECHNIQUES — alignment research (RLHF, constitutional AI, scalable oversight); interpretability and mechanistic interpretability advances; red-teaming methodologies and adversarial robustness; evaluation evasion and intent laundering; jailbreak research and mitigation; responsible AI tooling (guardrails, content filtering, bias detection); AI auditing methodologies and assurance tooling; and safety benchmarks. Search arXiv, lab blogs (Anthropic, OpenAI, DeepMind, ARC, MIRI, Redwood Research), and safety-focused outlets explicitly. PILLAR 2: GOVERNANCE & COMPLIANCE — formal AI governance frameworks (EU AI Act enforcement, NIST AI RMF, ISO 42001); multi-jurisdiction regulatory developments (not just EU — also cover US state legislation, UK AI Safety Institute, Asia-Pacific regulation); enterprise risk management for LLM deployments; and corporate AI ethics programs with measurable outcomes. BALANCE RULE: At least one Key Development must come from each pillar. If web search returns mostly regulatory news, actively search for safety research papers and techniques before finalizing.",
+      "focus": "This topic has two pillars with UNEQUAL weight. Pillar 1 is the PRIMARY focus. PILLAR 1 (PRIMARY — aim for 2 of 3 Key Developments): AI SAFETY RESEARCH & ASSURANCE — alignment research (RLHF, constitutional AI, scalable oversight, weak-to-strong generalization); interpretability and mechanistic interpretability advances; red-teaming methodologies and adversarial robustness; dangerous capability evaluations (cyber, biological, persuasion, autonomous replication) from AISI, METR, Apollo Research, and lab-internal teams; evaluation integrity and benchmark gaming; agentic supervision and control (monitoring, kill switches, CoT faithfulness, sandboxing); jailbreak research and mitigation; responsible AI tooling (guardrails, content filtering, bias detection); AI auditing methodologies and assurance tooling; and safety benchmarks. Search arXiv, lab blogs (Anthropic, OpenAI, DeepMind, METR, MIRI, Redwood Research), and safety evaluation bodies (AISI, Apollo Research, CAIS) explicitly. PILLAR 2 (SECONDARY — at most 1 of 3 Key Developments): GOVERNANCE & REGULATION — only include legislation or regulation as a Key Development if it sets a genuinely new precedent (e.g., first law of its kind, first enforcement action, new compliance deadline). Routine legislative movement (committee votes, session scheduling, bill amendments, incremental trilogue progress) belongs in Landscape Trends, not Key Developments. Cover: formal AI governance frameworks (EU AI Act enforcement, NIST AI RMF, ISO 42001); multi-jurisdiction regulatory developments; enterprise risk management for LLM deployments. BALANCE RULE: At least 2 of 3 Key Developments MUST come from Pillar 1 (safety research, evaluations, techniques, tooling). If web search returns mostly regulatory news, you have not searched hard enough for safety research — go back and run dedicated searches for lab blogs, AISI, METR, Apollo Research, arXiv safety papers before finalizing.",
       "sources": [
-        {"name": "Anthropic Research Blog", "url": "https://research.anthropic.com"},
-        {"name": "OpenAI Safety", "url": "https://openai.com/safety"},
-        {"name": "Google DeepMind Safety", "url": "https://deepmind.google/safety"},
-        {"name": "MIRI", "url": "https://intelligence.org/research/"},
-        {"name": "ARC Evals", "url": "https://metr.org/blog/"},
-        {"name": "UK AI Safety Institute", "url": "https://www.aisi.gov.uk/"},
-        {"name": "NIST AI RMF", "url": "https://www.nist.gov/artificial-intelligence"}
+        {"name": "Anthropic Research Blog — alignment, interpretability, responsible scaling", "url": "https://research.anthropic.com"},
+        {"name": "OpenAI Safety — safety research and red-teaming", "url": "https://openai.com/safety"},
+        {"name": "Google DeepMind Safety — safety research and evaluations", "url": "https://deepmind.google/safety"},
+        {"name": "MIRI — alignment research", "url": "https://intelligence.org/research/"},
+        {"name": "METR (formerly ARC Evals) — dangerous capability evaluations", "url": "https://metr.org/blog/"},
+        {"name": "UK AI Safety Institute (AISI) — model evaluations, red-teaming reports, inspections", "url": "https://www.aisi.gov.uk/blog"},
+        {"name": "Apollo Research — deception, scheming, and alignment evaluations", "url": "https://www.apolloresearch.ai/blog"},
+        {"name": "Center for AI Safety (CAIS) — safety research and benchmarks", "url": "https://www.safe.ai/research"},
+        {"name": "NIST AI — risk management framework and AI standards", "url": "https://www.nist.gov/artificial-intelligence"},
+        {"name": "Ars Technica AI — independent reporting on safety and capability findings", "url": "https://arstechnica.com/ai/"}
       ]
     },
     {

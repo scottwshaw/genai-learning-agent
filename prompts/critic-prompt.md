@@ -54,6 +54,8 @@ Flag violations of:
 - "Why it matters" exceeding 20 words (count carefully)
 - Source line not formatted as a standalone italic sub-bullet
 - Headline that is an event name or version number rather than a consequence/signal
+- Headline that uses academic abstractions or jargon phrases instead of plain language (e.g., "empirical ledger", "automation threshold problem", "non-monotonic alignment trajectory")
+- Bullet that combines two separate findings or developments into one (each bullet must cover ONE development)
 
 ### 4. Sentence Simplicity Rule
 
@@ -82,7 +84,11 @@ No Key Development may rest entirely on first-party vendor evidence (the vendor'
 
 Flag any unsupported superlative or comparative claim such as "most complete", "leading", "best-in-class", "most mature", "dominant platform", "strongest offering" — unless the brief cites specific Tier 1 independent evidence supporting the comparison.
 
-### 9. Section Structure
+### 9. Pillar Balance (Safety, Assurance & Governance only)
+
+If the topic is **Safety, Assurance & Governance**, at least 2 of 3 Key Developments MUST come from Pillar 1 (safety research, evaluations, capability assessments, alignment techniques, guardrails, agentic supervision — NOT legislation or regulation). Routine legislative movement (committee votes, session scheduling, bill amendments, trilogue progress) should not be a Key Development at all unless it sets a genuinely new precedent. Flag if fewer than 2 Key Developments are from Pillar 1, or if more than 1 is routine governance/legislation.
+
+### 10. Section Structure
 
 The brief must contain these sections in this order:
 1. `## Key Developments`
@@ -100,7 +106,7 @@ Flag missing or out-of-order sections.
 
 Call the `report_violations` tool with your findings. You MUST follow the tool's input schema exactly. Each item in the `violations` array must be a JSON object with these required string fields: `rule`, `location`, `description`, `fix_suggestion`. Do NOT return violations as plain strings — every violation must be a structured object.
 
-Use these rule identifiers for the `rule` field: `non_event_rule`, `topic_boundary`, `format_structure`, `word_count`, `sentence_simplicity`, `source_tier_flag`, `quiet_week`, `vendor_source_gate`, `cross_topic_requirement`, `prior_brief_callback`, `comparative_claim`, `section_structure`.
+Use these rule identifiers for the `rule` field: `non_event_rule`, `topic_boundary`, `format_structure`, `word_count`, `sentence_simplicity`, `source_tier_flag`, `quiet_week`, `vendor_source_gate`, `cross_topic_requirement`, `prior_brief_callback`, `comparative_claim`, `pillar_balance`, `section_structure`.
 
 ---
 

@@ -115,7 +115,8 @@ CRITIC_TOOL = {
                                 "quiet_week", "vendor_source_gate",
                                 "cross_topic_requirement",
                                 "prior_brief_callback",
-                                "comparative_claim", "section_structure",
+                                "comparative_claim", "pillar_balance",
+                                "section_structure",
                             ],
                         },
                         "location": {"type": "string"},
@@ -279,9 +280,13 @@ def critique_and_revise(client, brief, prompt, critic_model,
         violations = critic_result.get("violations", [])
         log(f"Critic: FAIL — {count} violation(s) found:")
         for v in violations:
-            log(f"  [{v.get('rule', '?')}] {v.get('location', '?')}: "
-                f"{v.get('description', '?')}")
-        revised = run_revision(client, critic_model, brief, violations,
+            if isinstance(v, dict):
+                log(f"  [{v.get('rule', '?')}] {v.get('location', '?')}: "
+                    f"{v.get('description', '?')}")
+            else:
+                log(f"  [malformed] {v}")
+        structured = [v for v in violations if isinstance(v, dict)]
+        revised = run_revision(client, critic_model, brief, structured,
                                topic_label, date_str, critic_thinking_budget)
         log("Revision: complete — outputting revised brief")
         return revised

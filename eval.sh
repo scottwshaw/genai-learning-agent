@@ -207,7 +207,7 @@ run_brief() {
     local out_file="$4"
 
     log "Running $label (model=$model, prompt=$(basename "$prompt_file"))..."
-    ANTHROPIC_MODEL="$model" \
+    ANTHROPIC_MODEL="$model" ENABLE_CRITIC=1 \
         "$REPO_ROOT/research.sh" \
         --eval-output "$out_file" \
         --topic-slug "$TOPIC_SLUG" \

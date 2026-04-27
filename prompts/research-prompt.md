@@ -34,7 +34,11 @@ Focus specifically on: {{TOPIC_FOCUS}}
 
 ### Priority Sources for This Topic
 
-In addition to your general web search across all source tiers, make sure you specifically check these sources for this topic. These supplement — not replace — your broader research. Continue to survey the full landscape using general web search as before.
+For each source listed below, perform **at least two dedicated searches using different strategies** — for example, a `site:` search AND a name-based search (e.g., `site:aisi.gov.uk 2026` AND `"UK AI Safety Institute" evaluation OR assessment 2026`). Do this early in your research, before general topic searches. Institutional blogs, evaluation reports, and technical posts are routinely missed by broad keyword searches — a single query is not sufficient.
+
+If a source is an evaluation or research body (AISI, METR, Apollo Research, CAIS), also search for their name combined with the names of major models (e.g., `"AISI" "Claude"`, `"METR" "GPT"`) to catch model-specific evaluation reports.
+
+These supplement — not replace — your broader research. Continue to survey the full landscape using general web search as well.
 
 {{TOPIC_SOURCES}}
 
@@ -193,7 +197,7 @@ Produce a well-structured research brief in the following **exact** markdown for
 
 (3–4 developments only — the most significant ones. Each bullet must use the following **exact** structure — no variations:
 
-- **[Headline: the consequence or signal in 8–12 words — not an event name or version number]**
+- **[Headline: the practical consequence in 8–12 plain words — no academic abstractions, no jargon phrases like "empirical ledger" or "automation threshold". Write it so a busy executive understands the point without reading further.]**
   - **What changed:** [Exactly one sentence. What happened + at most one supporting fact. Max 20 words.]
   - **Why it matters:** [Exactly one sentence. What this signals for enterprise teams. Max 20 words.]
   - *(Source name, Date)*
@@ -202,7 +206,7 @@ Do not merge the sub-bullets into a paragraph. Do not add extra sub-bullets. Do 
 
 Do not present a vendor release as evidence that a category is mature or a problem is solved unless independent sources support that conclusion.
 
-Write each `Key Development` for a senior AI leader who is familiar with GenAI concepts, tooling categories, and major vendors. Use standard field terminology where it improves precision, but avoid unnecessary density, product-specific jargon without framing, or changelog-style prose. The headline and first sentence should make the significance clear quickly to a reader who already knows the domain.
+Write each `Key Development` for a senior AI leader who is familiar with GenAI concepts, tooling categories, and major vendors. Use standard field terminology where it improves precision, but avoid unnecessary density, product-specific jargon without framing, or changelog-style prose. The headline must be immediately understandable — if you have to re-read it to get the point, rewrite it in plainer language. Each bullet covers ONE development, not two; do not combine separate findings into a single bullet even if they're from the same organization.
 
 Treat `Key Developments` as the scan layer of the brief.
 
