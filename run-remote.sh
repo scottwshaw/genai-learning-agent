@@ -37,6 +37,7 @@ log "Starting research container..."
 docker run --rm \
     --read-only \
     --tmpfs /tmp \
+    --user "$(id -u):$(id -g)" \
     -e ANTHROPIC_API_KEY \
     -e ENABLE_CRITIC=1 \
     -v "${REPO_ROOT}:/workspace" \
