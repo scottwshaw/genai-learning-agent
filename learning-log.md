@@ -70,3 +70,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-05-02 | LLM Production Infrastructure | [2026-05-02-llm-production-infrastructure.md](briefs/2026-05-02-llm-production-infrastructure.md) |
 | 2026-05-01 | Models & Market | [2026-05-01-models-and-market.md](briefs/2026-05-01-models-and-market.md) |
 | 2026-04-30 | Agentic Systems | [2026-04-30-agentic-systems.md](briefs/2026-04-30-agentic-systems.md) |
+| 2026-05-03 | AI Infrastructure & Geopolitics | [2026-05-03-ai-infrastructure-and-geopolitics.md](briefs/2026-05-03-ai-infrastructure-and-geopolitics.md) |
