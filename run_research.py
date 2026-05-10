@@ -39,10 +39,25 @@ def log(msg):
 
 
 def extract_text(response) -> str:
-    return "\n".join(
-        block.text for block in response.content
-        if getattr(block, "type", None) == "text"
-    ).strip()
+    """Extract only the final text segment from a response.
+
+    With server-side web search, responses interleave text blocks with
+    tool_use/tool_result blocks. Text written between searches is planning
+    noise. We only want text from after the last tool activity.
+    """
+    blocks = response.content
+    last_tool_idx = -1
+    for i, block in enumerate(blocks):
+        btype = getattr(block, "type", None)
+        if btype in ("tool_use", "tool_result", "server_tool_use", "web_search_tool_result"):
+            last_tool_idx = i
+
+    text_blocks = []
+    for i, block in enumerate(blocks):
+        if getattr(block, "type", None) == "text" and i > last_tool_idx:
+            text_blocks.append(block.text)
+
+    return "\n".join(text_blocks).strip()
 
 
 def strip_preamble(text_output: str) -> tuple[str, int]:

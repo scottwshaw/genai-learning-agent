@@ -1,4 +1,13 @@
 {
+  "discovery": {
+    "semantic_scholar_api": "https://api.semanticscholar.org/graph/v1",
+    "openalex_api": "https://api.openalex.org",
+    "arxiv_api": "http://export.arxiv.org/api",
+    "request_delay_seconds": 1.1,
+    "max_results_per_query": 20,
+    "recency_days": 90,
+    "contact_email": "research-agent@example.com"
+  },
   "topics": [
     {
       "slug": "safety-assurance-and-governance",
@@ -14,8 +23,92 @@
         {"name": "Apollo Research — deception, scheming, and alignment evaluations", "url": "https://www.apolloresearch.ai/blog"},
         {"name": "Center for AI Safety (CAIS) — safety research and benchmarks", "url": "https://www.safe.ai/research"},
         {"name": "NIST AI — risk management framework and AI standards", "url": "https://www.nist.gov/artificial-intelligence"},
-        {"name": "Ars Technica AI — independent reporting on safety and capability findings", "url": "https://arstechnica.com/ai/"}
-      ]
+        {"name": "Ars Technica AI — independent reporting on safety and capability findings", "url": "https://arstechnica.com/ai/"},
+        {"name": "ACM FAccT — fairness, accountability, transparency", "url": "https://facctconference.org/"},
+        {"name": "Partnership on AI — multi-stakeholder AI governance", "url": "https://partnershiponai.org/"},
+        {"name": "OECD AI Policy Observatory — international AI policy", "url": "https://oecd.ai/"},
+        {"name": "NIST AI RMF resources — risk management framework", "url": "https://www.nist.gov/itl/ai-risk-management-framework"},
+        {"name": "Stanford HAI — human-centered AI research", "url": "https://hai.stanford.edu/"},
+        {"name": "Berkeley CLTC — long-term cybersecurity and AI safety", "url": "https://cltc.berkeley.edu/"},
+        {"name": "MIT FutureTech — AI governance research", "url": "https://futuretech.mit.edu/"}
+      ],
+      "seed_papers": [
+        {"id": "ARXIV:2209.04963", "title": "Responsible AI Pattern Catalogue"},
+        {"id": "ARXIV:2111.09478", "title": "Software Engineering for Responsible AI"},
+        {"id": "ARXIV:2307.03718", "title": "AI Assurance using Causal Inference"},
+        {"id": "ARXIV:2306.12001", "title": "Challenges and Practices of Deep Learning Model Reengineering"},
+        {"id": "ARXIV:2310.06692", "title": "Sociotechnical Safety Evaluation of Generative AI Systems"},
+        {"id": "ARXIV:2404.14068", "title": "Practices for Governing Agentic AI Systems"},
+        {"id": "SSRN:6567199", "title": "Scalable Runtime Governance for Agentic AI in Financial Services", "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6567199", "authors": ["Szpruch", "Sudjianto", "Bhatti", "Ang"]}
+      ],
+      "tracked_authors": [
+        {"name": "Qinghua Lu", "note": "CSIRO Data61 — responsible AI patterns, SE for AI"},
+        {"name": "Liming Zhu", "note": "CSIRO Data61 — responsible AI engineering"},
+        {"name": "Jon Whittle", "note": "CSIRO/Monash — responsible AI, SE"},
+        {"name": "Virginia Dignum", "note": "Umeå University — responsible AI frameworks"},
+        {"name": "Inioluwa Deborah Raji", "note": "UC Berkeley — AI auditing, evaluation"},
+        {"name": "Margaret Mitchell", "note": "Hugging Face — model cards, responsible AI"},
+        {"name": "David Leslie", "note": "Alan Turing Institute — AI ethics, governance"},
+        {"name": "Iason Gabriel", "note": "DeepMind — AI ethics, alignment"},
+        {"name": "Ben Shneiderman", "note": "UMD — human-centered AI"},
+        {"name": "Shannon Vallor", "note": "Edinburgh — AI ethics, virtue ethics"},
+        {"name": "Peter Henderson", "note": "Stanford — AI policy, safety evaluation"},
+        {"name": "Dylan Hadfield-Menell", "note": "MIT — value alignment, AI safety"},
+        {"name": "Jess Whittlestone", "note": "AI governance, policy research"},
+        {"name": "Lukasz Szpruch", "note": "Alan Turing/Edinburgh — financial AI governance"},
+        {"name": "Agus Sudjianto", "note": "Wells Fargo — model risk management"},
+        {"name": "Timnit Gebru", "note": "DAIR Institute — AI ethics, bias"},
+        {"name": "Finale Doshi-Velez", "note": "Harvard — interpretability, ML for healthcare"}
+      ],
+      "tracked_institutions": [
+        "Microsoft Research FATE",
+        "Google DeepMind Safety",
+        "Anthropic Alignment",
+        "METR",
+        "Apollo Research",
+        "Stanford HAI",
+        "CMU SEI",
+        "MIT CSAIL",
+        "Oxford Internet Institute",
+        "CSIRO Data61",
+        "Alan Turing Institute",
+        "DAIR Institute",
+        "Center for AI Safety",
+        "UC Berkeley CLTC"
+      ],
+      "concept_synonyms": [
+        "AI assurance",
+        "AI trustworthiness",
+        "operational controls for AI",
+        "AI TRiSM",
+        "runtime mediation",
+        "AI controllability",
+        "supervisory architecture",
+        "conformance enforcement",
+        "socio-technical assurance",
+        "AI auditability",
+        "AI observability governance",
+        "policy enforcement AI",
+        "runtime verification AI",
+        "accountability infrastructure",
+        "model risk management",
+        "safety engineering AI",
+        "responsible AI patterns",
+        "AI assurance cases",
+        "runtime governance",
+        "AI guardrails engineering"
+      ],
+      "academic_venues": [
+        {"name": "FAccT", "type": "conference"},
+        {"name": "AIES", "type": "conference"},
+        {"name": "SaTML", "type": "conference"},
+        {"name": "AISec", "type": "workshop"},
+        {"name": "NeurIPS Safe AI Workshop", "type": "workshop"},
+        {"name": "ICML Safety Workshop", "type": "workshop"},
+        {"name": "IEEE Symposium on Security and Privacy", "type": "conference"},
+        {"name": "AAAI Workshop on AI Safety", "type": "workshop"}
+      ],
+      "arxiv_categories": ["cs.AI", "cs.CY", "cs.SE", "cs.LG"]
     },
     {
       "slug": "enterprise-genai-adoption",
@@ -25,8 +118,49 @@
         {"name": "McKinsey AI Insights", "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights"},
         {"name": "Gartner AI Research", "url": "https://www.gartner.com/en/topics/artificial-intelligence"},
         {"name": "Harvard Business Review AI", "url": "https://hbr.org/topic/subject/ai-and-machine-learning"},
-        {"name": "MIT Sloan Management Review", "url": "https://sloanreview.mit.edu/topic/artificial-intelligence-and-business-strategy/"}
-      ]
+        {"name": "MIT Sloan Management Review", "url": "https://sloanreview.mit.edu/topic/artificial-intelligence-and-business-strategy/"},
+        {"name": "Bank for International Settlements — AI in finance", "url": "https://www.bis.org/"},
+        {"name": "FSB — financial stability and AI", "url": "https://www.fsb.org/"},
+        {"name": "IMF — AI in finance research", "url": "https://www.imf.org/en/Publications"},
+        {"name": "Cambridge Centre for Alternative Finance", "url": "https://www.jbs.cam.ac.uk/faculty-research/centres/alternative-finance/"},
+        {"name": "FINOS — open source financial AI governance", "url": "https://www.finos.org/"}
+      ],
+      "seed_papers": [
+        {"id": "ARXIV:2304.10578", "title": "Generative AI at Work (Brynjolfsson et al.)"},
+        {"id": "ARXIV:2401.16863", "title": "AI adoption in organizations survey"}
+      ],
+      "tracked_authors": [
+        {"name": "Erik Brynjolfsson", "note": "Stanford — AI productivity, enterprise adoption"},
+        {"name": "Ethan Mollick", "note": "Wharton — AI in organizations, enterprise use"},
+        {"name": "Agus Sudjianto", "note": "Wells Fargo — model risk management, financial AI"},
+        {"name": "Lukasz Szpruch", "note": "Alan Turing/Edinburgh — financial AI governance"}
+      ],
+      "tracked_institutions": [
+        "Stanford Digital Economy Lab",
+        "MIT Initiative on the Digital Economy",
+        "McKinsey Global Institute",
+        "Bank for International Settlements",
+        "Financial Stability Board",
+        "Basel Committee",
+        "FINOS"
+      ],
+      "concept_synonyms": [
+        "enterprise AI deployment",
+        "GenAI ROI",
+        "AI change management",
+        "regulated AI adoption",
+        "financial services AI",
+        "AI governance enterprise",
+        "production AI deployment",
+        "AI operational maturity"
+      ],
+      "academic_venues": [
+        {"name": "CSCW", "type": "conference"},
+        {"name": "CHI", "type": "conference"},
+        {"name": "ICIS", "type": "conference"},
+        {"name": "MISQ", "type": "journal"}
+      ],
+      "arxiv_categories": ["cs.CY", "cs.AI", "econ.GN"]
     },
     {
       "slug": "agentic-systems",
@@ -39,7 +173,48 @@
         {"name": "arXiv cs.MA (Multi-Agent)", "url": "https://arxiv.org/list/cs.MA/recent"},
         {"name": "The Information", "url": "https://www.theinformation.com/"},
         {"name": "MIT Technology Review", "url": "https://www.technologyreview.com/topic/artificial-intelligence/"}
-      ]
+      ],
+      "seed_papers": [
+        {"id": "ARXIV:2308.08155", "title": "AutoGen: Enabling Next-Gen LLM Applications"},
+        {"id": "ARXIV:2402.18679", "title": "LLM Agent Survey"},
+        {"id": "ARXIV:2404.14068", "title": "Practices for Governing Agentic AI Systems"},
+        {"id": "ARXIV:2310.04406", "title": "Language Agent Tree Search"}
+      ],
+      "tracked_authors": [
+        {"name": "Chi Wang", "note": "Microsoft — AutoGen, multi-agent systems"},
+        {"name": "Shunyu Yao", "note": "Princeton — ReAct, Tree of Thoughts, agent reasoning"},
+        {"name": "Noah Shinn", "note": "Reflexion, agent self-improvement"},
+        {"name": "Ofir Press", "note": "Princeton — agent benchmarks"},
+        {"name": "Graham Neubig", "note": "CMU — agent frameworks, code generation"}
+      ],
+      "tracked_institutions": [
+        "Microsoft Research Agent Team",
+        "Princeton NLP",
+        "CMU Language Technologies",
+        "Stanford NLP",
+        "Google DeepMind Agent Team"
+      ],
+      "concept_synonyms": [
+        "LLM agents",
+        "autonomous agents",
+        "multi-agent systems",
+        "agentic workflows",
+        "tool use LLM",
+        "agent orchestration",
+        "agent memory",
+        "agent planning",
+        "agent evaluation",
+        "agent reliability",
+        "agent supervision",
+        "agentic AI governance"
+      ],
+      "academic_venues": [
+        {"name": "NeurIPS Agent Workshop", "type": "workshop"},
+        {"name": "ICML Agent Workshop", "type": "workshop"},
+        {"name": "AAAI", "type": "conference"},
+        {"name": "ACL", "type": "conference"}
+      ],
+      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"]
     },
     {
       "slug": "models-and-market",
@@ -52,7 +227,38 @@
         {"name": "The Information", "url": "https://www.theinformation.com/"},
         {"name": "MIT Technology Review", "url": "https://www.technologyreview.com/topic/artificial-intelligence/"},
         {"name": "Gartner AI Research", "url": "https://www.gartner.com/en/topics/artificial-intelligence"}
-      ]
+      ],
+      "seed_papers": [
+        {"id": "ARXIV:2303.08774", "title": "GPT-4 Technical Report"},
+        {"id": "ARXIV:2407.21783", "title": "The Llama 3 Herd of Models"}
+      ],
+      "tracked_authors": [
+        {"name": "Jason Wei", "note": "OpenAI — scaling, chain-of-thought"},
+        {"name": "Tri Dao", "note": "FlashAttention, efficient architectures"}
+      ],
+      "tracked_institutions": [
+        "OpenAI",
+        "Anthropic",
+        "Google DeepMind",
+        "Meta AI",
+        "Mistral AI",
+        "xAI"
+      ],
+      "concept_synonyms": [
+        "frontier models",
+        "large language models",
+        "model benchmarks",
+        "reasoning capabilities",
+        "open weight models",
+        "model evaluation",
+        "AI market landscape"
+      ],
+      "academic_venues": [
+        {"name": "NeurIPS", "type": "conference"},
+        {"name": "ICML", "type": "conference"},
+        {"name": "ICLR", "type": "conference"}
+      ],
+      "arxiv_categories": ["cs.CL", "cs.LG", "cs.AI"]
     },
     {
       "slug": "llm-production-infrastructure",
@@ -64,8 +270,48 @@
         {"name": "ACM Queue", "url": "https://queue.acm.org/"},
         {"name": "IEEE Spectrum AI", "url": "https://spectrum.ieee.org/topic/artificial-intelligence/"},
         {"name": "Forrester AI Research", "url": "https://www.forrester.com/research/artificial-intelligence/"},
-        {"name": "OpenTelemetry GenAI Project", "url": "https://github.com/open-telemetry/community/blob/main/projects/gen-ai.md"}
-      ]
+        {"name": "OpenTelemetry GenAI Project", "url": "https://github.com/open-telemetry/community/blob/main/projects/gen-ai.md"},
+        {"name": "IEEE Software AI Engineering", "url": "https://www.computer.org/csdl/magazine/so"},
+        {"name": "ICSE Workshops — SE for AI", "url": "https://conf.researchr.org/home/icse-2026"},
+        {"name": "SE4AI Workshop series", "url": "https://sites.google.com/view/se4ai"},
+        {"name": "CEUR Workshop Proceedings — AI Engineering", "url": "https://ceur-ws.org/"}
+      ],
+      "seed_papers": [
+        {"id": "ARXIV:2304.15004", "title": "Challenges and Best Practices in LLM Evaluation"},
+        {"id": "ARXIV:2312.07559", "title": "Efficient Memory Management for LLM Serving with PagedAttention"}
+      ],
+      "tracked_authors": [
+        {"name": "Ion Stoica", "note": "UC Berkeley — vLLM, Ray, systems for ML"},
+        {"name": "Matei Zaharia", "note": "Databricks/Stanford — MLOps, Spark"},
+        {"name": "Qinghua Lu", "note": "CSIRO Data61 — SE for AI, AI engineering patterns"},
+        {"name": "Liming Zhu", "note": "CSIRO Data61 — AI engineering, responsible AI"}
+      ],
+      "tracked_institutions": [
+        "UC Berkeley Sky Lab",
+        "Stanford DAWN",
+        "CSIRO Data61",
+        "MLCommons"
+      ],
+      "concept_synonyms": [
+        "LLMOps",
+        "ML observability",
+        "LLM evaluation framework",
+        "model serving",
+        "inference optimization",
+        "AI engineering",
+        "production ML monitoring",
+        "LLM deployment pipeline",
+        "AI platform engineering"
+      ],
+      "academic_venues": [
+        {"name": "MLSys", "type": "conference"},
+        {"name": "OSDI", "type": "conference"},
+        {"name": "SoCC", "type": "conference"},
+        {"name": "USENIX ATC", "type": "conference"},
+        {"name": "ICSE SE4AI Workshop", "type": "workshop"},
+        {"name": "KDD", "type": "conference"}
+      ],
+      "arxiv_categories": ["cs.SE", "cs.DC", "cs.LG", "cs.PF"]
     },
     {
       "slug": "ai-infrastructure-and-geopolitics",
@@ -78,7 +324,29 @@
         {"name": "IEEE Spectrum Semiconductors", "url": "https://spectrum.ieee.org/topic/semiconductors/"},
         {"name": "Ars Technica AI", "url": "https://arstechnica.com/ai/"},
         {"name": "Reuters Technology", "url": "https://www.reuters.com/technology/"}
-      ]
+      ],
+      "seed_papers": [],
+      "tracked_authors": [
+        {"name": "Jaime Sevilla", "note": "Epoch AI — compute trends, training costs"}
+      ],
+      "tracked_institutions": [
+        "Epoch AI",
+        "SemiAnalysis",
+        "CSET Georgetown"
+      ],
+      "concept_synonyms": [
+        "AI compute",
+        "GPU supply chain",
+        "sovereign AI",
+        "data center energy",
+        "AI chip exports",
+        "semiconductor geopolitics"
+      ],
+      "academic_venues": [
+        {"name": "Hot Chips", "type": "conference"},
+        {"name": "ISSCC", "type": "conference"}
+      ],
+      "arxiv_categories": ["cs.AR", "cs.DC"]
     }
   ]
 }

@@ -185,6 +185,53 @@ At the end of this prompt you will find a block of **recent briefs across all to
 
 **Important — topic labels change over time.** The previous briefs may carry different topic names than the current taxonomy (e.g. "Frontier Research", "GenAI Products & Platforms", "MLOps & LLMOps", "Inference Optimization" are older labels for content now covered under "Models & Market" and "LLM Production Infrastructure"). Do not filter or discount any brief because its title does not match today's topic. Judge each brief by its *content*, not its label — all recent briefs are relevant context regardless of what they were called.
 
+### Two-Stream Research Strategy
+
+Your research must cover two distinct streams. Do not let one overwhelm the other.
+
+**Stream 1 — Operational News (web search):** Announcements, regulation, incidents, vendor tooling, benchmark news, standards movement. Your web search already handles this well.
+
+**Stream 2 — Research Discovery (pre-retrieved candidates):** Papers, workshops, institutional reports, methodologies, standards, emerging governance frameworks. If pre-retrieved scholarly candidates appear at the end of this prompt, they represent papers found through citation graph expansion, author tracking, and semantic search of academic APIs. These are candidates that web search systematically under-surfaces.
+
+When pre-retrieved candidates are provided:
+
+- Evaluate each on its merits for this brief — not all will be relevant or timely enough.
+- **The hard recency gate still applies to pre-retrieved candidates.** A candidate older than 30 days must NOT appear in Key Developments or Notable Papers unless you can find — via web search — verifiable new evidence (adoption, citation in a standards document, workshop inclusion, institutional endorsement) that appeared since {{PREVIOUS_BRIEF_DATE}}. "Referenced in May 2026" is not sufficient unless you can cite the specific reference. Do not fabricate or infer recency — if you cannot find a concrete new event, drop the candidate.
+- A pre-retrieved paper with high citation velocity, workshop adoption, or standards references may warrant a Key Development even if it is older than 14 days — but only if you can cite the specific new adoption evidence. Apply the slow-burn rule below.
+- Use pre-retrieved candidates to inform your web search strategy: if a candidate paper is relevant, search for independent coverage, adoption evidence, or institutional responses.
+- Pre-retrieved candidates that do not qualify for Key Developments or Notable Papers may still inform Landscape Trends as context.
+
+### Original Contribution Bias
+
+Strongly prefer original intellectual contributions over derivative commentary:
+
+- **Prioritize**: original frameworks, methodologies, empirical findings, operational patterns, taxonomies, assurance mechanisms, and technical reports from research groups or standards bodies.
+- **Deprioritize**: news articles summarizing research, "AI governance explained" posts, vendor interpretations of academic work, and commentary that adds no original analysis.
+
+When both a primary source (the paper, the framework document, the standards draft) and secondary coverage (news article about it) are available, cite the primary source. Use secondary coverage only to establish independent validation or adoption evidence.
+
+### Slow-Burn Research Detection
+
+Your recency bias is calibrated for operational news. Research discovery requires a second lens:
+
+A paper or framework from 2–6 months ago that shows **citation acceleration**, **workshop adoption**, **standards body references**, or **repeated institutional citation** may be more significant than today's news. When evaluating older research candidates:
+
+- Check whether citation count has grown meaningfully since publication.
+- Check whether the paper appears in recent workshop programs, standards drafts, or institutional bibliographies.
+- If an older paper shows growing adoption evidence, it can appear in Key Developments — but lead with the *adoption signal* (the new thing), not the paper itself (the old thing).
+
+### Negative Signals
+
+Deprioritize or reject content that matches these patterns:
+
+- Press releases with no independent coverage
+- "Top N" listicles or SEO roundup posts
+- Articles with no primary references or citations
+- Vendor "thought leadership" restating product features as industry trends
+- Generic "AI regulation explained" or "enterprise AI strategy" articles
+- Content where the primary purpose is lead generation
+- Repeated coverage of the same event across multiple outlets with no new analysis
+
 ### Output Format
 
 Produce a well-structured research brief in the following **exact** markdown format. Do not add extra sections, rename headings, or change their order.

@@ -229,6 +229,45 @@ log "Previous brief date for this topic: $PREVIOUS_BRIEF_DATE"
 log "Loaded ${RECENT_BRIEFS_COUNT} recent brief(s) as coverage context"
 
 # ---------------------------------------------------------------------------
+# Scholarly discovery — pre-retrieval from academic APIs
+# Runs before generation to surface papers that web search would miss.
+# Non-fatal: if discovery fails, generation proceeds with web search only.
+# ---------------------------------------------------------------------------
+DISCOVERY_CONTEXT=""
+SKIP_DISCOVERY="${SKIP_DISCOVERY:-false}"
+
+if [[ "$SKIP_DISCOVERY" == "true" ]]; then
+    log "Skipping scholarly discovery (SKIP_DISCOVERY=true)"
+else
+    log "Running scholarly discovery for topic: $TOPIC_SLUG"
+    DISCOVERY_DAYS="${DISCOVERY_DAYS:-90}"
+    if DISCOVERY_JSON="$("$PYTHON_BIN" "$REPO_ROOT/discovery.py" \
+        --topic "$TOPIC_SLUG" \
+        --topics-file "$TOPICS_FILE" \
+        --days "$DISCOVERY_DAYS" \
+        --format context 2>>"$LOG_FILE")"; then
+        DISCOVERY_SIZE="${#DISCOVERY_JSON}"
+        if (( DISCOVERY_SIZE > 100 )); then
+            DISCOVERY_CONTEXT="$DISCOVERY_JSON"
+            log "Discovery returned ${DISCOVERY_SIZE} chars of scholarly context"
+        else
+            log "Discovery returned no significant results"
+        fi
+    else
+        log "WARNING: discovery.py failed (non-fatal) — proceeding with web search only"
+    fi
+fi
+
+# Append discovery context to the research prompt if available
+if [[ -n "$DISCOVERY_CONTEXT" ]]; then
+    RESEARCH_PROMPT="${RESEARCH_PROMPT}
+
+---
+
+${DISCOVERY_CONTEXT}"
+fi
+
+# ---------------------------------------------------------------------------
 # Run research via Anthropic API (run_research.py)
 # ANTHROPIC_API_KEY is read from the environment — never stored on disk.
 # ---------------------------------------------------------------------------
