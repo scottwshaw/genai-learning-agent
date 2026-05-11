@@ -127,22 +127,42 @@
       ],
       "seed_papers": [
         {"id": "ARXIV:2304.10578", "title": "Generative AI at Work (Brynjolfsson et al.)"},
-        {"id": "ARXIV:2401.16863", "title": "AI adoption in organizations survey"}
+        {"id": "ARXIV:2401.16863", "title": "AI adoption in organizations survey"},
+        {"id": "ARXIV:2312.14628", "title": "Navigating the Jagged Technological Frontier (Dell'Acqua, Mollick et al.)"},
+        {"id": "ARXIV:2401.12474", "title": "The Simple Economics of AI (Acemoglu)"},
+        {"id": "ARXIV:2402.14373", "title": "Large Language Models and Financial Services"},
+        {"id": "ARXIV:2306.07377", "title": "Organizational Challenges of AI Adoption"},
+        {"id": "ARXIV:2310.17628", "title": "AI-Augmented Software Engineering"}
       ],
       "tracked_authors": [
         {"name": "Erik Brynjolfsson", "note": "Stanford — AI productivity, enterprise adoption"},
-        {"name": "Ethan Mollick", "note": "Wharton — AI in organizations, enterprise use"},
+        {"name": "Ethan Mollick", "note": "Wharton — AI in organizations, co-intelligence"},
         {"name": "Agus Sudjianto", "note": "Wells Fargo — model risk management, financial AI"},
-        {"name": "Lukasz Szpruch", "note": "Alan Turing/Edinburgh — financial AI governance"}
+        {"name": "Lukasz Szpruch", "note": "Alan Turing/Edinburgh — financial AI governance"},
+        {"name": "Daron Acemoglu", "note": "MIT — AI labor economics, productivity skepticism"},
+        {"name": "Ajay Agrawal", "note": "Toronto/Rotman — economics of AI, prediction machines"},
+        {"name": "Thomas Davenport", "note": "Babson — AI in enterprise, analytics strategy"},
+        {"name": "Michael Chui", "note": "McKinsey Global Institute — enterprise AI adoption surveys"},
+        {"name": "Bhaskar Chakravorti", "note": "Tufts — digital transformation, AI readiness indexes"},
+        {"name": "Danielle Li", "note": "MIT Sloan — AI productivity studies with Brynjolfsson"},
+        {"name": "Lindsey Raymond", "note": "MIT — AI productivity, enterprise field experiments"},
+        {"name": "Fabrizio Dell'Acqua", "note": "Harvard — AI in consulting, jagged frontier"}
       ],
       "tracked_institutions": [
         "Stanford Digital Economy Lab",
+        "Stanford HAI",
         "MIT Initiative on the Digital Economy",
         "McKinsey Global Institute",
+        "BCG Henderson Institute",
+        "Deloitte AI Institute",
         "Bank for International Settlements",
         "Financial Stability Board",
         "Basel Committee",
-        "FINOS"
+        "FINOS",
+        "World Economic Forum AI Governance",
+        "Brookings Institution AI",
+        "NBER AI and the Economy",
+        "Rotman School of Management CDL"
       ],
       "concept_synonyms": [
         "enterprise AI deployment",
@@ -152,15 +172,34 @@
         "financial services AI",
         "AI governance enterprise",
         "production AI deployment",
-        "AI operational maturity"
+        "AI operational maturity",
+        "AI transformation enterprise",
+        "digital transformation AI",
+        "AI pilot to production",
+        "AI scaling challenges",
+        "AI technical debt",
+        "responsible AI enterprise",
+        "AI workforce impact",
+        "AI procurement",
+        "AI vendor evaluation",
+        "shadow AI",
+        "AI center of excellence",
+        "AI failure modes enterprise",
+        "build vs buy AI",
+        "AI organizational change"
       ],
       "academic_venues": [
         {"name": "CSCW", "type": "conference"},
         {"name": "CHI", "type": "conference"},
         {"name": "ICIS", "type": "conference"},
-        {"name": "MISQ", "type": "journal"}
+        {"name": "MISQ", "type": "journal"},
+        {"name": "HICSS", "type": "conference"},
+        {"name": "AMCIS", "type": "conference"},
+        {"name": "Journal of MIS", "type": "journal"},
+        {"name": "Organization Science", "type": "journal"},
+        {"name": "Management Science", "type": "journal"}
       ],
-      "arxiv_categories": ["cs.CY", "cs.AI", "econ.GN"]
+      "arxiv_categories": ["cs.CY", "cs.AI", "cs.SE", "econ.GN"]
     },
     {
       "slug": "agentic-systems",
