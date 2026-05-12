@@ -389,18 +389,7 @@ def arxiv_recent_by_category(categories: list[str],
 # ---------------------------------------------------------------------------
 
 def _resolve_seed_id(seed: dict) -> str | None:
-    """Resolve a seed paper entry to a Semantic Scholar paper ID.
-
-    Handles ARXIV:, DOI:, and S2 IDs natively. For SSRN: or other
-    non-native prefixes, falls back to title search on Semantic Scholar.
-    """
-    paper_id = seed.get("id", "")
-    if paper_id.startswith("ARXIV:") or paper_id.startswith("DOI:"):
-        return paper_id
-    if not paper_id.startswith("SSRN:") and ":" not in paper_id:
-        return paper_id
-
-    # For SSRN and other non-native IDs, search by title
+    """Resolve a seed paper entry by title search on Semantic Scholar."""
     title = seed.get("title", "")
     if not title:
         return None
@@ -408,6 +397,27 @@ def _resolve_seed_id(seed: dict) -> str | None:
     if results:
         return results[0].paper_id
     return None
+
+
+def build_arxiv_queries(topic: dict) -> list[str]:
+    """Build small, high-yield arXiv queries from topic metadata.
+
+    The category-only query is useful for broad recall, but combining broad
+    categories with a literal topic label like "Agentic Systems" is too
+    narrow and times out too often. Prefer several targeted queries using
+    high-signal concept synonyms that already exist in topics.json.
+    """
+    queries: list[str] = []
+    topic_label = (topic.get("label") or "").strip()
+    if topic_label:
+        queries.append(topic_label)
+
+    for concept in topic.get("concept_synonyms", [])[:6]:
+        concept = concept.strip()
+        if concept and concept not in queries:
+            queries.append(concept)
+
+    return queries
 
 
 # ---------------------------------------------------------------------------
@@ -458,15 +468,21 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
     seed_papers = topic.get("seed_papers", [])
     for seed in seed_papers:
         paper_id = seed.get("id", "")
-        if not paper_id:
+        title = seed.get("title", paper_id)
+        if not paper_id and not title:
             continue
-        log(f"Seed paper citations: {seed.get('title', paper_id)}")
-        resolved_id = _resolve_seed_id(seed)
-        if not resolved_id:
-            log(f"  Could not resolve paper ID: {paper_id}")
-            stats["errors"] += 1
-            continue
-        citations = s2_citations(resolved_id, limit=max_results)
+        log(f"Seed paper citations: {title or paper_id}")
+
+        citations = s2_citations(paper_id, limit=max_results) if paper_id else []
+        if not citations and title:
+            resolved_id = _resolve_seed_id(seed)
+            if not resolved_id:
+                log(f"  Could not resolve paper ID: {paper_id or title}")
+                stats["errors"] += 1
+                continue
+            if resolved_id != paper_id:
+                citations = s2_citations(resolved_id, limit=max_results)
+
         recent_citations = filter_recent(citations, recency_days)
         stats["seed_paper_citations"] += len(recent_citations)
         all_papers.extend(recent_citations)
@@ -496,12 +512,21 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
     arxiv_cats = topic.get("arxiv_categories", [])
     if arxiv_cats:
         log(f"arXiv categories: {', '.join(arxiv_cats)}")
-        topic_label = topic.get("label", "")
-        papers = arxiv_search(topic_label, categories=arxiv_cats,
-                              max_results=max_results)
-        recent = filter_recent(papers, recency_days)
-        stats["arxiv_papers"] += len(recent)
-        all_papers.extend(recent)
+        per_category_cap = 3
+        for category in arxiv_cats:
+            log(f"arXiv category: {category}")
+            category_papers = arxiv_recent_by_category([category],
+                                                       max_results=per_category_cap)
+            recent = filter_recent(category_papers, recency_days)
+            stats["arxiv_papers"] += len(recent)
+            all_papers.extend(recent)
+
+        for query in build_arxiv_queries(topic):
+            log(f"arXiv query: {query}")
+            papers = arxiv_search(query, max_results=3)
+            recent = filter_recent(papers, recency_days)
+            stats["arxiv_papers"] += len(recent)
+            all_papers.extend(recent)
 
     # --- Deduplicate and sort ---
     unique = deduplicate(all_papers)

@@ -207,24 +207,55 @@
       "focus": "Agent frameworks and agent-specific system design: autonomous agent frameworks (LangGraph, AutoGen, CrewAI, Mastra, etc.) and their production readiness; multi-agent coordination protocols (MCP, A2A) and ecosystem adoption; tool use, planning, delegation, long-horizon task reliability, and memory architectures (episodic, semantic, procedural) for persistent agent state; agent evaluation benchmarks and failure-mode taxonomies; agentic workflow design patterns; and AgentOps only where the development is specifically about agent behavior, orchestration, or non-deterministic agent evaluation. EXCLUDE FROM THIS TOPIC — generic LLM observability platforms, general-purpose eval tools, serving-framework releases, inference optimization, and broad production infrastructure unless the primary significance is clearly agent-specific (for example: tool-use tracing for agents, multi-agent orchestration, agent memory management, or agent protocol adoption). If the same item would read unchanged in the LLM Production Infrastructure brief, it does not belong here.",
       "sources": [
         {"name": "Anthropic MCP Spec", "url": "https://modelcontextprotocol.io/"},
+        {"name": "MCP Specification Enhancement Proposals", "url": "https://modelcontextprotocol.io/seps"},
         {"name": "Google A2A Protocol", "url": "https://google.github.io/A2A/"},
+        {"name": "Google ADK A2A Docs", "url": "https://google.github.io/adk-docs/a2a/"},
+        {"name": "LangGraph Overview", "url": "https://docs.langchain.com/oss/python/langgraph/overview"},
+        {"name": "AutoGen Agent Docs", "url": "https://microsoft.github.io/autogen/stable/user-guide/agentchat-user-guide/tutorial/agents.html"},
+        {"name": "CrewAI Documentation", "url": "https://docs.crewai.com/en/introduction"},
+        {"name": "Mastra Agents", "url": "https://mastra.ai/agents"},
+        {"name": "Mastra Workflows", "url": "https://mastra.ai/workflows"},
+        {"name": "OpenAI Agents SDK", "url": "https://platform.openai.com/docs/guides/agents-sdk/"},
+        {"name": "OpenAI Tools and Remote MCP", "url": "https://platform.openai.com/docs/guides/tools?api-mode=responses"},
+        {"name": "WebArena Project", "url": "https://webarena.dev/"},
+        {"name": "WorkArena Project", "url": "https://servicenow.github.io/WorkArena/"},
+        {"name": "GAIA Benchmark", "url": "https://huggingface.co/gaia-benchmark"},
+        {"name": "smolagents Documentation", "url": "https://huggingface.co/docs/smolagents/index"},
         {"name": "arXiv cs.AI (Agents)", "url": "https://arxiv.org/list/cs.AI/recent"},
         {"name": "arXiv cs.MA (Multi-Agent)", "url": "https://arxiv.org/list/cs.MA/recent"},
         {"name": "The Information", "url": "https://www.theinformation.com/"},
         {"name": "MIT Technology Review", "url": "https://www.technologyreview.com/topic/artificial-intelligence/"}
       ],
       "seed_papers": [
+        {"id": "ARXIV:2408.03520", "title": "TheAgentCompany: Benchmarking LLM Agents on Consequential Real World Tasks"},
+        {"id": "ARXIV:2303.11366", "title": "Reflexion: Language Agents with Verbal Reinforcement Learning"},
         {"id": "ARXIV:2308.08155", "title": "AutoGen: Enabling Next-Gen LLM Applications"},
+        {"id": "ARXIV:2308.03688", "title": "AgentBench: Evaluating LLMs as Agents"},
+        {"id": "ARXIV:2309.02427", "title": "Cognitive Architectures for Language Agents"},
+        {"id": "ARXIV:2306.06070", "title": "Mind2Web: Towards a Generalist Agent for the Web"},
+        {"id": "ARXIV:2307.13854", "title": "WebArena: A Realistic Web Environment for Building Autonomous Agents"},
+        {"id": "ARXIV:2305.16291", "title": "Voyager: An Open-Ended Embodied Agent with Large Language Models"},
         {"id": "ARXIV:2402.18679", "title": "LLM Agent Survey"},
+        {"id": "ARXIV:2401.13919", "title": "WebVoyager: Building an End-to-End Web Agent with Large Multimodal Models"},
+        {"id": "ARXIV:2403.07718", "title": "WorkArena: How Capable Are Web Agents at Solving Common Knowledge Work Tasks?"},
         {"id": "ARXIV:2404.14068", "title": "Practices for Governing Agentic AI Systems"},
+        {"id": "ARXIV:2404.07972", "title": "OSWORLD: Benchmarking Multimodal Agents for Open-Ended Tasks in Real Computer Environments"},
+        {"id": "ARXIV:2407.05291", "title": "WorkArena++: Towards Compositional Planning and Reasoning-based Common Knowledge Work Tasks"},
         {"id": "ARXIV:2310.04406", "title": "Language Agent Tree Search"}
       ],
       "tracked_authors": [
         {"name": "Chi Wang", "note": "Microsoft — AutoGen, multi-agent systems"},
         {"name": "Shunyu Yao", "note": "Princeton — ReAct, Tree of Thoughts, agent reasoning"},
+        {"name": "Karthik Narasimhan", "note": "Princeton — ReAct, Reflexion, cognitive architectures for agents"},
         {"name": "Noah Shinn", "note": "Reflexion, agent self-improvement"},
         {"name": "Ofir Press", "note": "Princeton — agent benchmarks"},
-        {"name": "Graham Neubig", "note": "CMU — agent frameworks, code generation"}
+        {"name": "Graham Neubig", "note": "CMU — WebArena, agent frameworks, code generation"},
+        {"name": "Tao Yu", "note": "HKU — OSWorld, web and computer-use agents"},
+        {"name": "Shuyan Zhou", "note": "CMU — WebArena, web agents"},
+        {"name": "Xiang Deng", "note": "Mind2Web, web agents"},
+        {"name": "Yu Su", "note": "Mind2Web, agent evaluation"},
+        {"name": "Yang Li", "note": "Google DeepMind — computer control agents"},
+        {"name": "Zhiwei Deng", "note": "Google DeepMind — web and computer-use agents"}
       ],
       "tracked_institutions": [
         "Microsoft Research Agent Team",
@@ -234,18 +265,23 @@
         "Google DeepMind Agent Team"
       ],
       "concept_synonyms": [
+        "language agents",
         "LLM agents",
-        "autonomous agents",
-        "multi-agent systems",
-        "agentic workflows",
-        "tool use LLM",
-        "agent orchestration",
+        "web agents",
+        "browser agents",
+        "computer use agents",
+        "GUI agents",
+        "agent benchmark",
         "agent memory",
+        "multi-agent systems",
         "agent planning",
+        "agent orchestration",
+        "tool-using language models",
+        "long-horizon agents",
         "agent evaluation",
         "agent reliability",
-        "agent supervision",
-        "agentic AI governance"
+        "Model Context Protocol",
+        "Agent2Agent"
       ],
       "academic_venues": [
         {"name": "NeurIPS Agent Workshop", "type": "workshop"},
@@ -253,7 +289,7 @@
         {"name": "AAAI", "type": "conference"},
         {"name": "ACL", "type": "conference"}
       ],
-      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"]
+      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL", "cs.RO", "cs.HC"]
     },
     {
       "slug": "models-and-market",
