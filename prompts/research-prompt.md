@@ -114,6 +114,8 @@ Apply this hierarchy strictly. The tier of a source determines how much weight i
 
 **arXiv rule:** If an arXiv paper has no clear institutional affiliation and no independent corroboration, either skip it or note: *"unaffiliated preprint, unverified"*. Never present an arXiv paper as significant solely because it exists.
 
+**arXiv Key Development ban:** An unaffiliated, unverified arXiv preprint must NEVER appear in `Key Developments`, regardless of how interesting or relevant it seems. Place it in `Notable Papers / Models / Tools` at most. Only arXiv papers with clear institutional affiliation OR independent corroboration (adoption evidence, standards-body citation, coverage by Tier 1 journalism) may be Key Developments.
+
 **Benchmark source rule:** Benchmark studies published by compute vendors, cloud infrastructure vendors, or GPU-as-a-service providers (e.g., Spheron, Lambda Labs, RunPod, CoreWeave, any cloud provider) are Tier 2, not independent technical evaluations — regardless of how they are framed. Treat their numbers with the same skepticism as vendor release notes: they establish what was measured but not whether the measurement reflects production-representative conditions. A benchmark from a vendor is useful context; it is not independent validation.
 
 **Source mix requirement and quiet-week rule:** Before finalizing the brief, check your source list for `Key Developments`:
@@ -242,7 +244,7 @@ Produce a well-structured research brief in the following **exact** markdown for
 
 ## Key Developments
 
-(3–4 developments only — the most significant ones. Each bullet must use the following **exact** structure — no variations:
+(Up to 4 developments — but prefer fewer strong bullets over padding. 1–2 is perfectly acceptable on a quiet week. Each bullet must use the following **exact** structure — no variations:
 
 - **[Headline: the practical consequence in 8–12 plain words — no academic abstractions, no jargon phrases like "empirical ledger" or "automation threshold". Write it so a busy executive understands the point without reading further.]**
   - **What changed:** [Exactly one sentence. What happened + at most one supporting fact. Max 20 words.]
@@ -387,7 +389,9 @@ Do not:
 
 ## Technical Deep-Dive
 
-(Choose the single most technically interesting development from above. Explain it in 2–4 paragraphs with genuine technical depth — cover the mechanism, what's novel, why it matters, and any limitations. Be specific: include architecture details, benchmark numbers, or algorithmic insights where relevant.)
+(Choose the single most technically interesting development from above. Explain it in 2–4 paragraphs with genuine technical depth — cover the mechanism, what's novel, why it matters, and any limitations. Be specific: include architecture details, benchmark numbers, or algorithmic insights where relevant.
+
+**Source-tier preference:** Strongly prefer Tier 1 developments for the deep dive. Never use this section to amplify a Tier 2-only item that failed the Single-Vendor Source Gate for Key Developments — if a vendor release didn't earn a Key Development slot, it does not deserve 3 paragraphs of deep-dive either. A vendor changelog is documentation, not technical depth. Choose a development where genuine analytical depth is possible: a research paper's methodology, a benchmark's design choices, or an empirical finding's implications.)
 
 ## Landscape Trends
 

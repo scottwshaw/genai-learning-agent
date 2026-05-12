@@ -61,16 +61,22 @@ def extract_text(response) -> str:
 
 
 def strip_preamble(text_output: str) -> tuple[str, int]:
-    """Anchor on the first line-start H1 heading and return (brief, preamble_len).
+    """Anchor on the LAST line-start H1 heading and return (brief, preamble_len).
+
+    Models sometimes emit multiple drafts in visible output (draft, restart,
+    final). Anchoring on the last H1 keeps only the final version.
 
     ``^# \\S`` (hash, space, non-whitespace at line start) reliably matches a
     markdown H1 without colliding with inline ``#1``/``#2`` in reasoning prose.
     Returns the original text unchanged with preamble_len=0 if no H1 is found.
     """
-    match = re.search(r"^# \S", text_output, re.MULTILINE)
-    if match is None:
+    matches = list(re.finditer(r"^# \S", text_output, re.MULTILINE))
+    if not matches:
         return text_output, 0
-    marker = match.start()
+    if len(matches) > 1:
+        log(f"WARNING: {len(matches)} H1 headings found in output — model emitted "
+            f"multiple drafts, keeping only the last one (discarding {matches[-1].start()} chars)")
+    marker = matches[-1].start()
     return text_output[marker:].strip(), marker
 
 
