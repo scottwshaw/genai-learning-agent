@@ -155,16 +155,24 @@ def _summarize_brief(text: str) -> str:
     return "\n".join(out).strip()
 
 
-def recent_briefs_context(briefs_dir: Path, limit: int = 28) -> tuple[int, str]:
+def recent_briefs_context(
+    briefs_dir: Path, limit: int = 28, max_chars: int = 80_000
+) -> tuple[int, str]:
     briefs = sorted(briefs_dir.glob("*.md"))[-limit:]
     if not briefs:
         return 0, "(No prior briefs exist yet — this is the first run.)"
 
     parts = []
-    for brief in briefs:
+    total = 0
+    for brief in reversed(briefs):
         summary = _summarize_brief(brief.read_text())
-        parts.append(f"### {brief.stem}\n{summary}\n\n---\n")
-    return len(briefs), "\n".join(parts).rstrip()
+        part = f"### {brief.stem}\n{summary}\n\n---\n"
+        if total + len(part) > max_chars and parts:
+            break
+        parts.append(part)
+        total += len(part)
+    parts.reverse()
+    return len(parts), "\n".join(parts).rstrip()
 
 
 def render_research_prompt(
