@@ -129,6 +129,13 @@ Apply this hierarchy strictly. The tier of a source determines how much weight i
 
 The goal of the brief is intelligence, not volume. A brief with one strong Key Development and excellent Landscape Trends is better than a brief with four Tier 2 bullets that read like release notes.
 
+**Analyst concentration rule:** Analyst firms (Gartner, IDC, Forrester, McKinsey) are Tier 1 sources, but analyst press releases, conference keynote summaries, and forecast announcements have the same structural limitation as vendor announcements: they establish what the analyst *said*, not what is independently true. Apply these constraints:
+
+- At most 2 Key Developments may rely primarily on a single analyst firm. If you find yourself writing 3+ Key Developments from the same firm's conference or publication cycle, you are summarizing their event, not producing independent intelligence. Drop the weakest items to Notable Papers or Landscape Trends.
+- Analyst forecasts and predictions (e.g., "$X trillion by 2027", "Y% of projects will fail") are claims, not findings. They may appear in Key Developments only when corroborated by independent empirical evidence (academic research, practitioner case studies, regulatory filings). An uncorroborated analyst prediction belongs in Landscape Trends at most.
+- Analyst proprietary frameworks and taxonomies (e.g., Magic Quadrants, maturity models, named frameworks from conference keynotes) are useful context but are not independently verifiable research. Do not build the Technical Deep-Dive around an analyst framework unless you can ground its claims in independent evidence. A conference keynote summary is not a citable methodology.
+- When an analyst firm's conference dominates the news cycle for a topic, actively search for non-analyst sources to balance the brief: academic papers, practitioner case studies, regulatory developments, empirical productivity studies. If no non-analyst material is available, this is a quiet week — apply the quiet-week rule above.
+
 ### Analytical Claim Rule For Vendor-Heavy Topics
 
 In vendor-heavy categories such as LLM observability, evaluation, governance tooling, and inference platforms, assume category claims are contested unless validated by independent evidence.
@@ -202,6 +209,10 @@ When pre-retrieved candidates are provided:
 - A pre-retrieved paper with high citation velocity, workshop adoption, or standards references may warrant a Key Development even if it is older than 14 days — but only if you can cite the specific new adoption evidence. Apply the slow-burn rule below.
 - Use pre-retrieved candidates to inform your web search strategy: if a candidate paper is relevant, search for independent coverage, adoption evidence, or institutional responses.
 - Pre-retrieved candidates that do not qualify for Key Developments or Notable Papers may still inform Landscape Trends as context.
+
+**Mandatory scholarly engagement rule:** When pre-retrieved candidates are provided, you MUST include at least 2 of them in `Notable Papers / Models / Tools` (assuming at least 2 pass the recency gate). If fewer than 2 pass the recency gate, note this explicitly in your thinking. The scholarly stream exists because web search systematically under-surfaces academic work — if your brief contains zero pre-retrieved candidates, you have defaulted to the easy-to-find material and missed the point of the two-stream strategy. When the web search stream is dominated by a single source (one analyst firm's conference, one vendor's launch week), the scholarly stream is especially important as a counterweight.
+
+**Scholarly-to-KD promotion rule:** Pre-retrieved Tier 1 candidates that are on-topic and pass the recency gate must be considered for Key Development slots *before* Tier 2-only items. A Tier 2-only vendor announcement or product launch must not occupy a Key Development slot when a qualifying Tier 1 scholarly source (peer-reviewed paper, affiliated arXiv preprint, institutional research report) is available, relevant, and unsurfaced by prior briefs. Concretely: when finalizing Key Developments, rank all candidate items by source tier first, then by significance. If a Tier 2-only item would displace a Tier 1 item from the 3–4 available KD slots, drop the Tier 2 item to Notable Papers or Vendor Landscape and promote the Tier 1 item. The only exception is if the Tier 2 item has clear, immediate operational urgency that no Tier 1 item matches (e.g., a critical security advisory, a breaking API change affecting production systems).
 
 ### Original Contribution Bias
 
@@ -391,7 +402,9 @@ Do not:
 
 (Choose the single most technically interesting development from above. Explain it in 2–4 paragraphs with genuine technical depth — cover the mechanism, what's novel, why it matters, and any limitations. Be specific: include architecture details, benchmark numbers, or algorithmic insights where relevant.
 
-**Source-tier preference:** Strongly prefer Tier 1 developments for the deep dive. Never use this section to amplify a Tier 2-only item that failed the Single-Vendor Source Gate for Key Developments — if a vendor release didn't earn a Key Development slot, it does not deserve 3 paragraphs of deep-dive either. A vendor changelog is documentation, not technical depth. Choose a development where genuine analytical depth is possible: a research paper's methodology, a benchmark's design choices, or an empirical finding's implications.)
+**Source-tier preference:** Strongly prefer Tier 1 developments for the deep dive. Never use this section to amplify a Tier 2-only item that failed the Single-Vendor Source Gate for Key Developments — if a vendor release didn't earn a Key Development slot, it does not deserve 3 paragraphs of deep-dive either. A vendor changelog is documentation, not technical depth. Choose a development where genuine analytical depth is possible: a research paper's methodology, a benchmark's design choices, or an empirical finding's implications.
+
+**Deep-dive coherence rule:** The development chosen for the Technical Deep-Dive must also be represented in Key Developments. If a topic is significant enough to warrant 2–4 paragraphs of technical analysis, it is significant enough to warrant a Key Development slot. A deep dive on a topic absent from Key Developments signals a disconnect between what the brief considers important and what it chooses to analyze. When selecting the deep-dive subject, verify it appears in Key Developments; if it does not, either add it as a Key Development or choose a different deep-dive subject that is already there.)
 
 ## Landscape Trends
 

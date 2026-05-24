@@ -173,9 +173,16 @@ fi
 # ---------------------------------------------------------------------------
 resolve_topic "$TOPIC_SLUG_OVERRIDE"
 
-# In eval mode use the caller-specified output path; otherwise use briefs/
+# In eval mode use the caller-specified output path; in no-commit (test) mode
+# write to eval-runs/ so briefs/ stays clean; otherwise use briefs/.
+EVAL_RUNS_DIR=""
 if [[ -n "$EVAL_OUTPUT" ]]; then
     BRIEF_FILE="$EVAL_OUTPUT"
+    EVAL_RUNS_DIR="$(dirname "$EVAL_OUTPUT")"
+elif [[ "$NO_COMMIT" == true ]]; then
+    EVAL_RUNS_DIR="$REPO_ROOT/eval-runs/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$EVAL_RUNS_DIR"
+    BRIEF_FILE="$EVAL_RUNS_DIR/${DATE}-${TOPIC_SLUG}.md"
 else
     BRIEF_FILE="$BRIEFS_DIR/${DATE}-${TOPIC_SLUG}.md"
 fi
@@ -258,6 +265,13 @@ else
     fi
 fi
 
+# Log discovery results to eval-runs/ in test/eval mode
+if [[ -n "$DISCOVERY_CONTEXT" ]] && [[ -n "$EVAL_RUNS_DIR" ]]; then
+    mkdir -p "$EVAL_RUNS_DIR"
+    echo "$DISCOVERY_CONTEXT" > "$EVAL_RUNS_DIR/discovery-context.md"
+    log "Discovery context logged to $EVAL_RUNS_DIR/discovery-context.md"
+fi
+
 # Append discovery context to the research prompt if available
 if [[ -n "$DISCOVERY_CONTEXT" ]]; then
     RESEARCH_PROMPT="${RESEARCH_PROMPT}
@@ -274,7 +288,8 @@ fi
 log "Invoking: python3 run_research.py (model=$MODEL)"
 
 if ! echo "$RESEARCH_PROMPT" \
-    | ANTHROPIC_MODEL="$MODEL" "$PYTHON_BIN" "$REPO_ROOT/run_research.py" \
+    | ANTHROPIC_MODEL="$MODEL" ENABLE_CRITIC="${ENABLE_CRITIC:-}" \
+    "$PYTHON_BIN" "$REPO_ROOT/run_research.py" \
     --topic-label "$TOPIC_LABEL" --date "$DATE" --topic-focus "$TOPIC_FOCUS" \
     > "$BRIEF_FILE" 2>>"$LOG_FILE"; then
     log "ERROR: run_research.py exited with non-zero status"
@@ -307,9 +322,9 @@ fi
 
 # ---------------------------------------------------------------------------
 # Advance the topic index for tomorrow
-# Skipped in eval mode or when topic was manually selected (--topic N|SLUG)
+# Skipped in eval/test mode or when topic was manually selected (--topic N|SLUG)
 # ---------------------------------------------------------------------------
-if [[ -z "$EVAL_OUTPUT" ]] && [[ "$LOCK_ROTATION" == false ]]; then
+if [[ -z "$EVAL_OUTPUT" ]] && [[ "$NO_COMMIT" == false ]] && [[ "$LOCK_ROTATION" == false ]]; then
     echo "$TOPIC_NEXT_IDX" > "$STATE_FILE"
     NEXT_LABEL="$(jq -r ".topics[$TOPIC_NEXT_IDX].label" "$TOPICS_FILE")"
     log "Next topic: $NEXT_LABEL (index $TOPIC_NEXT_IDX)"
@@ -321,7 +336,7 @@ fi
 if [[ -n "$EVAL_OUTPUT" ]]; then
     log "Eval mode: brief written to $EVAL_OUTPUT (no commit, no log update, no index advance)"
 elif [[ "$NO_COMMIT" == true ]]; then
-    log "Skipping git commit (--no-commit flag set). Brief saved but not staged."
+    log "Test mode: brief written to $BRIEF_FILE (no commit, no log update, no index advance)"
 else
     cd "$REPO_ROOT"
 

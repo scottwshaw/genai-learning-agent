@@ -247,6 +247,7 @@
         {"name": "Chi Wang", "note": "Microsoft — AutoGen, multi-agent systems"},
         {"name": "Shunyu Yao", "note": "Princeton — ReAct, Tree of Thoughts, agent reasoning"},
         {"name": "Karthik Narasimhan", "note": "Princeton — ReAct, Reflexion, cognitive architectures for agents"},
+        {"name": "Theodore R. Sumers", "note": "Princeton/MIT — cognitive architectures for language agents"},
         {"name": "Noah Shinn", "note": "Reflexion, agent self-improvement"},
         {"name": "Ofir Press", "note": "Princeton — agent benchmarks"},
         {"name": "Graham Neubig", "note": "CMU — WebArena, agent frameworks, code generation"},
@@ -255,7 +256,11 @@
         {"name": "Xiang Deng", "note": "Mind2Web, web agents"},
         {"name": "Yu Su", "note": "Mind2Web, agent evaluation"},
         {"name": "Yang Li", "note": "Google DeepMind — computer control agents"},
-        {"name": "Zhiwei Deng", "note": "Google DeepMind — web and computer-use agents"}
+        {"name": "Zhiwei Deng", "note": "Google DeepMind — web and computer-use agents"},
+        {"name": "Thomas Scialom", "note": "Hugging Face — GAIA benchmark"},
+        {"name": "Grégoire Mialon", "note": "Hugging Face/Meta — GAIA benchmark"},
+        {"name": "Linxi Fan", "note": "Voyager, embodied agents"},
+        {"name": "Yuke Zhu", "note": "Embodied and interactive agents"}
       ],
       "tracked_institutions": [
         "Microsoft Research Agent Team",

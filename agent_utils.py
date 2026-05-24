@@ -132,27 +132,23 @@ def previous_brief_date(briefs_dir: Path, topic_slug: str, fallback_days: int = 
 
 
 def _summarize_brief(text: str) -> str:
-    """Extract only Key Developments and Notable Papers/Models/Tools sections.
+    """Extract Notable Papers/Models/Tools section for dedup context.
 
-    Keeps the H1 title line and the two sections needed for deduplication.
-    Drops Technical Deep-Dive, Landscape Trends, Vendor Landscape, and Sources.
+    Keeps the H1 title line and Notable Papers table. The table contains
+    item names, dates, sources, and summaries — sufficient for both
+    topic-level and source-level deduplication.
     """
     lines = text.split("\n")
     out: list[str] = []
-    # Keep sections whose H2 heading starts with these prefixes
-    keep_prefixes = ("## Key Developments", "## Key Releases",
-                     "## Notable Papers")
     keeping = False
 
     for line in lines:
-        # Always keep the H1 title line
         if line.startswith("# ") and not line.startswith("## "):
             out.append(line)
             keeping = False
             continue
-        # H2 heading: decide whether to keep this section
         if line.startswith("## "):
-            keeping = any(line.startswith(p) for p in keep_prefixes)
+            keeping = line.startswith("## Notable Papers")
         if keeping:
             out.append(line)
 
