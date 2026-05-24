@@ -315,11 +315,39 @@
       ],
       "seed_papers": [
         {"id": "ARXIV:2303.08774", "title": "GPT-4 Technical Report"},
-        {"id": "ARXIV:2407.21783", "title": "The Llama 3 Herd of Models"}
+        {"id": "ARXIV:2407.21783", "title": "The Llama 3 Herd of Models"},
+        {"id": "ARXIV:2312.11805", "title": "Gemini: A Family of Highly Capable Multimodal Models"},
+        {"id": "ARXIV:2310.06825", "title": "Mistral 7B"},
+        {"id": "ARXIV:2401.04088", "title": "Mixtral of Experts"},
+        {"id": "ARXIV:2412.19437", "title": "DeepSeek-V3 Technical Report"},
+        {"id": "ARXIV:2501.12948", "title": "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via RL"},
+        {"id": "ARXIV:2412.15115", "title": "Qwen2.5 Technical Report"},
+        {"id": "ARXIV:2009.03300", "title": "Measuring Massive Multitask Language Understanding (MMLU)"},
+        {"id": "ARXIV:2311.12022", "title": "GPQA: A Graduate-Level Google-Proof Q&A Benchmark"},
+        {"id": "ARXIV:2310.06770", "title": "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?"},
+        {"id": "ARXIV:2107.03374", "title": "Evaluating Large Language Models Trained on Code (HumanEval)"},
+        {"id": "ARXIV:2306.05685", "title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena"},
+        {"id": "ARXIV:2211.09110", "title": "Holistic Evaluation of Language Models (HELM)"},
+        {"id": "ARXIV:2201.11903", "title": "Chain-of-Thought Prompting Elicits Reasoning in LLMs"},
+        {"id": "ARXIV:2305.10601", "title": "Tree of Thoughts: Deliberate Problem Solving with LLMs"},
+        {"id": "ARXIV:2001.08361", "title": "Scaling Laws for Neural Language Models"},
+        {"id": "ARXIV:2203.15556", "title": "Training Compute-Optimal Large Language Models (Chinchilla)"},
+        {"id": "SSRN:5044496", "title": "Concentrating Intelligence: Scaling and Market Structure in AI"},
+        {"id": "SSRN:4088838", "title": "AI Adoption in a Competitive Market"},
+        {"id": "SSRN:4763294", "title": "Market Power in Artificial Intelligence"}
       ],
       "tracked_authors": [
         {"name": "Jason Wei", "note": "OpenAI — scaling, chain-of-thought"},
-        {"name": "Tri Dao", "note": "FlashAttention, efficient architectures"}
+        {"name": "Tri Dao", "note": "FlashAttention, efficient architectures"},
+        {"name": "Noam Shazeer", "note": "Google — Transformer co-author, GLaM, PaLM"},
+        {"name": "Dario Amodei", "note": "Anthropic — CEO, scaling laws"},
+        {"name": "Tom Brown", "note": "GPT-3, scaling"},
+        {"name": "Hugo Touvron", "note": "Meta — Llama models"},
+        {"name": "Albert Gu", "note": "State space models, Mamba"},
+        {"name": "Percy Liang", "note": "Stanford — HELM, CRFM benchmarks"},
+        {"name": "Dan Hendrycks", "note": "MMLU, safety benchmarks, CAIS"},
+        {"name": "Carlos Riquelme", "note": "Google DeepMind — Gemma, efficient models"},
+        {"name": "Lianmin Zheng", "note": "UC Berkeley — LMSYS Chatbot Arena, vLLM"}
       ],
       "tracked_institutions": [
         "OpenAI",
@@ -330,13 +358,23 @@
         "xAI"
       ],
       "concept_synonyms": [
-        "frontier models",
-        "large language models",
-        "model benchmarks",
-        "reasoning capabilities",
-        "open weight models",
-        "model evaluation",
-        "AI market landscape"
+        "frontier model",
+        "language model scaling",
+        "LLM benchmark",
+        "model evaluation benchmark",
+        "chain-of-thought reasoning",
+        "open-weight model",
+        "instruction tuning",
+        "RLHF",
+        "reasoning capability",
+        "coding benchmark",
+        "SWE-bench",
+        "MMLU",
+        "chatbot arena",
+        "model distillation",
+        "scaling law",
+        "context window",
+        "multimodal foundation model"
       ],
       "academic_venues": [
         {"name": "NeurIPS", "type": "conference"},
