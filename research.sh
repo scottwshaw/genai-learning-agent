@@ -247,7 +247,7 @@ if [[ "$SKIP_DISCOVERY" == "true" ]]; then
     log "Skipping scholarly discovery (SKIP_DISCOVERY=true)"
 else
     log "Running scholarly discovery for topic: $TOPIC_SLUG"
-    DISCOVERY_DAYS="${DISCOVERY_DAYS:-90}"
+    DISCOVERY_DAYS="${DISCOVERY_DAYS:-30}"
     if DISCOVERY_JSON="$("$PYTHON_BIN" "$REPO_ROOT/discovery.py" \
         --topic "$TOPIC_SLUG" \
         --topics-file "$TOPICS_FILE" \

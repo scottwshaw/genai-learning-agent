@@ -5,7 +5,7 @@
     "arxiv_api": "http://export.arxiv.org/api",
     "request_delay_seconds": 1.1,
     "max_results_per_query": 20,
-    "recency_days": 90,
+    "recency_days": 30,
     "contact_email": "research-agent@example.com"
   },
   "topics": [
@@ -241,7 +241,12 @@
         {"id": "ARXIV:2404.14068", "title": "Practices for Governing Agentic AI Systems"},
         {"id": "ARXIV:2404.07972", "title": "OSWORLD: Benchmarking Multimodal Agents for Open-Ended Tasks in Real Computer Environments"},
         {"id": "ARXIV:2407.05291", "title": "WorkArena++: Towards Compositional Planning and Reasoning-based Common Knowledge Work Tasks"},
-        {"id": "ARXIV:2310.04406", "title": "Language Agent Tree Search"}
+        {"id": "ARXIV:2310.04406", "title": "Language Agent Tree Search"},
+        {"id": "ARXIV:2504.16736", "title": "A Survey of AI Agent Protocols"},
+        {"id": "ARXIV:2505.02279", "title": "A Survey of Agent Interoperability Protocols: MCP, ACP, A2A, and ANP"},
+        {"title": "Agentic AI: The Next Frontier in Autonomous Enterprise Systems"},
+        {"title": "Adopting Agentic AI: Challenges and Opportunities for Information Management Research"},
+        {"title": "Agentic AI Orchestration: An Organizational Design Framework for Reliable Multi-Agent Systems"}
       ],
       "tracked_authors": [
         {"name": "Chi Wang", "note": "Microsoft — AutoGen, multi-agent systems"},
@@ -294,7 +299,7 @@
         {"name": "AAAI", "type": "conference"},
         {"name": "ACL", "type": "conference"}
       ],
-      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL", "cs.RO", "cs.HC"]
+      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"]
     },
     {
       "slug": "models-and-market",

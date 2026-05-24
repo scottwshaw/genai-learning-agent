@@ -435,6 +435,19 @@ def deduplicate(papers: list[Paper]) -> list[Paper]:
     return result
 
 
+def filter_relevant(papers: list[Paper], topic: dict) -> list[Paper]:
+    """Keep only papers whose title or abstract mentions a concept synonym."""
+    synonyms = [s.lower() for s in topic.get("concept_synonyms", [])]
+    if not synonyms:
+        return papers
+    result = []
+    for p in papers:
+        text = f"{p.title} {p.abstract}".lower()
+        if any(s in text for s in synonyms):
+            result.append(p)
+    return result
+
+
 def filter_recent(papers: list[Paper], days: int) -> list[Paper]:
     cutoff = (date.today() - timedelta(days=days)).isoformat()
     cutoff_year = date.today().year
@@ -448,7 +461,7 @@ def filter_recent(papers: list[Paper], days: int) -> list[Paper]:
 
 
 def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
-    recency_days = days or config.get("recency_days", 90)
+    recency_days = days or config.get("recency_days", 30)
     max_results = config.get("max_results_per_query", 20)
     mailto = config.get("contact_email", "")
     year_from = date.today().year - 1
@@ -528,12 +541,15 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
             stats["arxiv_papers"] += len(recent)
             all_papers.extend(recent)
 
-    # --- Deduplicate and sort ---
+    # --- Deduplicate, filter relevance, and sort ---
     unique = deduplicate(all_papers)
+    pre_filter = len(unique)
+    unique = filter_relevant(unique, topic)
     unique.sort(key=lambda p: (p.citation_count or 0), reverse=True)
 
-    log(f"Discovery complete: {len(unique)} unique papers "
-        f"(citations={stats['seed_paper_citations']}, "
+    log(f"Discovery complete: {len(unique)} relevant papers "
+        f"(of {pre_filter} unique, "
+        f"citations={stats['seed_paper_citations']}, "
         f"authors={stats['author_papers']}, "
         f"concepts={stats['concept_searches']}, "
         f"arxiv={stats['arxiv_papers']})")
