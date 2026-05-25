@@ -8,6 +8,53 @@
     "recency_days": 30,
     "contact_email": "research-agent@example.com"
   },
+  "ownership_matrix": [
+    {
+      "development_type": "New model release / weights drop / benchmark score",
+      "primary_owner": "models-and-market",
+      "never_kd_in": ["llm-production-infrastructure", "agentic-systems", "enterprise-genai-adoption"]
+    },
+    {
+      "development_type": "License change on an existing model family",
+      "primary_owner": "models-and-market",
+      "never_kd_in": ["llm-production-infrastructure"]
+    },
+    {
+      "development_type": "Serving framework release (vLLM, SGLang, TGI)",
+      "primary_owner": "llm-production-infrastructure",
+      "never_kd_in": ["models-and-market", "agentic-systems"]
+    },
+    {
+      "development_type": "Observability / eval platform release (Langfuse, Phoenix, Braintrust)",
+      "primary_owner": "llm-production-infrastructure",
+      "never_kd_in": ["agentic-systems"]
+    },
+    {
+      "development_type": "Agent framework release (LangGraph, AutoGen, CrewAI, Mastra)",
+      "primary_owner": "agentic-systems",
+      "never_kd_in": ["llm-production-infrastructure"]
+    },
+    {
+      "development_type": "MCP / A2A / tool-protocol updates",
+      "primary_owner": "agentic-systems",
+      "never_kd_in": ["llm-production-infrastructure"]
+    },
+    {
+      "development_type": "Regulatory / policy developments",
+      "primary_owner": "safety-assurance-and-governance",
+      "never_kd_in": ["enterprise-genai-adoption"]
+    },
+    {
+      "development_type": "GPU supply, data center buildout, sovereign compute",
+      "primary_owner": "ai-infrastructure-and-geopolitics",
+      "never_kd_in": ["enterprise-genai-adoption"]
+    },
+    {
+      "development_type": "Model safety evaluations, red-teaming results, dangerous capability findings",
+      "primary_owner": "safety-assurance-and-governance",
+      "never_kd_in": ["models-and-market", "enterprise-genai-adoption"]
+    }
+  ],
   "topics": [
     {
       "slug": "safety-assurance-and-governance",
@@ -108,7 +155,14 @@
         {"name": "IEEE Symposium on Security and Privacy", "type": "conference"},
         {"name": "AAAI Workshop on AI Safety", "type": "workshop"}
       ],
-      "arxiv_categories": ["cs.AI", "cs.CY", "cs.SE", "cs.LG"]
+      "arxiv_categories": ["cs.AI", "cs.CY", "cs.SE", "cs.LG"],
+      "critic_rules": [
+        {
+          "id": "pillar_balance",
+          "name": "Pillar Balance",
+          "check": "At least 2 of 3 Key Developments MUST come from Pillar 1 (safety research, evaluations, capability assessments, alignment techniques, guardrails, agentic supervision — NOT legislation or regulation). Routine legislative movement (committee votes, session scheduling, bill amendments, trilogue progress) should not be a Key Development unless it sets a genuinely new precedent. Flag if fewer than 2 Key Developments are from Pillar 1, or if more than 1 is routine governance/legislation."
+        }
+      ]
     },
     {
       "slug": "enterprise-genai-adoption",
@@ -299,7 +353,10 @@
         {"name": "AAAI", "type": "conference"},
         {"name": "ACL", "type": "conference"}
       ],
-      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"]
+      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"],
+      "rejection_filters": [
+        "Reject generic observability, eval, routing, or serving news unless the core novelty is about agent frameworks, agent orchestration, tool use, planning, memory, MCP/A2A, multi-agent coordination, or agent-specific reliability."
+      ]
     },
     {
       "slug": "models-and-market",

@@ -29,7 +29,7 @@ except ImportError:
     print("ERROR: anthropic package not installed. Run: pip install anthropic", file=sys.stderr)
     sys.exit(1)
 
-from agent_utils import retry_on_overload
+from agent_utils import retry_on_overload, render_critic_prompt
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -137,6 +137,7 @@ CRITIC_TOOL = {
                                 "cross_topic_requirement",
                                 "prior_brief_callback",
                                 "comparative_claim", "pillar_balance",
+                                "deep_dive_coherence", "scholarly_promotion",
                                 "section_structure",
                             ],
                         },
@@ -155,13 +156,14 @@ CRITIC_TOOL = {
 
 
 def run_critic(client, model, brief, topic_label, topic_focus,
-               thinking_budget) -> dict | None:
+               thinking_budget, topics_config=None,
+               topic_slug="") -> dict | None:
     """Check a brief against the compliance checklist using structured tool output."""
-    template = load_prompt("critic-prompt.md")
-    prompt = (template
-              .replace("{{TOPIC_LABEL}}", topic_label)
-              .replace("{{TOPIC_FOCUS}}", topic_focus)
-              .replace("{{BRIEF}}", brief))
+    template_path = SCRIPT_DIR / "prompts" / "critic-prompt.md"
+    prompt = render_critic_prompt(
+        template_path, topic_label, topic_focus, brief,
+        topics_config=topics_config, topic_slug=topic_slug,
+    )
 
     messages = [{"role": "user", "content": prompt}]
     tools = [CRITIC_TOOL]
@@ -271,9 +273,9 @@ def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
 
 def critique_and_revise(client, brief, prompt, critic_model,
                         critic_thinking_budget, topic_label=None,
-                        date_str=None, topic_focus=None):
+                        date_str=None, topic_focus=None,
+                        topics_config=None, topic_slug=""):
     """Run critic→revise on a brief. Returns the (possibly revised) brief."""
-    # Use provided metadata, or fall back to parsing from the brief/prompt
     if not topic_label or not date_str:
         h1_match = re.match(r"^# (.+?) — Research Brief \((\d{4}-\d{2}-\d{2})\)",
                             brief)
@@ -288,7 +290,9 @@ def critique_and_revise(client, brief, prompt, critic_model,
             topic_focus = focus_match.group(1).strip() if focus_match else ""
 
     critic_result = run_critic(client, critic_model, brief, topic_label,
-                               topic_focus, critic_thinking_budget)
+                               topic_focus, critic_thinking_budget,
+                               topics_config=topics_config,
+                               topic_slug=topic_slug)
 
     if critic_result is None:
         log("Critic: failed to parse response — outputting original brief")
@@ -325,6 +329,10 @@ def main():
                         help="Brief date (avoids parsing from brief H1)")
     parser.add_argument("--topic-focus", default=None,
                         help="Topic focus text (avoids parsing from prompt)")
+    parser.add_argument("--topics-file", default=None,
+                        help="Path to topics.json (enables ownership matrix in critic)")
+    parser.add_argument("--topic-slug", default=None,
+                        help="Topic slug (for topic-specific critic rules)")
     args = parser.parse_args()
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -339,8 +347,11 @@ def main():
     critic_model = os.environ.get("CRITIC_MODEL", model)
     critic_thinking_budget = int(os.environ.get("CRITIC_THINKING_BUDGET", "8000"))
 
+    topics_config = None
+    if args.topics_file:
+        topics_config = json.loads(Path(args.topics_file).read_text())
+
     if args.brief:
-        # Critic-only mode: read existing brief, run critic→revise, output result
         brief_path = Path(args.brief)
         if not brief_path.exists():
             print(f"ERROR: {brief_path} not found", file=sys.stderr)
@@ -351,11 +362,12 @@ def main():
                                     critic_thinking_budget,
                                     topic_label=args.topic_label,
                                     date_str=args.date,
-                                    topic_focus=args.topic_focus)
+                                    topic_focus=args.topic_focus,
+                                    topics_config=topics_config,
+                                    topic_slug=args.topic_slug or "")
         print(brief)
         return
 
-    # Full generation mode: read prompt from stdin
     prompt = sys.stdin.read().strip()
     if not prompt:
         print("ERROR: No prompt received on stdin", file=sys.stderr)
@@ -370,17 +382,17 @@ def main():
 
     tools = [{"type": "web_search_20250305", "name": "web_search"}]
 
-    # --- Generate the brief ---
     brief = generate_brief(client, model, prompt, max_tokens,
                            thinking_budget, tools)
 
-    # --- Critic loop (optional) ---
     if enable_critic:
         brief = critique_and_revise(client, brief, prompt, critic_model,
                                     critic_thinking_budget,
                                     topic_label=args.topic_label,
                                     date_str=args.date,
-                                    topic_focus=args.topic_focus)
+                                    topic_focus=args.topic_focus,
+                                    topics_config=topics_config,
+                                    topic_slug=args.topic_slug or "")
 
     print(brief)
 

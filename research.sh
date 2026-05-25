@@ -291,6 +291,7 @@ if ! echo "$RESEARCH_PROMPT" \
     | ANTHROPIC_MODEL="$MODEL" ENABLE_CRITIC="${ENABLE_CRITIC:-}" \
     "$PYTHON_BIN" "$REPO_ROOT/run_research.py" \
     --topic-label "$TOPIC_LABEL" --date "$DATE" --topic-focus "$TOPIC_FOCUS" \
+    --topics-file "$TOPICS_FILE" --topic-slug "$TOPIC_SLUG" \
     > "$BRIEF_FILE" 2>>"$LOG_FILE"; then
     log "ERROR: run_research.py exited with non-zero status"
     # Remove partial output so a re-run starts fresh
