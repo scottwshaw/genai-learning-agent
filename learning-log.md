@@ -87,4 +87,5 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-05-19 | Models & Market | [2026-05-19-models-and-market.md](briefs/2026-05-19-models-and-market.md) |
 | 2026-05-21 | Safety, Assurance & Governance | [2026-05-21-safety-assurance-and-governance.md](briefs/2026-05-21-safety-assurance-and-governance.md) || 2026-05-22 | Enterprise GenAI Adoption | [2026-05-22-enterprise-genai-adoption.md](briefs/2026-05-22-enterprise-genai-adoption.md) |
 | 2026-05-23 | Agentic Systems | [2026-05-23-agentic-systems.md](briefs/2026-05-23-agentic-systems.md) |
+| 2026-05-24 | Models & Market | [2026-05-24-models-and-market.md](briefs/2026-05-24-models-and-market.md) |
 | 2026-05-25 | LLM Production Infrastructure | [2026-05-25-llm-production-infrastructure.md](briefs/2026-05-25-llm-production-infrastructure.md) |
