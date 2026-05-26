@@ -8,6 +8,53 @@
     "recency_days": 30,
     "contact_email": "research-agent@example.com"
   },
+  "ownership_matrix": [
+    {
+      "development_type": "New model release / weights drop / benchmark score",
+      "primary_owner": "models-and-market",
+      "never_kd_in": ["llm-production-infrastructure", "agentic-systems", "enterprise-genai-adoption"]
+    },
+    {
+      "development_type": "License change on an existing model family",
+      "primary_owner": "models-and-market",
+      "never_kd_in": ["llm-production-infrastructure"]
+    },
+    {
+      "development_type": "Serving framework release (vLLM, SGLang, TGI)",
+      "primary_owner": "llm-production-infrastructure",
+      "never_kd_in": ["models-and-market", "agentic-systems"]
+    },
+    {
+      "development_type": "Observability / eval platform release (Langfuse, Phoenix, Braintrust)",
+      "primary_owner": "llm-production-infrastructure",
+      "never_kd_in": ["agentic-systems"]
+    },
+    {
+      "development_type": "Agent framework release (LangGraph, AutoGen, CrewAI, Mastra)",
+      "primary_owner": "agentic-systems",
+      "never_kd_in": ["llm-production-infrastructure"]
+    },
+    {
+      "development_type": "MCP / A2A / tool-protocol updates",
+      "primary_owner": "agentic-systems",
+      "never_kd_in": ["llm-production-infrastructure"]
+    },
+    {
+      "development_type": "Regulatory / policy developments",
+      "primary_owner": "safety-assurance-and-governance",
+      "never_kd_in": ["enterprise-genai-adoption"]
+    },
+    {
+      "development_type": "GPU supply, data center buildout, sovereign compute",
+      "primary_owner": "ai-infrastructure-and-geopolitics",
+      "never_kd_in": ["enterprise-genai-adoption"]
+    },
+    {
+      "development_type": "Model safety evaluations, red-teaming results, dangerous capability findings",
+      "primary_owner": "safety-assurance-and-governance",
+      "never_kd_in": ["models-and-market", "enterprise-genai-adoption"]
+    }
+  ],
   "topics": [
     {
       "slug": "safety-assurance-and-governance",
@@ -33,32 +80,40 @@
         {"name": "MIT FutureTech — AI governance research", "url": "https://futuretech.mit.edu/"}
       ],
       "seed_papers": [
-        {"id": "ARXIV:2209.04963", "title": "Responsible AI Pattern Catalogue"},
-        {"id": "ARXIV:2111.09478", "title": "Software Engineering for Responsible AI"},
-        {"id": "ARXIV:2307.03718", "title": "AI Assurance using Causal Inference"},
-        {"id": "ARXIV:2306.12001", "title": "Challenges and Practices of Deep Learning Model Reengineering"},
         {"id": "ARXIV:2310.06692", "title": "Sociotechnical Safety Evaluation of Generative AI Systems"},
         {"id": "ARXIV:2404.14068", "title": "Practices for Governing Agentic AI Systems"},
-        {"id": "SSRN:6567199", "title": "Scalable Runtime Governance for Agentic AI in Financial Services", "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6567199", "authors": ["Szpruch", "Sudjianto", "Bhatti", "Ang"]}
+        {"id": "SSRN:6567199", "title": "Scalable Runtime Governance for Agentic AI in Financial Services", "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6567199", "authors": ["Szpruch", "Sudjianto", "Bhatti", "Ang"]},
+        {"id": "ARXIV:2401.05566", "title": "Sleeper Agents: Training Deceptive LLMs That Persist Through Safety Training"},
+        {"id": "ARXIV:2311.08379", "title": "Scalable AI Safety via Doubly-Efficient Debate"},
+        {"id": "ARXIV:2312.06942", "title": "Weak-to-Strong Generalization"},
+        {"id": "ARXIV:2406.11717", "title": "Frontier AI Regulation: Managing Emerging Risks to Public Safety"},
+        {"id": "ARXIV:2604.09544", "title": "LLMs Generate Harmful Content Using a Distinct Unified Mechanism"},
+        {"id": "ARXIV:2605.00267", "title": "Jailbroken Frontier Models Retain Their Capabilities"},
+        {"id": "ARXIV:2605.06390", "title": "Automated Alignment is Harder Than You Think"},
+        {"id": "ARXIV:2605.05584", "title": "Operationalizing Ethics for AI Agents"},
+        {"id": "ARXIV:2409.18169", "title": "Harmful Fine-Tuning Attacks and Defenses for LLMs: A Survey"},
+        {"id": "ARXIV:2310.03693", "title": "Representation Engineering: A Top-Down Approach to AI Transparency"},
+        {"id": "ARXIV:2304.15004", "title": "Are Emergent Abilities of Large Language Models a Mirage?"},
+        {"id": "ARXIV:2209.04963", "title": "Responsible AI Pattern Catalogue"}
       ],
       "tracked_authors": [
-        {"name": "Qinghua Lu", "note": "CSIRO Data61 — responsible AI patterns, SE for AI"},
-        {"name": "Liming Zhu", "note": "CSIRO Data61 — responsible AI engineering"},
-        {"name": "Jon Whittle", "note": "CSIRO/Monash — responsible AI, SE"},
-        {"name": "Virginia Dignum", "note": "Umeå University — responsible AI frameworks"},
+        {"name": "Evan Hubinger", "note": "Anthropic — deceptive alignment, sleeper agents"},
+        {"name": "Chris Olah", "note": "Anthropic — mechanistic interpretability, circuits"},
+        {"name": "Neel Nanda", "note": "Google DeepMind — mechanistic interpretability"},
+        {"name": "Paul Christiano", "note": "ARC — alignment, scalable oversight, debate"},
+        {"name": "Owain Evans", "note": "Oxford/METR — deception, evaluation awareness"},
+        {"name": "David Rein", "note": "METR — frontier risk, dangerous capability evals"},
+        {"name": "Dan Hendrycks", "note": "CAIS — safety benchmarks, catastrophic risk"},
+        {"name": "Mrinank Sharma", "note": "Anthropic/AISI — sleeper agents, jailbreak research"},
+        {"name": "Sam Bowman", "note": "NYU/Anthropic — alignment evaluations"},
+        {"name": "Buck Shlegeris", "note": "Redwood Research — alignment, AI control"},
         {"name": "Inioluwa Deborah Raji", "note": "UC Berkeley — AI auditing, evaluation"},
-        {"name": "Margaret Mitchell", "note": "Hugging Face — model cards, responsible AI"},
-        {"name": "David Leslie", "note": "Alan Turing Institute — AI ethics, governance"},
-        {"name": "Iason Gabriel", "note": "DeepMind — AI ethics, alignment"},
-        {"name": "Ben Shneiderman", "note": "UMD — human-centered AI"},
-        {"name": "Shannon Vallor", "note": "Edinburgh — AI ethics, virtue ethics"},
         {"name": "Peter Henderson", "note": "Stanford — AI policy, safety evaluation"},
         {"name": "Dylan Hadfield-Menell", "note": "MIT — value alignment, AI safety"},
-        {"name": "Jess Whittlestone", "note": "AI governance, policy research"},
         {"name": "Lukasz Szpruch", "note": "Alan Turing/Edinburgh — financial AI governance"},
         {"name": "Agus Sudjianto", "note": "Wells Fargo — model risk management"},
-        {"name": "Timnit Gebru", "note": "DAIR Institute — AI ethics, bias"},
-        {"name": "Finale Doshi-Velez", "note": "Harvard — interpretability, ML for healthcare"}
+        {"name": "Finale Doshi-Velez", "note": "Harvard — interpretability, ML for healthcare"},
+        {"name": "Jess Whittlestone", "note": "AI governance, policy research"}
       ],
       "tracked_institutions": [
         "Microsoft Research FATE",
@@ -77,26 +132,29 @@
         "UC Berkeley CLTC"
       ],
       "concept_synonyms": [
-        "AI assurance",
-        "AI trustworthiness",
-        "operational controls for AI",
-        "AI TRiSM",
-        "runtime mediation",
-        "AI controllability",
-        "supervisory architecture",
-        "conformance enforcement",
-        "socio-technical assurance",
-        "AI auditability",
-        "AI observability governance",
-        "policy enforcement AI",
-        "runtime verification AI",
-        "accountability infrastructure",
+        "alignment research",
+        "deceptive alignment",
+        "scalable oversight",
+        "mechanistic interpretability",
+        "red-teaming",
+        "jailbreak",
+        "dangerous capability evaluation",
+        "scheming",
+        "evaluation gaming",
+        "chain-of-thought faithfulness",
+        "sleeper agent",
+        "weak-to-strong generalization",
+        "AI safety case",
+        "frontier risk",
         "model risk management",
-        "safety engineering AI",
-        "responsible AI patterns",
-        "AI assurance cases",
+        "AI assurance",
+        "responsible AI",
+        "AI governance framework",
         "runtime governance",
-        "AI guardrails engineering"
+        "AI guardrails",
+        "harmful fine-tuning",
+        "representation engineering",
+        "activation analysis"
       ],
       "academic_venues": [
         {"name": "FAccT", "type": "conference"},
@@ -108,7 +166,14 @@
         {"name": "IEEE Symposium on Security and Privacy", "type": "conference"},
         {"name": "AAAI Workshop on AI Safety", "type": "workshop"}
       ],
-      "arxiv_categories": ["cs.AI", "cs.CY", "cs.SE", "cs.LG"]
+      "arxiv_categories": ["cs.AI", "cs.CY", "cs.CL", "cs.CR", "cs.LG"],
+      "critic_rules": [
+        {
+          "id": "pillar_balance",
+          "name": "Pillar Balance",
+          "check": "At least 2 of 3 Key Developments MUST come from Pillar 1 (safety research, evaluations, capability assessments, alignment techniques, guardrails, agentic supervision — NOT legislation or regulation). Routine legislative movement (committee votes, session scheduling, bill amendments, trilogue progress) should not be a Key Development unless it sets a genuinely new precedent. Flag if fewer than 2 Key Developments are from Pillar 1, or if more than 1 is routine governance/legislation."
+        }
+      ]
     },
     {
       "slug": "enterprise-genai-adoption",
@@ -299,7 +364,10 @@
         {"name": "AAAI", "type": "conference"},
         {"name": "ACL", "type": "conference"}
       ],
-      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"]
+      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"],
+      "rejection_filters": [
+        "Reject generic observability, eval, routing, or serving news unless the core novelty is about agent frameworks, agent orchestration, tool use, planning, memory, MCP/A2A, multi-agent coordination, or agent-specific reliability."
+      ]
     },
     {
       "slug": "models-and-market",

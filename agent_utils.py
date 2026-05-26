@@ -175,6 +175,58 @@ def recent_briefs_context(
     return len(parts), "\n".join(parts).rstrip()
 
 
+def _build_ownership_matrix(topics_config: dict, current_slug: str) -> str:
+    """Generate the Primary-Owner Matrix table from topics.json ownership_matrix."""
+    rows = topics_config.get("ownership_matrix", [])
+    if not rows:
+        return ""
+    slug_to_label = {t["slug"]: t["label"] for t in topics_config["topics"]}
+    lines = [
+        "| Development type | Primary owner | Never appears as Key Development in |",
+        "|---|---|---|",
+    ]
+    for row in rows:
+        primary = slug_to_label.get(row["primary_owner"], row["primary_owner"])
+        never = ", ".join(
+            slug_to_label.get(s, s) for s in row.get("never_kd_in", [])
+        )
+        lines.append(f"| {row['development_type']} | {primary} | {never} |")
+    return "\n".join(lines)
+
+
+def _build_topic_labels(topics_config: dict) -> str:
+    """Comma-separated list of all topic labels."""
+    return ", ".join(t["label"] for t in topics_config["topics"])
+
+
+def _build_rejection_filters(topic_raw: dict) -> str:
+    """Render topic-specific rejection filters, or empty string."""
+    filters = topic_raw.get("rejection_filters", [])
+    if not filters:
+        return ""
+    lines = [f"- {f}" for f in filters]
+    return "\n".join(lines)
+
+
+def _build_critic_rules(topic_raw: dict) -> str:
+    """Render topic-specific critic rules as markdown sections, or empty string."""
+    rules = topic_raw.get("critic_rules", [])
+    if not rules:
+        return ""
+    parts = []
+    for rule in rules:
+        parts.append(f"### {rule['name']} ({topic_raw['label']} only)\n\n{rule['check']}")
+    return "\n\n".join(parts)
+
+
+def _get_raw_topic(topics_config: dict, slug: str) -> dict:
+    """Get the raw topic dict by slug."""
+    for t in topics_config["topics"]:
+        if t["slug"] == slug:
+            return t
+    return {}
+
+
 def render_research_prompt(
     prompt_template: Path,
     run_date: str,
@@ -182,6 +234,7 @@ def render_research_prompt(
     previous_date: str,
     recent_count: int,
     recent_content: str,
+    topics_config: dict | None = None,
 ) -> str:
     base = prompt_template.read_text()
     topic_sources = ""
@@ -196,6 +249,19 @@ def render_research_prompt(
         "{{TOPIC_FOCUS}}": topic.focus,
         "{{TOPIC_SOURCES}}": topic_sources,
     }
+
+    if topics_config:
+        raw_topic = _get_raw_topic(topics_config, topic.slug)
+        substitutions["{{OWNERSHIP_MATRIX}}"] = _build_ownership_matrix(
+            topics_config, topic.slug
+        )
+        substitutions["{{ALL_TOPIC_LABELS}}"] = _build_topic_labels(topics_config)
+        substitutions["{{TOPIC_REJECTION_FILTERS}}"] = _build_rejection_filters(raw_topic)
+    else:
+        substitutions["{{OWNERSHIP_MATRIX}}"] = ""
+        substitutions["{{ALL_TOPIC_LABELS}}"] = ""
+        substitutions["{{TOPIC_REJECTION_FILTERS}}"] = ""
+
     for placeholder, value in substitutions.items():
         base = base.replace(placeholder, value)
     base = base.rstrip()
@@ -207,6 +273,36 @@ def render_research_prompt(
         "evolving across the full landscape; spot connections that cross topic boundaries.\n\n"
         f"{recent_content}\n"
     )
+
+
+def render_critic_prompt(
+    prompt_template: Path,
+    topic_label: str,
+    topic_focus: str,
+    brief: str,
+    topics_config: dict | None = None,
+    topic_slug: str = "",
+) -> str:
+    """Render the critic prompt with ownership matrix and topic-specific rules."""
+    base = prompt_template.read_text()
+    substitutions = {
+        "{{TOPIC_LABEL}}": topic_label,
+        "{{TOPIC_FOCUS}}": topic_focus,
+        "{{BRIEF}}": brief,
+    }
+    if topics_config:
+        substitutions["{{OWNERSHIP_MATRIX}}"] = _build_ownership_matrix(
+            topics_config, topic_slug
+        )
+        raw_topic = _get_raw_topic(topics_config, topic_slug)
+        substitutions["{{TOPIC_CRITIC_RULES}}"] = _build_critic_rules(raw_topic)
+    else:
+        substitutions["{{OWNERSHIP_MATRIX}}"] = ""
+        substitutions["{{TOPIC_CRITIC_RULES}}"] = ""
+
+    for placeholder, value in substitutions.items():
+        base = base.replace(placeholder, value)
+    return base
 
 
 def ensure_learning_log(learning_log: Path, topics_file: Path) -> bool:

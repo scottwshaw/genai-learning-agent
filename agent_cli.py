@@ -59,6 +59,7 @@ def command_render_prompt(args: argparse.Namespace) -> int:
     topic = resolve_topic(Path(args.topics_file), Path(args.state_file), args.topic)
     prev_date = previous_brief_date(Path(args.briefs_dir), topic.slug)
     recent_count, recent_content = recent_briefs_context(Path(args.briefs_dir))
+    topics_config = json.loads(Path(args.topics_file).read_text())
     payload = {
         "previous_brief_date": prev_date,
         "recent_briefs_count": recent_count,
@@ -69,6 +70,7 @@ def command_render_prompt(args: argparse.Namespace) -> int:
             prev_date,
             recent_count,
             recent_content,
+            topics_config=topics_config,
         ),
     }
     print(json.dumps(payload))

@@ -31,6 +31,16 @@ except ImportError:
     sys.exit(1)
 
 
+AUDIENCE_CONTEXT = """The intended reader is a senior ML engineer in regulated financial services who runs LLM \
+observability, evaluation, and governance at enterprise scale. They care about:
+- Tools, platforms, and practices for running and governing GenAI in production
+- Standards stabilization events (e.g., OTel semconv going stable) that change procurement/integration decisions
+- Compliance and regulatory implications of GenAI developments
+- Interoperability milestones that reduce vendor lock-in
+- Security advisories and breaking changes that require immediate attention
+They do NOT care about: model training internals, low-level hardware, or academic novelty without operational impact."""
+
+
 def build_scoring_prompt(brief: str, rubric: str, topic_label: str, dimensions: list[dict]) -> str:
     dim_lines = "\n".join(
         f'    "{d["key"]}": {{ "score": <1-5 integer>, "rationale": "<1-2 sentence justification>" }}'
@@ -41,11 +51,15 @@ def build_scoring_prompt(brief: str, rubric: str, topic_label: str, dimensions: 
 ## Topic
 {topic_label}
 
+## Target Audience
+{AUDIENCE_CONTEXT}
+
 ## Rubric
 {rubric}
 
 ## Instructions
-Score the brief on each rubric dimension using the 1-5 scale defined above.
+Score the brief on each rubric dimension using the 1-5 scale defined above. Judge the brief through the lens of the target audience — a development that is well-sourced but irrelevant to the reader's operational concerns should not score well on Audience Relevance or Operational Actionability.
+
 Return ONLY a valid JSON object — no markdown fences, no extra prose.
 
 ## Required JSON format
@@ -53,9 +67,9 @@ Return ONLY a valid JSON object — no markdown fences, no extra prose.
   "scores": {{
 {dim_lines}
   }},
-  "overall_observations": "<3-5 sentences on key strengths and weaknesses>",
+  "overall_observations": "<3-5 sentences on key strengths and weaknesses, judged against the target audience's needs>",
   "top_strength": "<the single most notable strength>",
-  "top_weakness": "<the single most significant gap>"
+  "top_weakness": "<the single most significant gap for the target reader>"
 }}
 
 ## Brief to Evaluate

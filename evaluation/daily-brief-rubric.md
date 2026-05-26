@@ -3,20 +3,23 @@ dimensions:
   - key: recency_novelty
     label: "Recency And Novelty"
     weight: 20
+  - key: operational_actionability
+    label: "Operational Actionability"
+    weight: 15
   - key: topic_boundary
     label: "Topic Boundary Discipline"
-    weight: 15
+    weight: 10
   - key: cross_topic_synthesis
     label: "Cross-Topic Trend Synthesis"
     weight: 10
   - key: source_quality
-    label: "Source Quality And Source Discipline"
-    weight: 15
+    label: "Source Quality And Discipline"
+    weight: 10
   - key: executive_scanability
     label: "Executive Scanability Of Key Developments"
     weight: 10
   - key: controlled_depth
-    label: "Controlled Technical Depth In Deep-Dive And Landscape Trends"
+    label: "Controlled Technical Depth"
     weight: 5
   - key: audience_relevance
     label: "Audience Relevance"
@@ -24,14 +27,11 @@ dimensions:
   - key: analytical_strength
     label: "Analytical Strength And Synthesis"
     weight: 10
-  - key: format_compliance
-    label: "Format Compliance And Structural Execution"
-    weight: 5
 ---
 
 # Daily Brief Evaluation Rubric
 
-This rubric is designed to assess how well each brief fulfills the intent of the current research prompt, not just whether it is well-written. It emphasizes novelty, topic discipline, source quality, useful synthesis, and the right level of abstraction for a senior technical reader who also needs executive-scan readability.
+This rubric assesses how well each brief fulfills the intent of the research prompt for its target reader: a senior ML engineer in regulated financial services who runs LLM observability, evaluation, and governance at enterprise scale. It emphasizes novelty, operational impact, topic discipline, and useful synthesis.
 
 ## Scoring Method
 
@@ -72,7 +72,33 @@ Assesses whether the brief surfaces genuinely new developments, with strong pref
 - Does the brief actually answer "what changed since the previous brief date?"
 - Are "new" items materially new, or just newly noticed?
 
-### 2. Topic Boundary Discipline — 15%
+### 2. Operational Actionability — 15%
+
+Assesses whether the brief surfaces developments that would change a decision, trigger an action, or require attention from the reader. A brief that accurately reports events but doesn't connect them to what the reader should do differently scores low here.
+
+**Score 5**
+
+- Most Key Developments identify a concrete operational consequence: a migration to plan, a procurement decision to revisit, a compliance requirement emerging, a tool to evaluate, a standard to adopt.
+- The brief distinguishes "interesting to know" from "need to act on."
+- Standards stabilization events, breaking API changes, security advisories, and interoperability milestones are surfaced prominently rather than buried.
+
+**Score 3**
+
+- Some items connect to operational decisions but others are reported as news without clear implications.
+- The reader can infer actionability but the brief doesn't make it explicit.
+
+**Score 1**
+
+- The brief reads as a news digest. Developments are reported but not connected to what the reader should do, evaluate, or watch.
+- High-impact operational items (standards changes, security issues, breaking changes) are buried or absent while less actionable items lead.
+
+**What to look for**
+
+- After reading each KD, can you answer "so what do I do about this?"
+- Are standards body decisions, stability promotions, and interoperability milestones given appropriate weight?
+- Would this brief change how the reader allocates their attention this week?
+
+### 3. Topic Boundary Discipline — 10%
 
 Assesses whether the brief stays centered on its assigned topic and avoids poaching developments that belong primarily in another topic area.
 
@@ -97,7 +123,7 @@ Assesses whether the brief stays centered on its assigned topic and avoids poach
 - Could the same "new information" have appeared unchanged in another topic's brief?
 - Is the brief discovering topic-specific developments, not just topic-adjacent news?
 
-### 3. Cross-Topic Trend Synthesis — 10%
+### 4. Cross-Topic Trend Synthesis — 10%
 
 Assesses whether the brief uses other recent briefs to identify broader patterns without duplicating their discoveries.
 
@@ -121,47 +147,98 @@ Assesses whether the brief uses other recent briefs to identify broader patterns
 - Does it say what this brief adds to a larger pattern?
 - Does it connect trends across topics without re-reporting the same discoveries?
 
-### 4. Source Quality And Source Discipline — 15%
+### 5. Source Quality And Discipline — 10%
 
 Assesses whether the brief relies on strong sources appropriately and uses weaker sources only for limited factual purposes.
 
 **Score 5**
 
 - Key claims are grounded primarily in Tier 1 sources.
+- Standards body publications, spec releases, and foundation guidance are treated as Tier 1 and given appropriate prominence.
 - Tier 2 sources are used carefully for factual developments only.
 - Tier 3 sources are avoided or clearly flagged.
-- Source selection reflects judgment, not convenience.
 - Comparative claims such as "leading", "most complete", or "best-in-class" are either avoided or explicitly supported by strong independent evidence.
 
 **Score 3**
 
 - Source quality is mixed.
 - Some important points rely too much on vendor or secondary reporting.
-- Source tiers are mostly respected but not consistently.
 - One or more comparative or market-judgment claims rely on weak or vendor-adjacent evidence.
 
 **Score 1**
 
 - Weak or promotional sources drive the brief.
 - Major claims lack credible support.
-- The brief shows little discipline in source weighting.
 - Vendor positioning language is repeated as if it were established fact.
 
 **What to look for**
 
 - Are analytical claims supported by high-quality evidence?
 - Is vendor content treated as fact-reporting, not proof?
-- Are comparative claims backed by independent evidence, or are they just vendor framing?
+- Are standards body sources given appropriate weight, not treated as secondary?
 
-### 5. Audience Relevance — 10%
+### 6. Executive Scanability Of Key Developments — 10%
 
-Assesses whether the brief is useful to the intended reader: a senior ML engineer focused on observability, evaluation, governance, and production GenAI systems in enterprise settings.
+Assesses whether the top section functions as a fast executive scan rather than a compressed long-form summary. Judge scan efficiency, not raw sentence count alone.
+
+**Score 5**
+
+- Each `Key Developments` item is quickly skimmable.
+- Headlines communicate significance, not just events.
+- The body under each headline is concise and efficient; `2-3` short sentences can still score highly if each sentence does distinct work.
+- Detailed mechanism, caveats, and extended evidence are deferred to the `Technical Deep-Dive`, `Landscape Trends`, tables, or sources.
+- A brief should not receive `5` if any `Key Developments` item reads like a mini-essay or requires rereading to extract the point.
+
+**Score 3**
+
+- Headlines are strong, but several items contain extra setup, repeated framing, or more detail than needed for a scan section.
+- A reader can understand the section, but not quickly.
+
+**Score 1**
+
+- `Key Developments` reads like a set of mini-essays.
+- Multiple items are long enough that the section no longer supports rapid scanning.
+
+**What to look for**
+
+- Can an AI-literate executive skim the section in under `90` seconds?
+- Does each item state the point before the evidence?
+- Do not award a high score based on strong bolded headlines alone; evaluate the full body text under each bullet.
+- If one or more bullets clearly function as compressed deep-dives, cap the score at `3`.
+
+### 7. Controlled Technical Depth — 5%
+
+Assesses whether the `Technical Deep-Dive` and `Landscape Trends` are substantively useful without becoming overloaded, implementation-level, or repetitive.
+
+**Score 5**
+
+- The `Technical Deep-Dive` adds real substance beyond the top section.
+- `Landscape Trends` stays analytical and synthetic rather than re-reporting the same facts.
+- Technical detail is informative, precise, and appropriately scoped.
+
+**Score 3**
+
+- The section quality is mixed: useful overall, but either too thin, too detailed, or somewhat repetitive.
+
+**Score 1**
+
+- The deep-dive is either superficial or overloaded.
+- `Landscape Trends` mostly repeats earlier sections.
+
+**What to look for**
+
+- Does the deep-dive teach the reader something meaningful beyond the top bullets?
+- Do `Landscape Trends` synthesize rather than restate?
+
+### 8. Audience Relevance — 10%
+
+Assesses whether the brief is useful to the intended reader: a senior ML engineer in regulated financial services focused on observability, evaluation, governance, and production GenAI systems.
 
 **Score 5**
 
 - The brief consistently emphasizes operational, governance, platform, tooling, or enterprise significance.
-- It filters developments through the reader's actual priorities.
-- It avoids irrelevant fascination with low-level details unless they matter operationally.
+- It filters developments through the reader's actual priorities: production LLM systems in regulated financial services environments.
+- Developments that affect compliance, procurement, integration, or operational risk are surfaced prominently.
 
 **Score 3**
 
@@ -175,80 +252,10 @@ Assesses whether the brief is useful to the intended reader: a senior ML enginee
 
 **What to look for**
 
-- Does the significance framing match the reader's role?
-- Would this brief help someone making practical enterprise judgments?
+- Does the significance framing match the reader's role in financial services?
+- Would this brief help someone making practical enterprise judgments in a regulated environment?
 
-### 6. Executive Scanability Of Key Developments — 10%
-
-Assesses whether the top section functions as a fast executive scan rather than a compressed long-form summary. Judge scan efficiency, not raw sentence count alone.
-
-**Score 5**
-
-- Each `Key Developments` item is quickly skimmable.
-- Headlines communicate significance, not just events.
-- The body under each headline is concise and efficient; `2-3` short sentences can still score highly if each sentence does distinct work.
-- Each item includes only the essential fact, why it matters, and a small number of supporting details or numbers.
-- Detailed mechanism, caveats, and extended evidence are deferred to the `Technical Deep-Dive`, `Landscape Trends`, tables, or sources.
-- Bullets avoid redundancy, repeated source setup, and mini-deep-dive behavior.
-- A brief should not receive `5` if any `Key Developments` item reads like a mini-essay or requires rereading to extract the point.
-
-**Score 3**
-
-- Headlines are strong, but several items contain extra setup, repeated framing, or more detail than needed for a scan section.
-- Some bullets read like compressed mini-essays, include too many metrics, or begin duplicating later sections.
-- A reader can understand the section, but not quickly.
-- This is the default score when the section is readable overall but inefficient to scan.
-
-**Score 2**
-
-- Most `Key Developments` items require sustained reading because they combine multiple implications, repeated factual setup, or too much supporting detail.
-- Strong headlines are doing most of the readability work while the body text remains hard to scan.
-- Multiple bullets would be better split between `Key Developments` and later sections.
-
-**Score 1**
-
-- `Key Developments` reads like a set of mini-essays.
-- Multiple items are long enough that the section no longer supports rapid scanning.
-- Important points are buried in explanatory prose rather than surfaced immediately.
-
-**What to look for**
-
-- Can an AI-literate executive skim the section in under `90` seconds?
-- Does each item state the point before the evidence?
-- Is the section efficient to scan, or does it require rereading because of redundancy or stacked implications?
-- Do not award a high score based on strong bolded headlines alone; evaluate the full body text under each bullet.
-- Do not penalize a bullet just for having `3` concise sentences; penalize redundancy, repeated setup, and detail that belongs later in the brief.
-- If one or more bullets clearly function as compressed deep-dives, cap the score at `3`; if this is true for most bullets, score `2` or below.
-
-### 7. Controlled Technical Depth In Deep-Dive And Landscape Trends — 5%
-
-Assesses whether the `Technical Deep-Dive` and `Landscape Trends` are substantively useful without becoming overloaded, implementation-level, or repetitive.
-
-**Score 5**
-
-- The `Technical Deep-Dive` adds real substance beyond the top section.
-- `Landscape Trends` stays analytical and synthetic rather than re-reporting the same facts.
-- Technical detail is informative, precise, and appropriately scoped for a senior AI leader or senior ML engineer.
-- The references, not the prose, carry the burden of exhaustive detail.
-
-**Score 3**
-
-- The section quality is mixed: useful overall, but either too thin, too detailed, or somewhat repetitive.
-- Some material that belongs in the sources or table is pulled into the prose unnecessarily.
-
-**Score 1**
-
-- The deep-dive is either superficial or overloaded.
-- `Landscape Trends` mostly repeats earlier sections.
-- The prose reads more like release notes, a product explainer, or an implementation document than a strategic brief.
-
-**What to look for**
-
-- Does the deep-dive teach the reader something meaningful beyond the top bullets?
-- Is the detail concentrated where it is most valuable?
-- Do `Landscape Trends` synthesize rather than restate?
-
-### 8. Analytical Strength And Synthesis — 10%
+### 9. Analytical Strength And Synthesis — 10%
 
 Assesses whether the brief interprets developments and explains why they matter, rather than merely summarizing announcements or papers.
 
@@ -263,60 +270,28 @@ Assesses whether the brief interprets developments and explains why they matter,
 
 - Some analysis is present, but parts of the brief remain descriptive.
 - Significance is stated unevenly or too generically.
-- Some conclusions are stronger than the cited evidence warrants.
 
 **Score 1**
 
 - The brief mostly summarizes events.
 - It does not show much judgment, synthesis, or interpretation.
-- Or it makes sweeping leadership or maturity claims that are not defensible from the evidence.
 
 **What to look for**
 
 - Does the brief tell the reader what matters and why?
 - Are conclusions drawn from evidence rather than asserted vaguely?
-- Does the brief distinguish "important product signal" from "category leader" or "market winner"?
-
-### 9. Format Compliance And Structural Execution — 5%
-
-Assesses whether the brief follows the required structure and uses each section properly.
-
-**Score 5**
-
-- All required sections are present and correctly used.
-- `Key Developments`, `Technical Deep-Dive`, `Landscape Trends`, and `Sources` all perform their intended roles.
-- `Key Developments` summarizes rather than absorbing the work of the `Technical Deep-Dive` or `Landscape Trends`.
-- The brief is easy to scan and internally coherent.
-- Do not award `5` if the top section is structurally correct but functionally overloaded.
-
-**Score 3**
-
-- Minor format deviations or uneven section quality.
-- One section is structurally correct but doing too much of another section's job.
-- Structure is mostly intact but some sections underperform.
-
-**Score 1**
-
-- Missing sections, incorrect structure, or clear misuse of the template.
-
-**What to look for**
-
-- Did the model follow the brief format exactly?
-- Are sections distinct, or do they collapse into the same kind of content?
-- Do any `Key Developments` bullets function like mini deep-dives?
-- If `Key Developments` is doing the work of the deep-dive, reduce this score even if the headings are present.
 
 ## Suggested Weighted Scorecard
 
 - Recency And Novelty: `20`
-- Topic Boundary Discipline: `15`
+- Operational Actionability: `15`
+- Topic Boundary Discipline: `10`
 - Cross-Topic Trend Synthesis: `10`
-- Source Quality And Source Discipline: `15`
+- Source Quality And Discipline: `10`
 - Executive Scanability Of Key Developments: `10`
-- Controlled Technical Depth In Deep-Dive And Landscape Trends: `5`
+- Controlled Technical Depth: `5`
 - Audience Relevance: `10`
 - Analytical Strength And Synthesis: `10`
-- Format Compliance And Structural Execution: `5`
 
 Total: `100`
 
@@ -325,14 +300,14 @@ Total: `100`
 For each brief, an evaluator should be able to answer these quickly:
 
 - Did this brief surface genuinely new information?
+- Would reading this brief change what I do this week?
 - Did it stay within its topic without duplicating another topic's discoveries?
 - Did it connect to broader trends across topics where appropriate?
 - Were the sources credible and used with discipline?
-- Did it avoid unsupported "leading / most complete / best-in-class" claims?
+- Were standards body decisions and interoperability milestones given appropriate prominence?
 - Was the top of the brief genuinely scannable, not just well-headlined?
 - Was the deep-dive and landscape analysis substantive without becoming excessive?
-- Did the brief explain why the developments matter?
-- Did it follow the required structure cleanly?
+- Did the brief explain why the developments matter to a production ML engineer in financial services?
 
 ## Practical Interpretation
 
@@ -350,3 +325,10 @@ You do not want:
 
 - the same news item reappearing across topics
 - isolated briefs that fail to reveal broader shifts
+
+A strong brief should also score well on both of these simultaneously:
+
+- `Operational Actionability`
+- `Source Quality And Discipline`
+
+That combination ensures the brief surfaces high-impact items backed by credible evidence. A brief that is actionable but poorly sourced is unreliable; a brief that is well-sourced but not actionable is academic.
