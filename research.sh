@@ -27,11 +27,12 @@ set -euo pipefail
 RESET_MODE=false
 LIST_TOPICS=false
 NO_COMMIT=false
-EVAL_OUTPUT=""          # --eval-output FILE  : write brief here; skip all side effects
+OUTPUT_FILE=""          # --output-file FILE  : write brief here; skip all side effects
 TOPIC_SLUG_OVERRIDE=""  # --topic-slug SLUG / --topic N : override rotation
 LOCK_ROTATION=false     # set true when topic is manually selected (don't advance index)
 PROMPT_FILE_OVERRIDE="" # --prompt-file FILE  : override prompt template
 CRITIC_BRIEF=""         # --brief FILE        : skip generation, run critic on existing brief
+EVAL_MODE=false         # --eval              : score brief against rubric after generation
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -53,9 +54,14 @@ while [[ $# -gt 0 ]]; do
             LOCK_ROTATION=true
             shift 2
             ;;
-        --eval-output)
-            EVAL_OUTPUT="${2:?--eval-output requires a file path}"
+        --output-file)
+            OUTPUT_FILE="${2:?--output-file requires a file path}"
             shift 2
+            ;;
+        --eval)
+            EVAL_MODE=true
+            NO_COMMIT=true
+            shift
             ;;
         --topic-slug)
             # Internal flag used by eval.sh; rotation always locked in eval mode
@@ -74,7 +80,8 @@ while [[ $# -gt 0 ]]; do
             echo "Unknown option: $1" >&2
             echo "Usage: $0 [--reset|--topics|--no-commit]" >&2
             echo "       $0 [--topic N|SLUG] [--no-commit]   # N is 1-based topic number" >&2
-            echo "       $0 --eval-output FILE [--topic-slug SLUG] [--prompt-file FILE]" >&2
+            echo "       $0 --eval [--topic SLUG]             # generate + score against rubric" >&2
+            echo "       $0 --output-file FILE [--topic-slug SLUG] [--prompt-file FILE]" >&2
             echo "       $0 --brief FILE [--no-commit]        # critic-only on existing brief" >&2
             exit 1
             ;;
@@ -173,12 +180,12 @@ fi
 # ---------------------------------------------------------------------------
 resolve_topic "$TOPIC_SLUG_OVERRIDE"
 
-# In eval mode use the caller-specified output path; in no-commit (test) mode
+# When --output-file is set, use that path directly; in no-commit/eval mode
 # write to eval-runs/ so briefs/ stays clean; otherwise use briefs/.
 EVAL_RUNS_DIR=""
-if [[ -n "$EVAL_OUTPUT" ]]; then
-    BRIEF_FILE="$EVAL_OUTPUT"
-    EVAL_RUNS_DIR="$(dirname "$EVAL_OUTPUT")"
+if [[ -n "$OUTPUT_FILE" ]]; then
+    BRIEF_FILE="$OUTPUT_FILE"
+    EVAL_RUNS_DIR="$(dirname "$OUTPUT_FILE")"
 elif [[ "$NO_COMMIT" == true ]]; then
     EVAL_RUNS_DIR="$REPO_ROOT/eval-runs/$(date +%Y%m%d-%H%M%S)"
     mkdir -p "$EVAL_RUNS_DIR"
@@ -214,10 +221,9 @@ if [[ -n "$CRITIC_BRIEF" ]]; then
     exit 0
 fi
 
-# Skip if today's brief already exists (idempotent re-runs) — skipped in eval mode
-if [[ -z "$EVAL_OUTPUT" ]] && [[ -f "$BRIEF_FILE" ]]; then
-    log "Brief already exists for today ($BRIEF_FILE). Skipping research."
-    log "Delete the file to force a re-run."
+# Skip if today's brief already exists (idempotent re-runs) — only in production mode
+if [[ -z "$OUTPUT_FILE" ]] && [[ "$NO_COMMIT" == false ]] && [[ -f "$BRIEF_FILE" ]]; then
+    log "Brief already exists: $BRIEF_FILE (use --no-commit or --eval to re-run)"
     exit 0
 fi
 
@@ -313,7 +319,7 @@ log "Brief saved (${BRIEF_SIZE} bytes): $BRIEF_FILE"
 # ---------------------------------------------------------------------------
 # Update learning log  (skipped in eval mode)
 # ---------------------------------------------------------------------------
-if [[ -z "$EVAL_OUTPUT" ]] && [[ "$NO_COMMIT" == false ]]; then
+if [[ -z "$OUTPUT_FILE" ]] && [[ "$NO_COMMIT" == false ]]; then
     BRIEF_BASENAME="$(basename "$BRIEF_FILE")"
     printf "| %s | %s | [%s](briefs/%s) |\n" \
         "$DATE" "$TOPIC_LABEL" "$BRIEF_BASENAME" "$BRIEF_BASENAME" \
@@ -325,7 +331,7 @@ fi
 # Advance the topic index for tomorrow
 # Skipped in eval/test mode or when topic was manually selected (--topic N|SLUG)
 # ---------------------------------------------------------------------------
-if [[ -z "$EVAL_OUTPUT" ]] && [[ "$NO_COMMIT" == false ]] && [[ "$LOCK_ROTATION" == false ]]; then
+if [[ -z "$OUTPUT_FILE" ]] && [[ "$NO_COMMIT" == false ]] && [[ "$LOCK_ROTATION" == false ]]; then
     echo "$TOPIC_NEXT_IDX" > "$STATE_FILE"
     NEXT_LABEL="$(jq -r ".topics[$TOPIC_NEXT_IDX].label" "$TOPICS_FILE")"
     log "Next topic: $NEXT_LABEL (index $TOPIC_NEXT_IDX)"
@@ -334,8 +340,8 @@ fi
 # ---------------------------------------------------------------------------
 # Git commit  (skipped in eval mode)
 # ---------------------------------------------------------------------------
-if [[ -n "$EVAL_OUTPUT" ]]; then
-    log "Eval mode: brief written to $EVAL_OUTPUT (no commit, no log update, no index advance)"
+if [[ -n "$OUTPUT_FILE" ]]; then
+    log "Output-file mode: brief written to $OUTPUT_FILE (no commit, no log update, no index advance)"
 elif [[ "$NO_COMMIT" == true ]]; then
     log "Test mode: brief written to $BRIEF_FILE (no commit, no log update, no index advance)"
 else
@@ -355,8 +361,35 @@ Generated by learning-agent on $(hostname)."
     fi
 fi
 
-if [[ -n "$EVAL_OUTPUT" ]]; then
-    log "Done (eval mode)."
+# ---------------------------------------------------------------------------
+# Rubric evaluation (--eval)
+# ---------------------------------------------------------------------------
+if [[ "$EVAL_MODE" == true ]]; then
+    SCORING_MODEL="${SCORING_MODEL:-claude-opus-4-6}"
+    SCORE_JSON="${BRIEF_FILE%.md}-scores.json"
+    SCORE_REPORT="${BRIEF_FILE%.md}-scores.md"
+    log "Running rubric evaluation (scoring_model=$SCORING_MODEL)..."
+    if SCORING_MODEL="$SCORING_MODEL" \
+        "$PYTHON_BIN" "$REPO_ROOT/score_brief.py" \
+        "$BRIEF_FILE" \
+        --topic-label "$TOPIC_LABEL" \
+        --output json \
+        > "$SCORE_JSON" 2>>"$LOG_FILE"; then
+        "$PYTHON_BIN" "$AGENT_CLI" render-score-report \
+            --score-json "$SCORE_JSON" \
+            --brief-file "$BRIEF_FILE" \
+            --topic-label "$TOPIC_LABEL" \
+            --output "$SCORE_REPORT" 2>>"$LOG_FILE"
+        WEIGHTED_SCORE="$(jq '.weighted_score' "$SCORE_JSON")"
+        log "Rubric score: ${WEIGHTED_SCORE}/100 -> $SCORE_JSON"
+        log "Score report: $SCORE_REPORT"
+    else
+        log "WARNING: rubric scoring failed (non-fatal) — brief still saved"
+    fi
+fi
+
+if [[ -n "$OUTPUT_FILE" ]]; then
+    log "Done (output-file mode)."
 elif [[ "$LOCK_ROTATION" == true ]]; then
     log "Done (rotation locked via --topic; .topic-index not advanced)."
 else

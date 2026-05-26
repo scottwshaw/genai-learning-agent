@@ -209,7 +209,7 @@ run_brief() {
     log "Running $label (model=$model, prompt=$(basename "$prompt_file"))..."
     ANTHROPIC_MODEL="$model" ENABLE_CRITIC=1 \
         "$REPO_ROOT/research.sh" \
-        --eval-output "$out_file" \
+        --output-file "$out_file" \
         --topic-slug "$TOPIC_SLUG" \
         --prompt-file "$prompt_file" \
         2> >(sed "s/^/  [${label}] /" >&2)
