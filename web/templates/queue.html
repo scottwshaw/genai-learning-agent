@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brief Annotations</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Unannotated Briefs — Last 7 Days</h1>
+    </header>
+    <main>
+        {% if not briefs %}
+            <p class="empty">All caught up — no briefs to review.</p>
+        {% else %}
+            <ul class="brief-list">
+                {% for brief in briefs %}
+                <li class="brief-item">
+                    <a href="/brief/{{ brief.filename }}">
+                        <span class="brief-date">{{ brief.date }}</span>
+                        <span class="brief-topic">{{ brief.topic }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </main>
+</body>
+</html>
