@@ -16,7 +16,27 @@ def briefs_dir(tmp_path):
     old = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
     (tmp_path / f"{today}-agentic-systems.md").write_text(
-        "# Agentic Systems\n\nSome content.\n\n## Sources\n\n"
+        "# Agentic Systems — Research Brief (2026-05-27)\n\n"
+        "## Key Developments\n\n"
+        "- **[First KD headline]**\n"
+        "  - **What changed:** Something happened.\n"
+        "  - **Why it matters:** It is important.\n"
+        "  - *(Example Source, May 2026)*\n\n"
+        "- **[Second KD headline]**\n"
+        "  - **What changed:** Another thing.\n"
+        "  - **Why it matters:** Also important.\n"
+        "  - *(Another Source, May 2026)*\n\n"
+        "## Notable Papers / Models / Tools\n\n"
+        "| Item | Date | Source | Summary |\n"
+        "|------|------|--------|---------|\n"
+        "| Paper A | May 2026 | arXiv | A summary |\n\n"
+        "## Technical Deep-Dive\n\n"
+        "### The Deep Dive Heading\n\n"
+        "Some deep dive content here.\n\n"
+        "## Landscape Trends\n\n"
+        "- **A trend is emerging.** Details about the trend.\n\n"
+        "- **Another trend.** More details here.\n\n"
+        "## Sources\n\n"
         "- https://example.com/paper1 [Tier 1 — Peer-reviewed]\n"
         "- https://example.com/paper2 [Tier 2 — Vendor announcement]\n"
     )
@@ -68,8 +88,8 @@ class TestBriefView:
         resp = client.get(f"/brief/{today}-agentic-systems.md")
         assert resp.status_code == 200
         html = resp.data.decode()
-        assert "<h1>Agentic Systems</h1>" in html
-        assert "Some content." in html
+        assert "<h1>Agentic Systems" in html
+        assert "Key Developments" in html
 
     def test_returns_404_for_nonexistent_brief(self, client):
         """Given no brief with this filename exists,
@@ -106,3 +126,39 @@ class TestBriefView:
         html = resp.data.decode()
         assert 'href="https://example.com/paper1"' in html
         assert 'href="https://example.com/paper2"' in html
+
+
+class TestBriefItemHighlighting:
+    """Hovering over items in a rendered brief."""
+
+    def test_each_item_is_wrapped_as_hoverable(self, client):
+        """Given a rendered brief with Key Developments and Landscape Trends,
+        when I view the brief,
+        then each item is wrapped in an element with class 'item'
+        so that it highlights on hover."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        html = resp.data.decode()
+        assert html.count('class="item"') == 5  # 2 KDs + 1 deep dive + 2 trends
+        assert 'class="item-row"' in html  # paper table row
+
+    def test_item_has_hover_style(self, client):
+        """Given CSS is loaded,
+        when an item exists on the page,
+        then a hover rule is defined for it."""
+        resp = client.get("/static/style.css")
+        css = resp.data.decode()
+        assert ".item:hover" in css
+
+
+class TestBriefTables:
+    """Rendering markdown tables in briefs."""
+
+    def test_tables_render_as_html_tables(self, client):
+        """Given a brief with a markdown table,
+        when I view the brief,
+        then it renders as an HTML table element."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        html = resp.data.decode()
+        assert "<table>" in html

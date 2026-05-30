@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -21,6 +22,90 @@ def load_topic_labels():
 
 
 TOPIC_LABELS = load_topic_labels()
+
+_LIST_ITEM_SECTIONS = {"Key Developments", "Landscape Trends"}
+_TABLE_ITEM_SECTIONS = {"Notable Papers / Models / Tools"}
+_BLOCK_ITEM_SECTIONS = {"Technical Deep-Dive"}
+
+
+def _wrap_items(html: str) -> str:
+    """Wrap annotatable items in each section with <div class="item">."""
+    parts = re.split(r'(<h2>.*?</h2>)', html)
+    result = []
+    section_name = None
+    for part in parts:
+        m = re.match(r'<h2>(.*?)</h2>', part)
+        if m:
+            section_name = m.group(1).strip()
+            result.append(part)
+        elif section_name in _LIST_ITEM_SECTIONS:
+            result.append(_wrap_top_level_items(part))
+        elif section_name in _TABLE_ITEM_SECTIONS:
+            result.append(_wrap_table_rows(part))
+        elif section_name in _BLOCK_ITEM_SECTIONS:
+            result.append(f'<div class="item">{part}</div>')
+        else:
+            result.append(part)
+    return ''.join(result)
+
+
+def _wrap_top_level_items(html: str) -> str:
+    """Wrap only the top-level <li> elements (depth 1) with <div class="item">."""
+    output = []
+    ul_depth = 0
+    i = 0
+    while i < len(html):
+        if html[i:].startswith('<ul>'):
+            ul_depth += 1
+            output.append('<ul>')
+            i += 4
+        elif html[i:].startswith('</ul>'):
+            ul_depth -= 1
+            output.append('</ul>')
+            i += 5
+        elif html[i:].startswith('<li>') and ul_depth == 1:
+            # Find the matching </li> at this depth
+            # We need to track nested <li> to find the right closing tag
+            li_start = i
+            i += 4  # skip <li>
+            li_depth = 1
+            while i < len(html) and li_depth > 0:
+                if html[i:].startswith('<li>') or html[i:].startswith('<li '):
+                    li_depth += 1
+                    i += 4
+                elif html[i:].startswith('</li>'):
+                    li_depth -= 1
+                    if li_depth == 0:
+                        i += 5  # skip </li>
+                        break
+                    else:
+                        i += 5
+                else:
+                    i += 1
+            li_content = html[li_start:i]
+            output.append('<div class="item">')
+            output.append(li_content)
+            output.append('</div>')
+        else:
+            output.append(html[i])
+            i += 1
+    return ''.join(output)
+
+
+def _wrap_table_rows(html: str) -> str:
+    """Add class="item-row" to each <tbody> <tr>."""
+    in_tbody = False
+    lines = html.split('\n')
+    result = []
+    for line in lines:
+        if '<tbody>' in line:
+            in_tbody = True
+        elif '</tbody>' in line:
+            in_tbody = False
+        if in_tbody and line.strip() == '<tr>':
+            line = line.replace('<tr>', '<tr class="item-row">')
+        result.append(line)
+    return '\n'.join(result)
 
 
 def get_recent_briefs(days=7):
@@ -54,8 +139,9 @@ def brief(filename):
     if not path.is_file():
         abort(404)
     md = path.read_text()
-    renderer = mistune.create_markdown(plugins=['url'])
+    renderer = mistune.create_markdown(plugins=['url', 'table'])
     html = renderer(md)
+    html = _wrap_items(html)
     return render_template("brief.html", content=html, filename=filename)
 
 
