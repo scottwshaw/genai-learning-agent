@@ -91,6 +91,7 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-05-25 | LLM Production Infrastructure | [2026-05-25-llm-production-infrastructure.md](briefs/2026-05-25-llm-production-infrastructure.md) |
 | 2026-05-27 | AI Infrastructure & Geopolitics | [2026-05-27-ai-infrastructure-and-geopolitics.md](briefs/2026-05-27-ai-infrastructure-and-geopolitics.md) |
 | 2026-05-27 | Safety, Assurance & Governance | [2026-05-27-safety-assurance-and-governance.md](briefs/2026-05-27-safety-assurance-and-governance.md) |
+| 2026-05-28 | Enterprise GenAI Adoption | [2026-05-28-enterprise-genai-adoption.md](briefs/2026-05-28-enterprise-genai-adoption.md) |
 | 2026-05-29 | Agentic Systems | [2026-05-29-agentic-systems.md](briefs/2026-05-29-agentic-systems.md) |
 | 2026-05-30 | Models & Market | [2026-05-30-models-and-market.md](briefs/2026-05-30-models-and-market.md) |
 | 2026-05-31 | LLM Production Infrastructure | [2026-05-31-llm-production-infrastructure.md](briefs/2026-05-31-llm-production-infrastructure.md) |
