@@ -28,6 +28,15 @@ _TABLE_ITEM_SECTIONS = {"Notable Papers / Models / Tools"}
 _BLOCK_ITEM_SECTIONS = {"Technical Deep-Dive"}
 
 
+def _has_numbered_sources(md: str) -> bool:
+    """Check if a brief uses numbered [N] references in its Sources section."""
+    m = re.search(r'^## Sources\s*\n', md, re.MULTILINE)
+    if not m:
+        return False
+    after = md[m.end():]
+    return bool(re.match(r'\s*1\.', after))
+
+
 def _wrap_items(html: str) -> str:
     """Wrap annotatable items in each section with <div class="item">."""
     parts = re.split(r'(<h2>.*?</h2>)', html)
@@ -140,9 +149,12 @@ def brief(filename):
     if not path.is_file():
         abort(404)
     md = path.read_text()
+    has_refs = _has_numbered_sources(md)
     renderer = mistune.create_markdown(plugins=['url', 'table'])
     html = renderer(md)
     html = _wrap_items(html)
+    if not has_refs:
+        html = '<p class="no-refs-notice">Older brief — numbered references not available.</p>\n' + html
     return render_template("brief.html", content=html, filename=filename)
 
 

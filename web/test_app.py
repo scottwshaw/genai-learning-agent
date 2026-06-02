@@ -41,7 +41,16 @@ def briefs_dir(tmp_path):
         "2. TechCrunch (May 2026) — https://example.com/techcrunch-article [Tier 2 — Tech news]\n"
         "3. arXiv (May 2026) — https://example.com/paper-a [Tier 1 — Peer-reviewed]\n"
     )
-    (tmp_path / f"{yesterday}-models-and-market.md").write_text("# Models & Market\n\nMore content.")
+    (tmp_path / f"{yesterday}-models-and-market.md").write_text(
+        "# Models & Market — Research Brief\n\n"
+        "## Key Developments\n\n"
+        "- **[Some headline]**\n"
+        "  - **What changed:** Something.\n"
+        "  - **Why it matters:** Important.\n"
+        "  - *(TechCrunch, May 2026)*\n\n"
+        "## Sources\n\n"
+        "- https://example.com/old-source [Tier 2 — Tech news]\n"
+    )
     (tmp_path / f"{old}-enterprise-genai-adoption.md").write_text("# Old brief\n\nStale.")
 
     return tmp_path
@@ -127,6 +136,19 @@ class TestBriefView:
         html = resp.data.decode()
         assert 'href="https://example.com/cnas-report"' in html
         assert 'href="https://example.com/techcrunch-article"' in html
+
+
+class TestOlderBriefFormat:
+    """Viewing briefs that use the old citation format (no numbered references)."""
+
+    def test_older_brief_shows_no_refs_notice(self, client):
+        """Given a brief with old-style sources (no numbered references),
+        when I view it,
+        then I see a notice that references are not available."""
+        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{yesterday}-models-and-market.md")
+        html = resp.data.decode()
+        assert "older brief" in html.lower()
 
 
 class TestBriefItemHighlighting:
