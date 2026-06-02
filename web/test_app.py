@@ -21,11 +21,11 @@ def briefs_dir(tmp_path):
         "- **[First KD headline]**\n"
         "  - **What changed:** Something happened.\n"
         "  - **Why it matters:** It is important.\n"
-        "  - *(CNAS Report, May 2026)*\n\n"
+        "  - *Sources: [1]*\n\n"
         "- **[Second KD headline]**\n"
         "  - **What changed:** Another thing.\n"
         "  - **Why it matters:** Also important.\n"
-        "  - *(TechCrunch, May 2026)*\n\n"
+        "  - *Sources: [2]*\n\n"
         "## Notable Papers / Models / Tools\n\n"
         "| Item | Date | Source | Summary |\n"
         "|------|------|--------|---------|\n"
@@ -37,9 +37,9 @@ def briefs_dir(tmp_path):
         "- **A trend is emerging.** Details about the trend.\n\n"
         "- **Another trend.** More details here.\n\n"
         "## Sources\n\n"
-        "- https://example.com/cnas-report [Tier 1 — CNAS Report]\n"
-        "- https://example.com/techcrunch-article [Tier 2 — TechCrunch]\n"
-        "- https://example.com/paper-a [Tier 1 — arXiv]\n"
+        "1. CNAS Report (May 2026) — https://example.com/cnas-report [Tier 1 — Policy research]\n"
+        "2. TechCrunch (May 2026) — https://example.com/techcrunch-article [Tier 2 — Tech news]\n"
+        "3. arXiv (May 2026) — https://example.com/paper-a [Tier 1 — Peer-reviewed]\n"
     )
     (tmp_path / f"{yesterday}-models-and-market.md").write_text("# Models & Market\n\nMore content.")
     (tmp_path / f"{old}-enterprise-genai-adoption.md").write_text("# Old brief\n\nStale.")
