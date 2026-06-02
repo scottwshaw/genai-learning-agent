@@ -94,3 +94,4 @@ The agent rotates through six priority areas in round-robin order.
 | 2026-05-30 | Models & Market | [2026-05-30-models-and-market.md](briefs/2026-05-30-models-and-market.md) |
 | 2026-05-31 | LLM Production Infrastructure | [2026-05-31-llm-production-infrastructure.md](briefs/2026-05-31-llm-production-infrastructure.md) |
 | 2026-06-01 | AI Infrastructure & Geopolitics | [2026-06-01-ai-infrastructure-and-geopolitics.md](briefs/2026-06-01-ai-infrastructure-and-geopolitics.md) |
+| 2026-06-02 | Safety, Assurance & Governance | [2026-06-02-safety-assurance-and-governance.md](briefs/2026-06-02-safety-assurance-and-governance.md) |
