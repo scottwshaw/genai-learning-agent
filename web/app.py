@@ -108,6 +108,7 @@ def _wrap_table_rows(html: str) -> str:
     return '\n'.join(result)
 
 
+
 def get_recent_briefs(days=7):
     cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
     briefs = []

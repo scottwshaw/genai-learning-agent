@@ -21,15 +21,15 @@ def briefs_dir(tmp_path):
         "- **[First KD headline]**\n"
         "  - **What changed:** Something happened.\n"
         "  - **Why it matters:** It is important.\n"
-        "  - *(Example Source, May 2026)*\n\n"
+        "  - *(CNAS Report, May 2026)*\n\n"
         "- **[Second KD headline]**\n"
         "  - **What changed:** Another thing.\n"
         "  - **Why it matters:** Also important.\n"
-        "  - *(Another Source, May 2026)*\n\n"
+        "  - *(TechCrunch, May 2026)*\n\n"
         "## Notable Papers / Models / Tools\n\n"
         "| Item | Date | Source | Summary |\n"
         "|------|------|--------|---------|\n"
-        "| Paper A | May 2026 | arXiv | A summary |\n\n"
+        "| Paper A | May 2026 | [arXiv](https://example.com/paper-a) | A summary |\n\n"
         "## Technical Deep-Dive\n\n"
         "### The Deep Dive Heading\n\n"
         "Some deep dive content here.\n\n"
@@ -37,8 +37,9 @@ def briefs_dir(tmp_path):
         "- **A trend is emerging.** Details about the trend.\n\n"
         "- **Another trend.** More details here.\n\n"
         "## Sources\n\n"
-        "- https://example.com/paper1 [Tier 1 — Peer-reviewed]\n"
-        "- https://example.com/paper2 [Tier 2 — Vendor announcement]\n"
+        "- https://example.com/cnas-report [Tier 1 — CNAS Report]\n"
+        "- https://example.com/techcrunch-article [Tier 2 — TechCrunch]\n"
+        "- https://example.com/paper-a [Tier 1 — arXiv]\n"
     )
     (tmp_path / f"{yesterday}-models-and-market.md").write_text("# Models & Market\n\nMore content.")
     (tmp_path / f"{old}-enterprise-genai-adoption.md").write_text("# Old brief\n\nStale.")
@@ -124,8 +125,8 @@ class TestBriefView:
         today = datetime.now().strftime("%Y-%m-%d")
         resp = client.get(f"/brief/{today}-agentic-systems.md")
         html = resp.data.decode()
-        assert 'href="https://example.com/paper1"' in html
-        assert 'href="https://example.com/paper2"' in html
+        assert 'href="https://example.com/cnas-report"' in html
+        assert 'href="https://example.com/techcrunch-article"' in html
 
 
 class TestBriefItemHighlighting:
