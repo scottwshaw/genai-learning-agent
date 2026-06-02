@@ -145,7 +145,7 @@ Up to 4 bullets — prefer fewer strong ones over padding. 1–2 is fine on a qu
 - **[Headline: practical consequence in 8–12 plain words — no jargon, no academic abstractions]**
   - **What changed:** [1 sentence, max 20 words. What happened + at most 1 supporting fact.]
   - **Why it matters:** [1 sentence, max 20 words. Signal or implication for enterprise teams.]
-  - *(Source name, Date)*
+  - *Sources: [N], [M]* — reference numbers matching the numbered Sources list below.
 
 Hard constraints:
 - One development and one implication per bullet. Second angles go to Landscape Trends.
@@ -159,16 +159,18 @@ Hard constraints:
 | Item | Date | Source | Summary |
 |------|------|--------|---------|
 
+The Source column must use `[N]` reference numbers matching the Sources list (e.g. `[3]`), not inline URLs or free text.
+
 ## Technical Deep-Dive
 
-The single most technically interesting development from Key Developments, in 2–4 paragraphs with genuine depth — mechanism, novelty, significance, limitations.
+The single most technically interesting development from Key Developments, in 2–4 paragraphs with genuine depth — mechanism, novelty, significance, limitations. Cite sources using `[N]` reference numbers throughout.
 
 - **Coherence rule:** The deep-dive subject must also appear in Key Developments.
 - **Source-tier preference:** Strongly prefer Tier 1 developments. Do not use this section to amplify a Tier 2-only item that failed the source gate.
 
 ## Landscape Trends
 
-3–5 analytical bullets on trajectory — what is accelerating, stalling, converging, or diverging. This is the most important section — make it analytical, not descriptive.
+3–5 analytical bullets on trajectory — what is accelerating, stalling, converging, or diverging. This is the most important section — make it analytical, not descriptive. Cite sources using `[N]` reference numbers.
 
 - At least 2 bullets must be cross-topic, naming two topic areas from the taxonomy ({{ALL_TOPIC_LABELS}}) with a bold **[Topic A × Topic B]** tag.
 - At least 1 bullet must reference a pattern from a prior brief (name the date or topic) and state whether current developments reinforce, weaken, complicate, or resolve it.
@@ -179,12 +181,12 @@ Brief factual summary of notable vendor activity — new entrants, launches, fun
 
 ## Sources
 
-List every useful URL with a tier tag:
-- https://... [Tier 1 — Peer-reviewed]
-- https://... [Tier 1 — arXiv affiliated]
-- https://... [Tier 1 — Independent journalism]
-- https://... [Tier 2 — Vendor announcement]
-- https://... [Tier 2 — GitHub]
+Numbered list. Every source referenced anywhere in the brief must appear here. Each entry uses this format:
+
+1. Source Name (Date) — https://... [Tier N — category]
+2. Source Name (Date) — https://... [Tier N — category]
+
+All citations in Key Developments, Notable Papers, Technical Deep-Dive, and Landscape Trends must use `[N]` reference numbers that match this list. Every number cited must appear in this list, and every entry should be cited at least once.
 
 ---
 

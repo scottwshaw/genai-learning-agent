@@ -19,10 +19,11 @@ For any removed Key Development: if it contains useful context, you may add a br
 - `word_count` → Cut the field to under 20 words. Prefer cutting detail over compressing with semicolons or em-dashes.
 - `format_structure` → Fix the headline to 8–12 words stating a consequence or signal, not an event name.
 - `sentence_simplicity` → Rewrite as a single independent clause. Drop the second fact.
-- `source_tier_flag` → Add `[Tier 2 sources only]` to the source parenthetical.
+- `source_tier_flag` → Add `[Tier 2 sources only]` after the `*Sources: [N]*` line.
 - `cross_topic_requirement` → Add bold `[Topic A × Topic B]` tags to at least 2 Landscape Trends bullets, ensuring they genuinely name two topics and trace a cross-topic connection.
 - `prior_brief_callback` → Add a reference to a prior brief pattern in one Landscape Trends bullet.
 - `comparative_claim` → Weaken to scoped language or remove the claim. Do not invent Tier 1 evidence.
+- `source_reference_integrity` → Fix numbered references so every `[N]` in the brief maps to a numbered entry in `## Sources`, and every Sources entry is cited at least once. Remove uncited entries; add missing entries; fix mismatched numbers.
 
 Preserve the exact markdown structure, section order, and formatting of all unflagged content.
 

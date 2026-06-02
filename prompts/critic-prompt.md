@@ -34,14 +34,14 @@ Each Key Development bullet must use this exact structure:
 - **[Headline: 8–12 words, consequence/signal, not event name]**
   - **What changed:** [1 sentence, max 20 words]
   - **Why it matters:** [1 sentence, max 20 words]
-  - *(Source name, Date)*
+  - *Sources: [N], [M]*
 ```
 
 Flag violations of:
-- Missing or merged sub-fields (What changed / Why it matters / Source)
+- Missing or merged sub-fields (What changed / Why it matters / Sources)
 - "What changed" exceeding 20 words (count carefully)
 - "Why it matters" exceeding 20 words (count carefully)
-- Source line not formatted as a standalone italic sub-bullet
+- Sources line not using numbered references matching the Sources section (e.g. `*Sources: [1], [3]*`)
 - Headline that is an event name or version number rather than a consequence/signal
 - Headline that uses academic abstractions or jargon instead of plain language
 - Bullet that combines two separate findings or developments into one
@@ -55,7 +55,7 @@ In Key Developments, each field ("What changed" and "Why it matters") must be a 
 
 ### 5. Source Tier Discipline
 
-- Any Key Development relying solely on Tier 2 sources must include `[Tier 2 sources only]` in its source parenthetical. Flag any that omit this tag.
+- Any Key Development relying solely on Tier 2 sources must include `[Tier 2 sources only]` after its `*Sources: [N]*` line. Flag any that omit this tag.
 - **Quiet-week rule:** If ALL Key Developments rely solely on Tier 2 sources, there should be at most 2 Key Developments and a quiet-week note. Flag if there are 3+ all-Tier-2 Key Developments without a quiet-week note.
 
 ### 6. Single-Vendor Source Gate
@@ -81,7 +81,17 @@ Additionally, the deep dive should strongly prefer Tier 1 sources. If the deep-d
 
 When the Notable Papers table contains Tier 1 items (peer-reviewed papers, affiliated arXiv preprints, institutional research) that are on-topic and within the recency window, but Key Developments includes Tier 2-only items, flag the Tier 2 KD as a potential promotion violation.
 
-### 11. Section Structure
+### 11. Source Reference Integrity
+
+All citations throughout the brief must use numbered references `[N]` that match entries in the `## Sources` section. Flag:
+- Any `[N]` reference in the brief body that has no corresponding numbered entry in Sources
+- Any numbered entry in Sources that is never cited anywhere in the brief
+- Any Key Development whose `*Sources:*` line does not use the `*Sources: [N], [M]*` format
+- Any Notable Papers row whose Source column uses free text or inline URLs instead of `[N]` references
+- Any Technical Deep-Dive paragraph that makes factual claims without `[N]` citations
+- Any Landscape Trends bullet that makes factual claims without `[N]` citations
+
+### 12. Section Structure
 
 The brief must contain these sections in this order:
 1. `## Key Developments`
@@ -101,7 +111,7 @@ Flag missing or out-of-order sections.
 
 Call the `report_violations` tool with your findings. You MUST follow the tool's input schema exactly. Each item in the `violations` array must be a JSON object with these required string fields: `rule`, `location`, `description`, `fix_suggestion`. Do NOT return violations as plain strings.
 
-Use these rule identifiers for the `rule` field: `non_event_rule`, `topic_boundary`, `format_structure`, `word_count`, `sentence_simplicity`, `source_tier_flag`, `quiet_week`, `vendor_source_gate`, `cross_topic_requirement`, `prior_brief_callback`, `comparative_claim`, `deep_dive_coherence`, `scholarly_promotion`, `section_structure`, `pillar_balance`.
+Use these rule identifiers for the `rule` field: `non_event_rule`, `topic_boundary`, `format_structure`, `word_count`, `sentence_simplicity`, `source_tier_flag`, `quiet_week`, `vendor_source_gate`, `cross_topic_requirement`, `prior_brief_callback`, `comparative_claim`, `deep_dive_coherence`, `scholarly_promotion`, `source_reference_integrity`, `section_structure`, `pillar_balance`.
 
 ---
 
