@@ -39,25 +39,11 @@ def log(msg):
 
 
 def extract_text(response) -> str:
-    """Extract only the final text segment from a response.
-
-    With server-side web search, responses interleave text blocks with
-    tool_use/tool_result blocks. Text written between searches is planning
-    noise. We only want text from after the last tool activity.
-    """
-    blocks = response.content
-    last_tool_idx = -1
-    for i, block in enumerate(blocks):
-        btype = getattr(block, "type", None)
-        if btype in ("tool_use", "tool_result", "server_tool_use", "web_search_tool_result"):
-            last_tool_idx = i
-
-    text_blocks = []
-    for i, block in enumerate(blocks):
-        if getattr(block, "type", None) == "text" and i > last_tool_idx:
-            text_blocks.append(block.text)
-
-    return "\n".join(text_blocks).strip()
+    """Extract all text blocks from a response."""
+    return "\n".join(
+        block.text for block in response.content
+        if getattr(block, "type", None) == "text"
+    ).strip()
 
 
 def strip_preamble(text_output: str) -> tuple[str, int]:
@@ -212,27 +198,24 @@ def run_revision(client, model, brief, violations_json, topic_label,
 
 
 def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
-    """Run the main research loop (web search + generation). Returns brief text."""
+    """Two-phase brief generation: research with web search, then write with fresh thinking."""
+
+    # --- Phase 1: Research (web search, collect findings) ---
+    log("Phase 1: research (web search)")
     messages = [{"role": "user", "content": prompt}]
 
-    for iteration in range(20):  # safety cap on agentic loop iterations
-        log(f"API call #{iteration + 1}")
+    for iteration in range(20):
+        log(f"Research API call #{iteration + 1}")
 
         response = call_api(client, model, max_tokens, messages,
                             thinking_budget, tools=tools, label="research")
 
         log(f"stop_reason={response.stop_reason}, blocks={len(response.content)}")
-        text_output = extract_text(response)
 
-        if response.stop_reason == "end_turn":
-            brief, preamble_len = strip_preamble(text_output)
-            if preamble_len == 0 and not text_output.lstrip().startswith("# "):
-                log("ERROR: No H1 heading found in model output — refusing to write broken brief")
-                log(f"[raw output head] {text_output[:1000]}")
-                sys.exit(2)
-            if preamble_len > 0:
-                log(f"[stripped preamble, {preamble_len} chars] {text_output[:500]}")
-            return brief
+        if response.stop_reason in ("end_turn", "max_tokens"):
+            research_notes = extract_text(response)
+            log(f"Research phase complete: {len(research_notes)} chars of notes")
+            break
 
         if response.stop_reason == "tool_use":
             messages.append({"role": "assistant", "content": response.content})
@@ -247,28 +230,45 @@ def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
                         "tool_use_id": block.id,
                         "content": "",
                     })
-                elif block_type == "tool_result":
-                    log("tool_result block present in response (server-side execution)")
 
             if tool_results:
                 messages.append({"role": "user", "content": tool_results})
-
-        elif response.stop_reason == "max_tokens":
-            log("WARNING: hit max_tokens — outputting partial response")
-            brief, preamble_len = strip_preamble(text_output)
-            if preamble_len > 0:
-                log(f"[stripped preamble, {preamble_len} chars] {text_output[:500]}")
-            return brief
-
         else:
-            log(f"Unexpected stop_reason: {response.stop_reason} — outputting available text")
-            brief, preamble_len = strip_preamble(text_output)
-            if preamble_len > 0:
-                log(f"[stripped preamble, {preamble_len} chars] {text_output[:500]}")
-            return brief
+            research_notes = extract_text(response)
+            log(f"Unexpected stop_reason: {response.stop_reason} — "
+                f"proceeding with {len(research_notes)} chars of notes")
+            break
+    else:
+        print("ERROR: Hit maximum iteration limit (20)", file=sys.stderr)
+        sys.exit(1)
 
-    print("ERROR: Hit maximum iteration limit (20)", file=sys.stderr)
-    sys.exit(1)
+    # --- Phase 2: Write (fresh thinking, no tools) ---
+    log("Phase 2: writing brief (fresh thinking budget, no tools)")
+    write_messages = [
+        {"role": "user", "content": prompt},
+        {"role": "assistant", "content": research_notes},
+        {"role": "user", "content":
+         "You have completed your research above. Now write the final brief. "
+         "Your visible output must begin with the H1 heading — no preamble."},
+    ]
+
+    response = call_api(client, model, max_tokens, write_messages,
+                        thinking_budget, tools=None, label="writing")
+
+    log(f"stop_reason={response.stop_reason}, blocks={len(response.content)}")
+    text_output = extract_text(response)
+
+    if response.stop_reason == "max_tokens":
+        log("WARNING: hit max_tokens in writing phase")
+
+    brief, preamble_len = strip_preamble(text_output)
+    if preamble_len == 0 and not text_output.lstrip().startswith("# "):
+        log("ERROR: No H1 heading found in model output — refusing to write broken brief")
+        log(f"[raw output head] {text_output[:1000]}")
+        sys.exit(2)
+    if preamble_len > 0:
+        log(f"[stripped preamble, {preamble_len} chars]")
+    return brief
 
 
 def critique_and_revise(client, brief, prompt, critic_model,
