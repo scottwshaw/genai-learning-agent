@@ -104,3 +104,37 @@ nav a.active {
 .brief-content a { color: #2563eb; }
 
 .item:hover, .item-row:hover { background: #f0f0f0; }
+
+.item { position: relative; }
+
+.source-tooltip {
+    display: none;
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    background: #333;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    max-width: 500px;
+    white-space: pre-wrap;
+    z-index: 10;
+}
+
+.item[data-sources]:hover::after {
+    content: attr(data-sources);
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    background: #333;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    max-width: 500px;
+    white-space: pre-wrap;
+    z-index: 10;
+    margin-bottom: 4px;
+}

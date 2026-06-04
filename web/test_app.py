@@ -174,6 +174,37 @@ class TestBriefItemHighlighting:
         assert ".item:hover" in css
 
 
+class TestReferenceHover:
+    """Hovering over an item shows its source references."""
+
+    def test_item_includes_source_data_for_hover(self, client):
+        """Given a brief with numbered [N] references in Key Developments,
+        when I view the brief,
+        then each item's wrapper includes a data-sources attribute
+        containing the resolved source text for its references."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        html = resp.data.decode()
+        assert 'data-sources="' in html
+
+    def test_item_source_data_contains_resolved_text(self, client):
+        """Given a KD citing [1],
+        when I view the brief,
+        then its data-sources attribute contains the source text from entry 1."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        html = resp.data.decode()
+        assert "CNAS Report" in html.split('data-sources="')[1].split('"')[0]
+
+    def test_hover_style_exists_for_source_tooltip(self, client):
+        """Given CSS is loaded,
+        when a source tooltip could appear,
+        then a CSS rule for .source-tooltip exists."""
+        resp = client.get("/static/style.css")
+        css = resp.data.decode()
+        assert ".source-tooltip" in css
+
+
 class TestBriefTables:
     """Rendering markdown tables in briefs."""
 

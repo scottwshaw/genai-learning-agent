@@ -3,6 +3,7 @@ import json
 import os
 import re
 from datetime import datetime, timedelta
+from html import escape as _html_escape
 from pathlib import Path
 
 from flask import Flask, abort, render_template
@@ -37,7 +38,31 @@ def _has_numbered_sources(md: str) -> bool:
     return bool(re.match(r'\s*1\.', after))
 
 
-def _wrap_items(html: str) -> str:
+def _parse_sources(md: str) -> dict:
+    """Parse numbered sources from markdown into {number: text} dict."""
+    m = re.search(r'^## Sources\s*\n', md, re.MULTILINE)
+    if not m:
+        return {}
+    sources = {}
+    for line in md[m.end():].split('\n'):
+        match = re.match(r'(\d+)\.\s+(.+)', line)
+        if match:
+            sources[int(match.group(1))] = match.group(2).strip()
+        elif line.strip().startswith('#'):
+            break
+    return sources
+
+
+def _source_attr(item_html, sources):
+    """Build a data-sources attribute from [N] refs found in the item HTML."""
+    refs = list(dict.fromkeys(int(n) for n in re.findall(r'\[(\d+)\]', item_html)))
+    texts = [sources[n] for n in refs if n in sources]
+    if not texts:
+        return ""
+    return f' data-sources="{_html_escape("; ".join(texts))}"'
+
+
+def _wrap_items(html: str, sources: dict) -> str:
     """Wrap annotatable items in each section with <div class="item">."""
     parts = re.split(r'(<h2>.*?</h2>)', html)
     result = []
@@ -48,17 +73,18 @@ def _wrap_items(html: str) -> str:
             section_name = m.group(1).strip()
             result.append(part)
         elif section_name in _LIST_ITEM_SECTIONS:
-            result.append(_wrap_top_level_items(part))
+            result.append(_wrap_top_level_items(part, sources))
         elif section_name in _TABLE_ITEM_SECTIONS:
             result.append(_wrap_table_rows(part))
         elif section_name in _BLOCK_ITEM_SECTIONS:
-            result.append(f'<div class="item">{part}</div>')
+            attr = _source_attr(part, sources)
+            result.append(f'<div class="item"{attr}>{part}</div>')
         else:
             result.append(part)
     return ''.join(result)
 
 
-def _wrap_top_level_items(html: str) -> str:
+def _wrap_top_level_items(html: str, sources: dict) -> str:
     """Wrap only the top-level <li> elements (depth 1) with <div class="item">."""
     output = []
     ul_depth = 0
@@ -92,7 +118,8 @@ def _wrap_top_level_items(html: str) -> str:
                 else:
                     i += 1
             li_content = html[li_start:i]
-            output.append('<div class="item">')
+            attr = _source_attr(li_content, sources)
+            output.append(f'<div class="item"{attr}>')
             output.append(li_content)
             output.append('</div>')
         else:
@@ -150,9 +177,10 @@ def brief(filename):
         abort(404)
     md = path.read_text()
     has_refs = _has_numbered_sources(md)
+    sources = _parse_sources(md) if has_refs else {}
     renderer = mistune.create_markdown(plugins=['url', 'table'])
     html = renderer(md)
-    html = _wrap_items(html)
+    html = _wrap_items(html, sources)
     if not has_refs:
         html = '<p class="no-refs-notice">Older brief — numbered references not available.</p>\n' + html
     return render_template("brief.html", content=html, filename=filename)
