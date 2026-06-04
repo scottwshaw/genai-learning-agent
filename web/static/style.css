@@ -125,10 +125,10 @@ nav a.active {
 .source-tooltip::before {
     content: '';
     position: absolute;
-    left: 0;
-    right: 0;
+    left: -20px;
+    right: -20px;
     top: 100%;
-    height: 10px;
+    height: 20px;
 }
 
 .source-tooltip a {
@@ -140,6 +140,14 @@ nav a.active {
     text-decoration: underline;
 }
 
-.item:hover .source-tooltip {
+.item:hover .source-tooltip,
+.item-row:hover .source-tooltip {
     display: block;
+}
+
+.tooltip-cell {
+    position: relative;
+    border: none !important;
+    padding: 0 !important;
+    width: 0;
 }

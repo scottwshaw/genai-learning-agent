@@ -29,7 +29,7 @@ def briefs_dir(tmp_path):
         "## Notable Papers / Models / Tools\n\n"
         "| Item | Date | Source | Summary |\n"
         "|------|------|--------|---------|\n"
-        "| Paper A | May 2026 | [arXiv](https://example.com/paper-a) | A summary |\n\n"
+        "| Paper A | May 2026 | [3] | A summary |\n\n"
         "## Technical Deep-Dive\n\n"
         "### The Deep Dive Heading\n\n"
         "Some deep dive content here.\n\n"
@@ -224,6 +224,20 @@ class TestReferenceHover:
         resp = client.get("/static/style.css")
         css = resp.data.decode()
         assert ".source-tooltip" in css
+
+
+class TestTableReferenceHover:
+    """Hovering over a Notable Papers row shows its source references."""
+
+    def test_table_row_has_source_tooltip(self, client):
+        """Given a Notable Papers row citing [3],
+        when I view the brief,
+        then the row contains a tooltip with the resolved source text."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        html = resp.data.decode()
+        assert "arXiv" in html.split('class="item-row"')[1].split("</tr>")[0]
+        assert 'class="source-tooltip"' in html.split('class="item-row"')[1].split("</tr>")[0]
 
 
 class TestBriefTables:

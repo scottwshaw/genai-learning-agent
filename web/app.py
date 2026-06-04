@@ -98,7 +98,7 @@ def _wrap_items(html: str, sources: dict) -> str:
         elif section_name in _LIST_ITEM_SECTIONS:
             result.append(_wrap_top_level_items(part, sources))
         elif section_name in _TABLE_ITEM_SECTIONS:
-            result.append(_wrap_table_rows(part))
+            result.append(_wrap_table_rows(part, sources))
         elif section_name in _BLOCK_ITEM_SECTIONS:
             attr = _source_attr(part, sources)
             tooltip = _source_tooltip_html(part, sources)
@@ -154,19 +154,34 @@ def _wrap_top_level_items(html: str, sources: dict) -> str:
     return ''.join(output)
 
 
-def _wrap_table_rows(html: str) -> str:
-    """Add class="item-row" to each <tbody> <tr>."""
+def _wrap_table_rows(html: str, sources: dict) -> str:
+    """Add class="item-row" and source tooltips to each <tbody> <tr>."""
     in_tbody = False
-    lines = html.split('\n')
+    in_row = False
+    row_lines = []
     result = []
-    for line in lines:
+    for line in html.split('\n'):
         if '<tbody>' in line:
             in_tbody = True
+            result.append(line)
         elif '</tbody>' in line:
             in_tbody = False
-        if in_tbody and line.strip() == '<tr>':
-            line = line.replace('<tr>', '<tr class="item-row">')
-        result.append(line)
+            result.append(line)
+        elif in_tbody and line.strip() == '<tr>':
+            in_row = True
+            row_lines = [line.replace('<tr>', '<tr class="item-row">')]
+        elif in_row and '</tr>' in line:
+            in_row = False
+            row_lines.append(line)
+            row_html = '\n'.join(row_lines)
+            tooltip = _source_tooltip_html(row_html, sources)
+            if tooltip:
+                row_html = row_html.replace('</tr>', f'<td class="tooltip-cell">{tooltip}</td></tr>')
+            result.extend(row_html.split('\n'))
+        elif in_row:
+            row_lines.append(line)
+        else:
+            result.append(line)
     return '\n'.join(result)
 
 
