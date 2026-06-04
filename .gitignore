@@ -5,6 +5,7 @@ agent.log
 \#*\#
 eval-runs/
 */.DS_Store
+.restart-claude-session
 
 # Terraform
 infra/terraform/.terraform/
