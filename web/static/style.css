@@ -118,23 +118,19 @@ nav a.active {
     border-radius: 4px;
     font-size: 0.8rem;
     max-width: 500px;
-    white-space: pre-wrap;
-    z-index: 10;
-}
-
-.item[data-sources]:hover::after {
-    content: attr(data-sources);
-    display: block;
-    position: absolute;
-    left: 0;
-    bottom: 100%;
-    background: #333;
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    max-width: 500px;
-    white-space: pre-wrap;
     z-index: 10;
     margin-bottom: 4px;
+}
+
+.source-tooltip a {
+    color: #93c5fd;
+    text-decoration: none;
+}
+
+.source-tooltip a:hover {
+    text-decoration: underline;
+}
+
+.item:hover .source-tooltip {
+    display: block;
 }

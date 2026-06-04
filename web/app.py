@@ -53,6 +53,12 @@ def _parse_sources(md: str) -> dict:
     return sources
 
 
+def _extract_url(source_text):
+    """Extract the first URL from a source entry."""
+    m = re.search(r'https?://\S+', source_text)
+    return m.group(0) if m else None
+
+
 def _source_attr(item_html, sources):
     """Build a data-sources attribute from [N] refs found in the item HTML."""
     refs = list(dict.fromkeys(int(n) for n in re.findall(r'\[(\d+)\]', item_html)))
@@ -60,6 +66,23 @@ def _source_attr(item_html, sources):
     if not texts:
         return ""
     return f' data-sources="{_html_escape("; ".join(texts))}"'
+
+
+def _source_tooltip_html(item_html, sources):
+    """Build a tooltip div with clickable source links for an item."""
+    refs = list(dict.fromkeys(int(n) for n in re.findall(r'\[(\d+)\]', item_html)))
+    entries = [(n, sources[n]) for n in refs if n in sources]
+    if not entries:
+        return ""
+    lines = []
+    for n, text in entries:
+        url = _extract_url(text)
+        label = _html_escape(f"[{n}] {text}")
+        if url:
+            lines.append(f'<a href="{_html_escape(url)}" target="_blank" rel="noopener">{label}</a>')
+        else:
+            lines.append(f"<span>{label}</span>")
+    return '<div class="source-tooltip">' + "<br>".join(lines) + "</div>"
 
 
 def _wrap_items(html: str, sources: dict) -> str:
@@ -78,7 +101,8 @@ def _wrap_items(html: str, sources: dict) -> str:
             result.append(_wrap_table_rows(part))
         elif section_name in _BLOCK_ITEM_SECTIONS:
             attr = _source_attr(part, sources)
-            result.append(f'<div class="item"{attr}>{part}</div>')
+            tooltip = _source_tooltip_html(part, sources)
+            result.append(f'<div class="item"{attr}>{part}{tooltip}</div>')
         else:
             result.append(part)
     return ''.join(result)
@@ -119,8 +143,10 @@ def _wrap_top_level_items(html: str, sources: dict) -> str:
                     i += 1
             li_content = html[li_start:i]
             attr = _source_attr(li_content, sources)
+            tooltip = _source_tooltip_html(li_content, sources)
             output.append(f'<div class="item"{attr}>')
             output.append(li_content)
+            output.append(tooltip)
             output.append('</div>')
         else:
             output.append(html[i])

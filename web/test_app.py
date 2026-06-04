@@ -206,6 +206,17 @@ class TestReferenceHover:
         first_attr = html.split('data-sources="')[1].split('"')[0]
         assert "[1]" in first_attr
 
+    def test_source_tooltip_contains_clickable_link(self, client):
+        """Given a KD citing [1] whose source has a URL,
+        when I view the brief,
+        then the item contains a tooltip link opening the URL in a new tab."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        html = resp.data.decode()
+        assert 'class="source-tooltip"' in html
+        assert 'href="https://example.com/cnas-report"' in html
+        assert 'target="_blank"' in html
+
     def test_hover_style_exists_for_source_tooltip(self, client):
         """Given CSS is loaded,
         when a source tooltip could appear,
