@@ -196,6 +196,16 @@ class TestReferenceHover:
         html = resp.data.decode()
         assert "CNAS Report" in html.split('data-sources="')[1].split('"')[0]
 
+    def test_source_data_includes_reference_number(self, client):
+        """Given a KD citing [1],
+        when I view the brief,
+        then its data-sources attribute prefixes the source text with [1]."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        html = resp.data.decode()
+        first_attr = html.split('data-sources="')[1].split('"')[0]
+        assert "[1]" in first_attr
+
     def test_hover_style_exists_for_source_tooltip(self, client):
         """Given CSS is loaded,
         when a source tooltip could appear,

@@ -56,7 +56,7 @@ def _parse_sources(md: str) -> dict:
 def _source_attr(item_html, sources):
     """Build a data-sources attribute from [N] refs found in the item HTML."""
     refs = list(dict.fromkeys(int(n) for n in re.findall(r'\[(\d+)\]', item_html)))
-    texts = [sources[n] for n in refs if n in sources]
+    texts = [f"[{n}] {sources[n]}" for n in refs if n in sources]
     if not texts:
         return ""
     return f' data-sources="{_html_escape("; ".join(texts))}"'
