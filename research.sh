@@ -4,7 +4,7 @@
 # =============================================================================
 # Runs daily via cron. Uses the Anthropic API (via run_research.py) with web
 # search to research the latest GenAI developments across 6 topic areas, saves
-# a markdown brief to briefs/, updates learning-log.md, and commits via git.
+# a markdown brief to briefs/ and commits via git.
 #
 # ANTHROPIC_API_KEY must be set in the environment at invocation time.
 # It is never stored on disk. Inject it via cron, SSH, or a secrets manager:
@@ -97,7 +97,6 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 # Local paths and settings
 # ---------------------------------------------------------------------------
 BRIEFS_DIR="$REPO_ROOT/briefs"
-LEARNING_LOG="$REPO_ROOT/learning-log.md"
 LOG_FILE="$REPO_ROOT/agent.log"
 PROMPT_TEMPLATE="$REPO_ROOT/prompts/research-prompt.md"
 DATE="$(date +%Y-%m-%d)"
@@ -136,7 +135,7 @@ log() {
 # Reset mode — wipe state and briefs for a clean test run
 # ---------------------------------------------------------------------------
 if [[ "$RESET_MODE" == true ]]; then
-    echo "WARNING: This will permanently delete all research briefs, the learning log, and all state."
+    echo "WARNING: This will permanently delete all research briefs and all state."
     read -r -p "Are you sure you want to reset? [y/N] " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         echo "Reset cancelled."
@@ -144,10 +143,9 @@ if [[ "$RESET_MODE" == true ]]; then
     fi
     echo "Resetting state..."
     rm -f "$STATE_FILE"
-    rm -f "$LEARNING_LOG"
     rm -rf "$BRIEFS_DIR"
     rm -f "$LOG_FILE"
-    echo "Deleted: .topic-index, learning-log.md, briefs/, agent.log"
+    echo "Deleted: .topic-index, briefs/, agent.log"
     echo "Run ./research.sh to start fresh."
     exit 0
 fi
@@ -166,14 +164,6 @@ fi
 # Initialization
 # ---------------------------------------------------------------------------
 mkdir -p "$BRIEFS_DIR"
-
-if [[ ! -f "$LEARNING_LOG" ]]; then
-    log "Initializing learning-log.md"
-    "$PYTHON_BIN" "$AGENT_CLI" ensure-learning-log \
-        --learning-log "$LEARNING_LOG" \
-        --topics-file "$TOPICS_FILE" \
-        >/dev/null
-fi
 
 # ---------------------------------------------------------------------------
 # Determine today's topic
@@ -317,17 +307,6 @@ fi
 log "Brief saved (${BRIEF_SIZE} bytes): $BRIEF_FILE"
 
 # ---------------------------------------------------------------------------
-# Update learning log  (skipped in eval mode)
-# ---------------------------------------------------------------------------
-if [[ -z "$OUTPUT_FILE" ]] && [[ "$NO_COMMIT" == false ]]; then
-    BRIEF_BASENAME="$(basename "$BRIEF_FILE")"
-    printf "| %s | %s | [%s](briefs/%s) |\n" \
-        "$DATE" "$TOPIC_LABEL" "$BRIEF_BASENAME" "$BRIEF_BASENAME" \
-        >> "$LEARNING_LOG"
-    log "Updated learning-log.md"
-fi
-
-# ---------------------------------------------------------------------------
 # Advance the topic index for tomorrow
 # Skipped in eval/test mode or when topic was manually selected (--topic N|SLUG)
 # ---------------------------------------------------------------------------
@@ -341,13 +320,13 @@ fi
 # Git commit  (skipped in eval mode)
 # ---------------------------------------------------------------------------
 if [[ -n "$OUTPUT_FILE" ]]; then
-    log "Output-file mode: brief written to $OUTPUT_FILE (no commit, no log update, no index advance)"
+    log "Output-file mode: brief written to $OUTPUT_FILE (no commit, no index advance)"
 elif [[ "$NO_COMMIT" == true ]]; then
-    log "Test mode: brief written to $BRIEF_FILE (no commit, no log update, no index advance)"
+    log "Test mode: brief written to $BRIEF_FILE (no commit, no index advance)"
 else
     cd "$REPO_ROOT"
 
-    git add "$BRIEF_FILE" "$LEARNING_LOG"
+    git add "$BRIEF_FILE"
 
     # Only commit if there are staged changes (guards against edge cases)
     if git diff --cached --quiet; then

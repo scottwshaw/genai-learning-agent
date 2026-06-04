@@ -9,7 +9,6 @@ from pathlib import Path
 
 from agent_utils import (
     compute_weighted_score,
-    ensure_learning_log,
     format_score_report,
     load_rubric_dimensions,
     next_topic_index,
@@ -46,12 +45,6 @@ def command_list_topics(args: argparse.Namespace) -> int:
         marker = "  ->" if i == current.index else "    "
         suffix = "  [next]" if i == current.index else ""
         print(f"{marker} {i + 1}. {topic['label']}{suffix}")
-    return 0
-
-
-def command_ensure_learning_log(args: argparse.Namespace) -> int:
-    created = ensure_learning_log(Path(args.learning_log), Path(args.topics_file))
-    print(json.dumps({"created": created}))
     return 0
 
 
@@ -152,11 +145,6 @@ def build_parser() -> argparse.ArgumentParser:
     list_topics_parser.add_argument("--topics-file", required=True)
     list_topics_parser.add_argument("--state-file", required=True)
     list_topics_parser.set_defaults(func=command_list_topics)
-
-    learning_log_parser = subparsers.add_parser("ensure-learning-log")
-    learning_log_parser.add_argument("--learning-log", required=True)
-    learning_log_parser.add_argument("--topics-file", required=True)
-    learning_log_parser.set_defaults(func=command_ensure_learning_log)
 
     render_prompt_parser = subparsers.add_parser("render-prompt")
     render_prompt_parser.add_argument("--prompt-template", required=True)

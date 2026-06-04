@@ -179,7 +179,6 @@ infra/
   systemd/               # Service and timer units
   scripts/               # Bootstrap and deploy scripts
   docker/                # Dockerfile
-learning-log.md          # Index of all briefs
 .topic-index             # Round-robin state (gitignored)
 agent.log                # Runtime log (gitignored)
 ```

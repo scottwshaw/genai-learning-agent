@@ -305,36 +305,6 @@ def render_critic_prompt(
     return base
 
 
-def ensure_learning_log(learning_log: Path, topics_file: Path) -> bool:
-    if learning_log.exists():
-        return False
-
-    topics = _load_topics(topics_file)
-    lines = [
-        "# GenAI Learning Log",
-        "",
-        "Tracks daily research briefs to ensure broad topic coverage and avoid repetition.",
-        "The agent rotates through the configured priority areas in round-robin order.",
-        "",
-        "## Priority Areas",
-        "",
-        "| # | Area | Focus |",
-        "|---|------|-------|",
-    ]
-    for index, topic in enumerate(topics, start=1):
-        lines.append(f"| {index} | {topic['label']} | {topic['focus']} |")
-    lines += [
-        "",
-        "## Research History",
-        "",
-        "| Date | Topic | Brief |",
-        "|------|-------|-------|",
-        "",
-    ]
-    learning_log.write_text("\n".join(lines))
-    return True
-
-
 def compute_weighted_score(scores: dict, dimensions: list[dict]) -> float:
     total = 0.0
     for dim in dimensions:
