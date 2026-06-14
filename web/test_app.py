@@ -409,3 +409,31 @@ class TestBriefTables:
         resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert "<table>" in html
+
+
+class TestBriefReviewedTracking:
+    """Tracking which briefs have been reviewed."""
+
+    def test_reviewed_brief_is_flagged_in_queue(self, client, briefs_dir):
+        """Given a brief has been marked as reviewed in annotations.json,
+        when I visit the queue,
+        then that brief's list item has the 'reviewed' class."""
+        import json
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        ann_path = briefs_dir / dirname / "annotations.json"
+        ann_path.write_text(json.dumps({"_reviewed": {"interesting": True}}))
+
+        resp = client.get("/")
+        html = resp.data.decode()
+        assert 'class="brief-item reviewed"' in html
+
+    def test_unreviewed_brief_has_no_reviewed_class(self, client):
+        """Given a brief has no annotations,
+        when I visit the queue,
+        then that brief's list item does not have the 'reviewed' class."""
+        resp = client.get("/")
+        html = resp.data.decode()
+        assert 'class="brief-item"' in html
+        # Make sure not all items got the reviewed class
+        assert 'brief-item reviewed' not in html

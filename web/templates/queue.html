@@ -21,7 +21,7 @@
         {% else %}
             <ul class="brief-list">
                 {% for brief in briefs %}
-                <li class="brief-item">
+                <li class="brief-item{{ ' reviewed' if brief.reviewed else '' }}">
                     <a href="/brief/{{ brief.filename }}">
                         <span class="brief-date">{{ brief.date }}</span>
                         <span class="brief-topic">{{ brief.topic }}</span>

@@ -225,10 +225,14 @@ def get_recent_briefs(days=7):
         if date < cutoff:
             continue
         slug = parts[3]
+        from annotations import load_annotations
+        annotations = load_annotations(path.parent)
+        reviewed = annotations.get("_reviewed", {}).get("interesting", False)
         briefs.append({
             "filename": dirname,
             "date": date,
             "topic": TOPIC_LABELS.get(slug, slug),
+            "reviewed": reviewed,
         })
     return briefs
 
