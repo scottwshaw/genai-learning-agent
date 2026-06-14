@@ -10,7 +10,6 @@ ExecStop=/usr/bin/docker stop research-agent-web
 Restart=on-failure
 RestartSec=30
 
-LoadCredentialEncrypted=op-token:/etc/research-agent/op-token
 LoadCredentialEncrypted=github-pat:/etc/research-agent/github-pat
 
 StandardOutput=journal

@@ -17,14 +17,7 @@ if [[ -z "${CREDENTIALS_DIRECTORY:-}" ]]; then
     exit 1
 fi
 
-OP_TOKEN="$(cat "${CREDENTIALS_DIRECTORY}/op-token")"
 GITHUB_PAT="$(cat "${CREDENTIALS_DIRECTORY}/github-pat")"
-
-export GIT_ASKPASS="${SCRIPTS_DIR}/git-askpass.sh"
-export GH_TOKEN="$GITHUB_PAT"
-
-git -C "$REPO_DIR" config user.name "Annotation Agent"
-git -C "$REPO_DIR" config user.email "agent@noreply"
 
 exec docker run --rm \
     --name research-agent-web \
@@ -34,6 +27,9 @@ exec docker run --rm \
     -e TOPICS_FILE=/workspace/topics.json \
     -e GITHUB_PAT="$GITHUB_PAT" \
     -e GH_TOKEN="$GITHUB_PAT" \
-    -e OP_SERVICE_ACCOUNT_TOKEN="$OP_TOKEN" \
     -e GIT_ASKPASS=/workspace/infra/scripts/git-askpass.sh \
+    -e GIT_AUTHOR_NAME="Annotation Agent" \
+    -e GIT_AUTHOR_EMAIL="agent@noreply" \
+    -e GIT_COMMITTER_NAME="Annotation Agent" \
+    -e GIT_COMMITTER_EMAIL="agent@noreply" \
     research-agent-web:latest
