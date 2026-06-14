@@ -75,20 +75,20 @@ runcmd:
 
   # Install 1Password CLI
   - log_progress "installing 1password-cli"
-  - curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
-  - echo "deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" > /etc/apt/sources.list.d/1password.list
+  - "curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg"
+  - 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" > /etc/apt/sources.list.d/1password.list'
   - mkdir -p /etc/debsig/policies/AC2D62742012EA22/ /usr/share/debsig/keyrings/AC2D62742012EA22/
-  - curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol > /etc/debsig/policies/AC2D62742012EA22/1password.pol
-  - curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
-  - apt-get update && apt-get install -y 1password-cli
+  - "curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol > /etc/debsig/policies/AC2D62742012EA22/1password.pol"
+  - "curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg"
+  - "apt-get update && apt-get install -y 1password-cli"
   - log_progress "1password-cli done"
 
   # Install GitHub CLI
   - log_progress "installing github-cli"
-  - curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+  - "curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg"
   - chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-  - echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
-  - apt-get update && apt-get install -y gh
+  - 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list'
+  - "apt-get update && apt-get install -y gh"
   - log_progress "github-cli done"
 
   # Create directories
@@ -116,9 +116,9 @@ runcmd:
   # Enable fail2ban
   - systemctl enable --now fail2ban
 
-  # Install Tailscale
+  # Install Tailscale (pipe requires shell invocation, so use a single string)
   - log_progress "installing tailscale"
-  - curl -fsSL https://tailscale.com/install.sh | sh
+  - "curl -fsSL https://tailscale.com/install.sh | sh"
   - log_progress "tailscale installed (run 'tailscale up --authkey=<key>' after deploy)"
 
   - log_progress "cloud-init runcmd COMPLETE"

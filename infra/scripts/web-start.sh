@@ -2,8 +2,8 @@
 # =============================================================================
 # web-start.sh — Bootstrap wrapper for the annotation web app
 # =============================================================================
-# Called by systemd (web-app.service). Reads the 1Password service account
-# token from systemd credentials, fetches GITHUB_PAT, then starts Flask.
+# Called by systemd (web-app.service). Reads credentials from systemd-creds,
+# configures git, then runs the Flask app in a Docker container.
 # Credentials are memory-only; nothing is written to disk.
 # =============================================================================
 
@@ -17,17 +17,23 @@ if [[ -z "${CREDENTIALS_DIRECTORY:-}" ]]; then
     exit 1
 fi
 
-export OP_SERVICE_ACCOUNT_TOKEN
-OP_SERVICE_ACCOUNT_TOKEN="$(cat "${CREDENTIALS_DIRECTORY}/op-token")"
-
-export GITHUB_PAT
-GITHUB_PAT="$(op read "op://research-agent/OC_GITHUB_TOKEN/credential")"
+OP_TOKEN="$(cat "${CREDENTIALS_DIRECTORY}/op-token")"
+GITHUB_PAT="$(cat "${CREDENTIALS_DIRECTORY}/github-pat")"
 
 export GIT_ASKPASS="${SCRIPTS_DIR}/git-askpass.sh"
 export GH_TOKEN="$GITHUB_PAT"
 
-# Ensure git identity is set (needed for annotation commits)
 git -C "$REPO_DIR" config user.name "Annotation Agent"
 git -C "$REPO_DIR" config user.email "agent@noreply"
 
-exec python3 "${REPO_DIR}/web/app.py"
+exec docker run --rm \
+    --name research-agent-web \
+    -p 5001:5001 \
+    -v "${REPO_DIR}:/workspace" \
+    -e BRIEFS_DIR=/workspace/briefs \
+    -e TOPICS_FILE=/workspace/topics.json \
+    -e GITHUB_PAT="$GITHUB_PAT" \
+    -e GH_TOKEN="$GITHUB_PAT" \
+    -e OP_SERVICE_ACCOUNT_TOKEN="$OP_TOKEN" \
+    -e GIT_ASKPASS=/workspace/infra/scripts/git-askpass.sh \
+    research-agent-web:latest

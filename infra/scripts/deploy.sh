@@ -81,18 +81,21 @@ ${SSH_CMD} "sudo mv /tmp/run-agent.sh /tmp/git-askpass.sh /opt/research-agent/sc
             sudo chmod +x /opt/research-agent/scripts/run-agent.sh /opt/research-agent/scripts/git-askpass.sh && \
             sudo chown agent:agent /opt/research-agent/scripts/*"
 
-echo "Copying Dockerfile..."
+echo "Copying Dockerfiles..."
 scp "${INFRA_DIR}/docker/Dockerfile" "${SSH_USER}@${SERVER_IP}:/tmp/"
-${SSH_CMD} "sudo mv /tmp/Dockerfile /opt/research-agent/"
+scp "${INFRA_DIR}/docker/Dockerfile.web" "${SSH_USER}@${SERVER_IP}:/tmp/"
+${SSH_CMD} "sudo mv /tmp/Dockerfile /tmp/Dockerfile.web /opt/research-agent/"
 
 echo ""
 
 # ---------------------------------------------------------------------------
-# 4. Build Docker image
+# 4. Build Docker images
 # ---------------------------------------------------------------------------
-echo "Building Docker image on server (this may take a minute)..."
+echo "Building agent Docker image..."
 ${SSH_CMD} "sudo docker build -t research-agent:latest /opt/research-agent/"
-echo "Docker image built."
+echo "Building web app Docker image..."
+${SSH_CMD} "sudo docker build -t research-agent-web:latest -f /opt/research-agent/Dockerfile.web /opt/research-agent/"
+echo "Docker images built."
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -112,6 +115,20 @@ echo "$OP_TOKEN" | ${SSH_CMD} "sudo systemd-creds encrypt --name=op-token - /etc
     sudo chmod 600 /etc/research-agent/op-token && \
     sudo chown root:root /etc/research-agent/op-token"
 echo "Token encrypted and placed."
+echo ""
+
+echo "Fetching GitHub PAT..."
+GH_PAT="$(op read 'op://research-agent/OC_GITHUB_TOKEN/credential')"
+
+if [[ -z "$GH_PAT" ]]; then
+    echo "ERROR: Failed to fetch GitHub PAT from 1Password."
+    exit 1
+fi
+
+echo "$GH_PAT" | ${SSH_CMD} "sudo systemd-creds encrypt --name=github-pat - /etc/research-agent/github-pat && \
+    sudo chmod 600 /etc/research-agent/github-pat && \
+    sudo chown root:root /etc/research-agent/github-pat"
+echo "GitHub PAT encrypted and placed."
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -139,7 +156,20 @@ echo "Web app enabled."
 echo ""
 
 # ---------------------------------------------------------------------------
-# 8. Configure Tailscale serve (HTTPS proxy → Flask on port 5001)
+# 8. Ensure Tailscale is installed (fallback if cloud-init missed it)
+# ---------------------------------------------------------------------------
+echo "Checking Tailscale installation..."
+if ! ${SSH_CMD} "command -v tailscale >/dev/null 2>&1"; then
+    echo "Tailscale not found — installing..."
+    ${SSH_CMD} "curl -fsSL https://tailscale.com/install.sh | sudo sh"
+    echo "Tailscale installed."
+else
+    echo "Tailscale already installed."
+fi
+echo ""
+
+# ---------------------------------------------------------------------------
+# 9. Configure Tailscale serve (HTTPS proxy → Flask on port 5001)
 # ---------------------------------------------------------------------------
 echo "Configuring Tailscale serve..."
 ${SSH_CMD} "sudo tailscale serve --bg https / http://localhost:5001" || \
@@ -154,7 +184,7 @@ fi
 echo ""
 
 # ---------------------------------------------------------------------------
-# 9. Verify
+# 10. Verify
 # ---------------------------------------------------------------------------
 echo "=== Timer status ==="
 ${SSH_CMD} "systemctl status research-agent.timer --no-pager" || true
