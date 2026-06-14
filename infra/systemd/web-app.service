@@ -1,0 +1,23 @@
+[Unit]
+Description=Annotation web app
+After=network.target
+
+[Service]
+Type=simple
+User=agent
+Group=agent
+ExecStart=/opt/research-agent/scripts/web-start.sh
+Restart=on-failure
+RestartSec=5
+
+Environment=BRIEFS_DIR=/opt/research-agent/repo/briefs
+Environment=TOPICS_FILE=/opt/research-agent/repo/topics.json
+
+# GitHub PAT injected via systemd-creds (same pattern as research-agent.service)
+LoadCredentialEncrypted=op-token:/etc/research-agent/op-token
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

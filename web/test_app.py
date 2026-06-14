@@ -354,6 +354,50 @@ class TestAnnotationDisplay:
         assert "brief.js" in html
 
 
+class TestSyncButtons:
+    """Pull and Save & Push buttons on the queue page."""
+
+    def test_queue_page_has_pull_button(self, client):
+        """Given the queue page,
+        when I load it,
+        then a Pull button is present."""
+        resp = client.get("/")
+        assert b"Pull" in resp.data
+
+    def test_queue_page_has_save_push_button(self, client):
+        """Given the queue page,
+        when I load it,
+        then a Save & Push button is present."""
+        resp = client.get("/")
+        assert b"Save" in resp.data and b"Push" in resp.data
+
+    def test_sync_pull_route_exists(self, client):
+        """Given the sync pull route,
+        when I POST to it,
+        then it returns 200 with ok=True."""
+        from unittest.mock import patch
+        with patch("git_sync.subprocess.run") as mock_run:
+            from unittest.mock import MagicMock
+            mock_run.return_value = MagicMock(stdout="Already up to date.\n", stderr="")
+            resp = client.post("/sync/pull")
+        assert resp.status_code == 200
+        assert resp.get_json()["ok"] is True
+
+    def test_sync_push_route_exists(self, client):
+        """Given the sync push route,
+        when I POST to it,
+        then it returns 200 with ok=True."""
+        from unittest.mock import patch, MagicMock
+        with patch("git_sync.subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                MagicMock(),  # git add
+                MagicMock(returncode=0),  # git diff (nothing to commit)
+            ]
+            resp = client.post("/sync/push")
+        assert resp.status_code == 200
+        assert resp.get_json()["ok"] is True
+
+
 class TestBriefTables:
     """Rendering markdown tables in briefs."""
 

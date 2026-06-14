@@ -116,4 +116,9 @@ runcmd:
   # Enable fail2ban
   - systemctl enable --now fail2ban
 
+  # Install Tailscale
+  - log_progress "installing tailscale"
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - log_progress "tailscale installed (run 'tailscale up --authkey=<key>' after deploy)"
+
   - log_progress "cloud-init runcmd COMPLETE"

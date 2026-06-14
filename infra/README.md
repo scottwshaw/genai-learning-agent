@@ -120,9 +120,38 @@ cd infra/terraform
 terraform destroy
 ```
 
+## Annotation Web App
+
+The Flask annotation app (`web/app.py`) runs on the server and is accessible from your phone via Tailscale — no open ports, no domain required.
+
+### First-time Tailscale setup
+
+1. Generate an auth key at https://login.tailscale.com/admin/settings/keys and store it in 1Password
+2. After `deploy.sh` completes, SSH to the server and authenticate:
+   ```bash
+   ssh deploy@$SERVER sudo tailscale up --authkey=<key-from-1password>
+   ```
+3. Install Tailscale on your phone and sign in with your Apple ID
+4. The web app URL will be `https://<hostname>.<tailnet>.ts.net`
+
+### Access
+
+- Open Tailscale on your phone, then browse to `https://<hostname>.ts.net`
+- Only devices on your Tailscale network can reach the app (auth = Tailscale membership)
+- **Pull** button fetches new briefs from GitHub
+- **Save & Push** button commits all annotation changes and pushes to main
+
+### Check web app status
+```bash
+ssh deploy@$SERVER systemctl status web-app
+ssh deploy@$SERVER journalctl -u web-app -f
+ssh deploy@$SERVER sudo tailscale serve status
+```
+
 ## Security
 
-- **SSH**: key-only, no root login, fail2ban, Hetzner firewall (SSH inbound only)
+- **SSH**: key-only, no root login, fail2ban, Hetzner firewall (SSH inbound only; ports 80/443 stay closed — Tailscale handles HTTPS)
+- **Web app**: only reachable via Tailscale network; Tailscale acts as the auth gate (Apple ID SSO)
 - **Users**: `deploy` (sudo, your SSH user), `agent` (unprivileged, runs the service)
 - **Secrets**: 1Password SA token is the only credential on disk, encrypted at rest via `systemd-creds` (machine-specific key). Exposed to the service via `LoadCredentialEncrypted`. API key and PAT exist only in memory at runtime.
 - **Docker**: `--rm`, `--read-only`, `--tmpfs /tmp`, no privileged mode
@@ -138,6 +167,7 @@ terraform destroy
     .topic-index           # Round-robin state
   scripts/
     run-agent.sh           # Wrapper script (systemd calls this)
+    web-start.sh           # Wrapper script for the web app
     git-askpass.sh         # Git credential helper (echoes $GITHUB_PAT)
   Dockerfile               # Built locally on the server
 
@@ -147,4 +177,5 @@ terraform destroy
 /etc/systemd/system/
   research-agent.service   # Oneshot service
   research-agent.timer     # Daily at 07:00 UTC
+  web-app.service          # Persistent Flask annotation app
 ```

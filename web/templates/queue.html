@@ -9,6 +9,11 @@
 <body>
     <header>
         <h1>Unannotated Briefs — Last 7 Days</h1>
+        <div class="sync-controls">
+            <button id="btn-pull" onclick="syncAction('/sync/pull', this)">Pull</button>
+            <button id="btn-push" onclick="syncAction('/sync/push', this)">Save &amp; Push</button>
+        </div>
+        <p id="sync-status" class="sync-status" hidden></p>
     </header>
     <main>
         {% if not briefs %}
@@ -26,5 +31,18 @@
             </ul>
         {% endif %}
     </main>
+    <script>
+    function syncAction(url, btn) {
+        btn.disabled = true;
+        fetch(url, {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('sync-status');
+                el.textContent = data.message || (data.ok ? 'Done.' : 'Error.');
+                el.hidden = false;
+            })
+            .finally(() => { btn.disabled = false; });
+    }
+    </script>
 </body>
 </html>

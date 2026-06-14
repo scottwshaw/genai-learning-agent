@@ -123,10 +123,44 @@ ${SSH_CMD} "sudo systemctl daemon-reload && \
 echo ""
 
 # ---------------------------------------------------------------------------
-# 7. Verify
+# 7. Deploy annotation web app
+# ---------------------------------------------------------------------------
+echo "Deploying annotation web app..."
+
+scp "${INFRA_DIR}/systemd/web-app.service" "${SSH_USER}@${SERVER_IP}:/tmp/"
+scp "${INFRA_DIR}/scripts/web-start.sh" "${SSH_USER}@${SERVER_IP}:/tmp/"
+${SSH_CMD} "sudo mv /tmp/web-app.service /etc/systemd/system/ && \
+            sudo mv /tmp/web-start.sh /opt/research-agent/scripts/ && \
+            sudo chmod +x /opt/research-agent/scripts/web-start.sh && \
+            sudo chown agent:agent /opt/research-agent/scripts/web-start.sh && \
+            sudo systemctl daemon-reload && \
+            sudo systemctl enable --now web-app"
+echo "Web app enabled."
+echo ""
+
+# ---------------------------------------------------------------------------
+# 8. Configure Tailscale serve (HTTPS proxy → Flask on port 5001)
+# ---------------------------------------------------------------------------
+echo "Configuring Tailscale serve..."
+${SSH_CMD} "sudo tailscale serve --bg https / http://localhost:5001" || \
+    echo "NOTE: Tailscale not yet authenticated. Run 'sudo tailscale up --authkey=<key>' on the server first."
+
+WEB_URL="$(${SSH_CMD} "tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty'" 2>/dev/null || true)"
+if [[ -n "$WEB_URL" ]]; then
+    echo "Web app URL: https://${WEB_URL}"
+else
+    echo "Web app URL: https://<hostname>.<tailnet>.ts.net (available after tailscale up)"
+fi
+echo ""
+
+# ---------------------------------------------------------------------------
+# 9. Verify
 # ---------------------------------------------------------------------------
 echo "=== Timer status ==="
 ${SSH_CMD} "systemctl status research-agent.timer --no-pager" || true
+echo ""
+echo "=== Web app status ==="
+${SSH_CMD} "systemctl status web-app --no-pager" || true
 echo ""
 echo "=== Deployment complete ==="
 echo ""
@@ -134,4 +168,7 @@ echo "Useful commands:"
 echo "  ssh ${SSH_USER}@${SERVER_IP} 'systemctl status research-agent.timer'     # check timer"
 echo "  ssh ${SSH_USER}@${SERVER_IP} 'sudo systemctl start research-agent'       # manual run"
 echo "  ssh ${SSH_USER}@${SERVER_IP} 'journalctl -u research-agent -f'           # watch logs"
-echo "  ssh ${SSH_USER}@${SERVER_IP} 'cat /opt/research-agent/repo/agent.log'    # app log"
+echo "  ssh ${SSH_USER}@${SERVER_IP} 'systemctl status web-app'                  # check web app"
+echo "  ssh ${SSH_USER}@${SERVER_IP} 'journalctl -u web-app -f'                  # web app logs"
+echo "  ssh ${SSH_USER}@${SERVER_IP} 'sudo tailscale up --authkey=<key>'         # connect Tailscale (first time)"
+echo "  ssh ${SSH_USER}@${SERVER_IP} 'tailscale serve status'                    # check HTTPS proxy"

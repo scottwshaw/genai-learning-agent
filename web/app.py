@@ -271,5 +271,19 @@ def annotate(dirname):
     return jsonify(ok=True)
 
 
+@app.route("/sync/pull", methods=["POST"])
+def sync_pull():
+    from git_sync import pull
+    msg = pull()
+    return jsonify(ok=True, message=msg)
+
+
+@app.route("/sync/push", methods=["POST"])
+def sync_push():
+    from git_sync import commit_and_push
+    msg = commit_and_push()
+    return jsonify(ok=True, message=msg)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
