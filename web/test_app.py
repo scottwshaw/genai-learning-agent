@@ -15,7 +15,9 @@ def briefs_dir(tmp_path):
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     old = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
-    (tmp_path / f"{today}-agentic-systems.md").write_text(
+    d = tmp_path / f"{today}-agentic-systems"
+    d.mkdir()
+    (d / "brief.md").write_text(
         "# Agentic Systems — Research Brief (2026-05-27)\n\n"
         "## Key Developments\n\n"
         "- **[First KD headline]**\n"
@@ -41,7 +43,9 @@ def briefs_dir(tmp_path):
         "2. TechCrunch (May 2026) — https://example.com/techcrunch-article [Tier 2 — Tech news]\n"
         "3. arXiv (May 2026) — https://example.com/paper-a [Tier 1 — Peer-reviewed]\n"
     )
-    (tmp_path / f"{yesterday}-models-and-market.md").write_text(
+    d2 = tmp_path / f"{yesterday}-models-and-market"
+    d2.mkdir()
+    (d2 / "brief.md").write_text(
         "# Models & Market — Research Brief\n\n"
         "## Key Developments\n\n"
         "- **[Some headline]**\n"
@@ -51,7 +55,9 @@ def briefs_dir(tmp_path):
         "## Sources\n\n"
         "- https://example.com/old-source [Tier 2 — Tech news]\n"
     )
-    (tmp_path / f"{old}-enterprise-genai-adoption.md").write_text("# Old brief\n\nStale.")
+    d3 = tmp_path / f"{old}-enterprise-genai-adoption"
+    d3.mkdir()
+    (d3 / "brief.md").write_text("# Old brief\n\nStale.")
 
     return tmp_path
 
@@ -59,9 +65,10 @@ def briefs_dir(tmp_path):
 @pytest.fixture
 def client(briefs_dir):
     os.environ["BRIEFS_DIR"] = str(briefs_dir)
-    from app import app
-    app.config["TESTING"] = True
-    with app.test_client() as client:
+    import app as app_module
+    app_module.BRIEFS_DIR = Path(str(briefs_dir))
+    app_module.app.config["TESTING"] = True
+    with app_module.app.test_client() as client:
         yield client
 
 
@@ -95,7 +102,7 @@ class TestBriefView:
         when I visit its URL,
         then I see the markdown rendered as HTML."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         assert resp.status_code == 200
         html = resp.data.decode()
         assert "<h1>Agentic Systems" in html
@@ -105,7 +112,7 @@ class TestBriefView:
         """Given no brief with this filename exists,
         when I visit its URL,
         then I get a 404."""
-        resp = client.get("/brief/nonexistent.md")
+        resp = client.get("/brief/nonexistent")
         assert resp.status_code == 404
 
     def test_clicking_queue_link_renders_brief(self, client, briefs_dir):
@@ -132,7 +139,7 @@ class TestBriefView:
         when I view the brief,
         then each URL is a clickable link."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert 'href="https://example.com/cnas-report"' in html
         assert 'href="https://example.com/techcrunch-article"' in html
@@ -146,7 +153,7 @@ class TestOlderBriefFormat:
         when I view it,
         then I see a notice that references are not available."""
         yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{yesterday}-models-and-market.md")
+        resp = client.get(f"/brief/{yesterday}-models-and-market")
         html = resp.data.decode()
         assert "older brief" in html.lower()
 
@@ -160,7 +167,7 @@ class TestBriefItemHighlighting:
         then each item is wrapped in an element with class 'item'
         so that it highlights on hover."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert html.count('class="item"') == 5  # 2 KDs + 1 deep dive + 2 trends
         assert 'class="item-row"' in html  # paper table row
@@ -183,7 +190,7 @@ class TestReferenceHover:
         then each item's wrapper includes a data-sources attribute
         containing the resolved source text for its references."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert 'data-sources="' in html
 
@@ -192,7 +199,7 @@ class TestReferenceHover:
         when I view the brief,
         then its data-sources attribute contains the source text from entry 1."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert "CNAS Report" in html.split('data-sources="')[1].split('"')[0]
 
@@ -201,7 +208,7 @@ class TestReferenceHover:
         when I view the brief,
         then its data-sources attribute prefixes the source text with [1]."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         first_attr = html.split('data-sources="')[1].split('"')[0]
         assert "[1]" in first_attr
@@ -211,7 +218,7 @@ class TestReferenceHover:
         when I view the brief,
         then the item contains a tooltip link opening the URL in a new tab."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert 'class="source-tooltip"' in html
         assert 'href="https://example.com/cnas-report"' in html
@@ -234,10 +241,117 @@ class TestTableReferenceHover:
         when I view the brief,
         then the row contains a tooltip with the resolved source text."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert "arXiv" in html.split('class="item-row"')[1].split("</tr>")[0]
         assert 'class="source-tooltip"' in html.split('class="item-row"')[1].split("</tr>")[0]
+
+
+class TestItemKeys:
+    """Each item in a rendered brief has a data-item-key attribute."""
+
+    def test_key_developments_have_item_keys(self, client):
+        """Given a brief with 2 Key Developments,
+        when I view the brief,
+        then they have data-item-key='key-developments/0' and 'key-developments/1'."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert 'data-item-key="key-developments/0"' in html
+        assert 'data-item-key="key-developments/1"' in html
+
+    def test_landscape_trends_have_item_keys(self, client):
+        """Given a brief with 2 Landscape Trends,
+        when I view the brief,
+        then they have data-item-key='landscape-trends/0' and 'landscape-trends/1'."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert 'data-item-key="landscape-trends/0"' in html
+        assert 'data-item-key="landscape-trends/1"' in html
+
+    def test_notable_papers_rows_have_item_keys(self, client):
+        """Given a brief with a Notable Papers table,
+        when I view the brief,
+        then each row has data-item-key='notable-papers/0'."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert 'data-item-key="notable-papers/0"' in html
+
+    def test_deep_dive_has_item_key(self, client):
+        """Given a brief with a Technical Deep-Dive,
+        when I view the brief,
+        then it has data-item-key='technical-deep-dive/0'."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert 'data-item-key="technical-deep-dive/0"' in html
+
+
+class TestAnnotation:
+    """Annotating items in a brief."""
+
+    def test_post_saves_annotation(self, client, briefs_dir):
+        """Given a brief exists,
+        when I POST an annotation,
+        then it is saved to annotations.json."""
+        import json
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        resp = client.post(
+            f"/brief/{dirname}/annotate",
+            json={"item_key": "key-developments/0", "interesting": True},
+        )
+        assert resp.status_code == 200
+        annotations = json.loads((briefs_dir / dirname / "annotations.json").read_text())
+        assert annotations["key-developments/0"]["interesting"] is True
+
+    def test_post_toggles_annotation(self, client, briefs_dir):
+        """Given an annotation exists,
+        when I POST a different value,
+        then it is updated."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        client.post(f"/brief/{dirname}/annotate", json={"item_key": "key-developments/0", "interesting": True})
+        client.post(f"/brief/{dirname}/annotate", json={"item_key": "key-developments/0", "interesting": False})
+        import json
+        annotations = json.loads((briefs_dir / dirname / "annotations.json").read_text())
+        assert annotations["key-developments/0"]["interesting"] is False
+
+    def test_post_returns_404_for_nonexistent_brief(self, client):
+        """Given no brief directory exists,
+        when I POST an annotation,
+        then I get 404."""
+        resp = client.post("/brief/nonexistent/annotate", json={"item_key": "key-developments/0", "interesting": True})
+        assert resp.status_code == 404
+
+
+class TestAnnotationDisplay:
+    """Viewing briefs reflects saved annotations."""
+
+    def test_annotated_item_has_interesting_attribute(self, client, briefs_dir):
+        """Given an item is annotated as interesting,
+        when I view the brief,
+        then the item has data-interesting='true'."""
+        import json
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        ann_path = briefs_dir / dirname / "annotations.json"
+        ann_path.write_text(json.dumps({"key-developments/0": {"interesting": True}}))
+
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert 'data-interesting="true"' in html
+
+    def test_brief_page_includes_js(self, client):
+        """Given a brief page,
+        when I view it,
+        then it includes brief.js for interactivity."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert "brief.js" in html
 
 
 class TestBriefTables:
@@ -248,6 +362,6 @@ class TestBriefTables:
         when I view the brief,
         then it renders as an HTML table element."""
         today = datetime.now().strftime("%Y-%m-%d")
-        resp = client.get(f"/brief/{today}-agentic-systems.md")
+        resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert "<table>" in html

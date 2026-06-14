@@ -181,7 +181,8 @@ elif [[ "$NO_COMMIT" == true ]]; then
     mkdir -p "$EVAL_RUNS_DIR"
     BRIEF_FILE="$EVAL_RUNS_DIR/${DATE}-${TOPIC_SLUG}.md"
 else
-    BRIEF_FILE="$BRIEFS_DIR/${DATE}-${TOPIC_SLUG}.md"
+    mkdir -p "$BRIEFS_DIR/${DATE}-${TOPIC_SLUG}"
+    BRIEF_FILE="$BRIEFS_DIR/${DATE}-${TOPIC_SLUG}/brief.md"
 fi
 
 log "=========================================="

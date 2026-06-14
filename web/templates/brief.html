@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <main class="brief-content">
+    <main class="brief-content" data-dirname="{{ filename }}">
         {{ content | safe }}
     </main>
+    <script src="/static/brief.js"></script>
 </body>
 </html>

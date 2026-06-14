@@ -125,9 +125,9 @@ def next_topic_index(topic: Topic) -> int:
 
 
 def previous_brief_date(briefs_dir: Path, topic_slug: str, fallback_days: int = 14) -> str:
-    matches = sorted(briefs_dir.glob(f"*-{topic_slug}.md"))
+    matches = sorted(briefs_dir.glob(f"*-{topic_slug}/brief.md"))
     if matches:
-        return matches[-1].name.removesuffix(f"-{topic_slug}.md")
+        return matches[-1].parent.name.removesuffix(f"-{topic_slug}")
     return (date.today() - timedelta(days=fallback_days)).isoformat()
 
 
@@ -158,7 +158,7 @@ def _summarize_brief(text: str) -> str:
 def recent_briefs_context(
     briefs_dir: Path, limit: int = 28, max_chars: int = 80_000
 ) -> tuple[int, str]:
-    briefs = sorted(briefs_dir.glob("*.md"))[-limit:]
+    briefs = sorted(briefs_dir.glob("*/brief.md"))[-limit:]
     if not briefs:
         return 0, "(No prior briefs exist yet — this is the first run.)"
 
@@ -166,7 +166,7 @@ def recent_briefs_context(
     total = 0
     for brief in reversed(briefs):
         summary = _summarize_brief(brief.read_text())
-        part = f"### {brief.stem}\n{summary}\n\n---\n"
+        part = f"### {brief.parent.name}\n{summary}\n\n---\n"
         if total + len(part) > max_chars and parts:
             break
         parts.append(part)
