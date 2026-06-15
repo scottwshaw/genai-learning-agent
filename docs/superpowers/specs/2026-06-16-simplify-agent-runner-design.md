@@ -61,7 +61,8 @@ The Docker container runs with:
 - `--tmpfs /tmp` for temporary files
 - `--user $(id -u):$(id -g)` to avoid root
 - Only `ANTHROPIC_API_KEY` passed in (not `GITHUB_PAT`)
-- Repo volume-mounted at `/workspace` (read-write, needed for brief output and `.topic-index`). The `--read-only` flag applies to the container's own filesystem, not to mounted volumes.
+- Repo mounted read-only at `/workspace:ro`, with `briefs/` and `eval-runs/` overlaid read-write for output
+- Topic resolution happens on the host; `--topic-slug` is passed to the container, so it never writes `.topic-index`
 
 ### Files changed
 
