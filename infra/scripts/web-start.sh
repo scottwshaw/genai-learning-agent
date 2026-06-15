@@ -17,16 +17,18 @@ if [[ -z "${CREDENTIALS_DIRECTORY:-}" ]]; then
     exit 1
 fi
 
-GITHUB_PAT="$(cat "${CREDENTIALS_DIRECTORY}/github-pat")"
+# Mount the credential file directly into the container so the PAT
+# never appears on the docker command line (visible via ps / systemctl status).
+# The askpass script inside the container reads from this file.
+CRED_FILE="${CREDENTIALS_DIRECTORY}/github-pat"
 
 exec docker run --rm \
     --name research-agent-web \
     -p 5001:5001 \
     -v "${REPO_DIR}:/workspace" \
+    -v "${CRED_FILE}:/run/secrets/github-pat:ro" \
     -e BRIEFS_DIR=/workspace/briefs \
     -e TOPICS_FILE=/workspace/topics.json \
-    -e GITHUB_PAT="$GITHUB_PAT" \
-    -e GH_TOKEN="$GITHUB_PAT" \
     -e GIT_ASKPASS=/workspace/infra/scripts/git-askpass.sh \
     -e GIT_AUTHOR_NAME="Annotation Agent" \
     -e GIT_AUTHOR_EMAIL="agent@noreply" \
