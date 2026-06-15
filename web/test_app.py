@@ -437,3 +437,26 @@ class TestBriefReviewedTracking:
         assert 'class="brief-item"' in html
         # Make sure not all items got the reviewed class
         assert 'brief-item reviewed' not in html
+
+    def test_brief_page_has_reviewed_data_attribute(self, client, briefs_dir):
+        """Given a brief has been marked as reviewed,
+        when I view the brief,
+        then the page has data-reviewed='true'."""
+        import json
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        ann_path = briefs_dir / dirname / "annotations.json"
+        ann_path.write_text(json.dumps({"_reviewed": {"interesting": True}}))
+
+        resp = client.get(f"/brief/{dirname}")
+        html = resp.data.decode()
+        assert 'data-reviewed="true"' in html
+
+    def test_unreviewed_brief_has_empty_reviewed_attribute(self, client):
+        """Given a brief has not been reviewed,
+        when I view the brief,
+        then data-reviewed is empty."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert 'data-reviewed=""' in html

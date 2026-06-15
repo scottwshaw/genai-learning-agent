@@ -254,13 +254,14 @@ def brief(dirname):
     sources = _parse_sources(md) if has_refs else {}
     from annotations import load_annotations
     annotations = load_annotations(brief_dir)
+    reviewed = annotations.get("_reviewed", {}).get("interesting", False)
     renderer = mistune.create_markdown(plugins=['url', 'table'])
     html = renderer(md)
     html = _wrap_items(html, sources)
     html = _apply_annotations(html, annotations)
     if not has_refs:
         html = '<p class="no-refs-notice">Older brief — numbered references not available.</p>\n' + html
-    return render_template("brief.html", content=html, filename=dirname)
+    return render_template("brief.html", content=html, filename=dirname, reviewed=reviewed)
 
 
 @app.route("/brief/<path:dirname>/annotate", methods=["POST"])
