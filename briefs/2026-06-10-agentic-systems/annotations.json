@@ -1,8 +1,11 @@
 {
   "key-developments/0": {
-    "interesting": false
+    "interesting": true
   },
   "notable-papers/7": {
     "interesting": false
+  },
+  "notable-papers/4": {
+    "interesting": true
   }
 }
