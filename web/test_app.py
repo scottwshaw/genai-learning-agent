@@ -460,3 +460,18 @@ class TestBriefReviewedTracking:
         resp = client.get(f"/brief/{today}-agentic-systems")
         html = resp.data.decode()
         assert 'data-reviewed=""' in html
+
+    def test_post_reviewed_annotation(self, client, briefs_dir):
+        """Given a brief exists,
+        when I POST a _reviewed annotation,
+        then it is saved to annotations.json."""
+        import json
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        resp = client.post(
+            f"/brief/{dirname}/annotate",
+            json={"item_key": "_reviewed", "interesting": True},
+        )
+        assert resp.status_code == 200
+        annotations = json.loads((briefs_dir / dirname / "annotations.json").read_text())
+        assert annotations["_reviewed"]["interesting"] is True

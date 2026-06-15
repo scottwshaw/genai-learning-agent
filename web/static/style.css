@@ -197,3 +197,25 @@ nav a.active {
 .is-interesting .interesting-toggle {
     color: #eab308;
 }
+
+.reviewed-toggle {
+    display: block;
+    margin: 0 0 16px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    color: #666;
+}
+
+.reviewed-toggle:active {
+    background: #f0f0f0;
+}
+
+.reviewed-toggle.is-reviewed {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+}
