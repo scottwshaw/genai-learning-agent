@@ -1,6 +1,6 @@
 # GenAI Learning Agent
 
-A daily research agent that scans the web for the latest developments across six GenAI topic areas, produces structured markdown briefs, and commits them to this repo. Runs on a Hetzner VPS via systemd timer, containerised with Docker, secrets from 1Password.
+A daily research agent that scans the web for the latest developments across six GenAI topic areas, produces structured markdown briefs, and commits them to this repo. Runs on a Hetzner VPS via systemd timer, containerised with Docker, secrets encrypted at rest via systemd-creds.
 
 ## How it works
 
@@ -35,7 +35,7 @@ research.sh                  # Main orchestrator — topic resolution, prompt re
 eval.sh                      # Eval runner — generates a brief, scores it, optionally compares two runs
   └── score_brief.py         # Model-based rubric scorer
 
-run-remote.sh                # Server-side wrapper — branch creation, Docker run, push, PR creation
+run-agent.sh                 # Unified runner — credentials, Docker run, branch/push/PR (local & server)
 ```
 
 ### Pipeline phases
@@ -68,18 +68,19 @@ python3 -m venv .venv
 
 ### Run locally
 
+Without Docker (runs research.sh directly):
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... ./research.sh --no-commit
 ```
 
-With the critic/revision pipeline:
+With Docker (same path as the server, but credentials from env):
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ENABLE_CRITIC=1 ./research.sh --no-commit
+ANTHROPIC_API_KEY=sk-ant-... ./run-agent.sh --no-commit
 ```
 
 Override topic (by slug or index):
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ./research.sh --topic-slug safety-assurance-and-governance --no-commit
+ANTHROPIC_API_KEY=sk-ant-... ./run-agent.sh --topic safety-assurance-and-governance --no-commit
 ```
 
 ### Run evals
@@ -126,9 +127,8 @@ ssh deploy@$(cd ../terraform && terraform output -raw server_ip) sudo systemctl 
 ### How the server runs
 
 1. **systemd timer** fires daily at 07:00 UTC
-2. **`run-agent.sh`** (bootstrap): reads 1Password SA token from encrypted credential, fetches API key and GitHub PAT, pulls latest repo
-3. **`run-remote.sh`** (repo): creates a branch, runs `research.sh` inside Docker with `ENABLE_CRITIC=1`, pushes, opens a PR
-4. **Docker**: `python:3.12-slim` with `anthropic` SDK, `--read-only`, `--user $(id -u):$(id -g)` to avoid root-owned file problems
+2. **`run-agent.sh`** (repo root): reads credentials from systemd-creds, pulls latest code, creates a branch, runs `research.sh` inside Docker with `ENABLE_CRITIC=1`, commits, pushes, opens a PR
+3. **Docker**: `python:3.12-slim` with `anthropic` SDK, `--read-only`, `--user $(id -u):$(id -g)` to avoid root-owned file problems
 
 ### Day-to-day operations
 
@@ -156,7 +156,7 @@ Prompt and script changes are picked up automatically — the bootstrap runs `gi
 ```
 research.sh              # Main orchestrator
 eval.sh                  # Eval runner
-run-remote.sh            # Server-side branch/Docker/PR wrapper
+run-agent.sh             # Unified runner (local & server)
 common.sh                # Shared shell boilerplate
 run_research.py          # Anthropic API caller (generation + critic + revision)
 score_brief.py           # Model-based rubric scorer
