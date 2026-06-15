@@ -75,10 +75,9 @@ scp "${INFRA_DIR}/systemd/research-agent.timer" "${SSH_USER}@${SERVER_IP}:/tmp/"
 ${SSH_CMD} "sudo mv /tmp/research-agent.service /tmp/research-agent.timer /etc/systemd/system/"
 
 echo "Copying scripts..."
-scp "${INFRA_DIR}/scripts/run-agent.sh" "${SSH_USER}@${SERVER_IP}:/tmp/"
 scp "${INFRA_DIR}/scripts/git-askpass.sh" "${SSH_USER}@${SERVER_IP}:/tmp/"
-${SSH_CMD} "sudo mv /tmp/run-agent.sh /tmp/git-askpass.sh /opt/research-agent/scripts/ && \
-            sudo chmod +x /opt/research-agent/scripts/run-agent.sh /opt/research-agent/scripts/git-askpass.sh && \
+${SSH_CMD} "sudo mv /tmp/git-askpass.sh /opt/research-agent/scripts/ && \
+            sudo chmod +x /opt/research-agent/scripts/git-askpass.sh && \
             sudo chown agent:agent /opt/research-agent/scripts/*"
 
 echo "Copying Dockerfiles..."
@@ -99,22 +98,20 @@ echo "Docker images built."
 echo ""
 
 # ---------------------------------------------------------------------------
-# 5. Place 1Password service account token
+# 5. Place secrets (fetched from 1Password on the dev machine, encrypted on server)
 # ---------------------------------------------------------------------------
-echo "Fetching 1Password service account token..."
-OP_TOKEN="$(op item get 'Service Account Auth Token: research-agent' --vault research-agent --fields credential --reveal)"
+echo "Fetching Anthropic API key..."
+ANTHROPIC_KEY="$(op read 'op://research-agent/ANTHROPIC_API_KEY/credential')"
 
-if [[ -z "$OP_TOKEN" ]]; then
-    echo "ERROR: Failed to fetch SA token from 1Password."
+if [[ -z "$ANTHROPIC_KEY" ]]; then
+    echo "ERROR: Failed to fetch Anthropic API key from 1Password."
     exit 1
 fi
 
-# Encrypt the token via systemd-creds on the server.
-# The plaintext is piped through stdin — never appears in a command line or on disk.
-echo "$OP_TOKEN" | ${SSH_CMD} "sudo systemd-creds encrypt --name=op-token - /etc/research-agent/op-token && \
-    sudo chmod 600 /etc/research-agent/op-token && \
-    sudo chown root:root /etc/research-agent/op-token"
-echo "Token encrypted and placed."
+echo "$ANTHROPIC_KEY" | ${SSH_CMD} "sudo systemd-creds encrypt --name=anthropic-api-key - /etc/research-agent/anthropic-api-key && \
+    sudo chmod 600 /etc/research-agent/anthropic-api-key && \
+    sudo chown root:root /etc/research-agent/anthropic-api-key"
+echo "Anthropic API key encrypted and placed."
 echo ""
 
 echo "Fetching GitHub PAT..."
