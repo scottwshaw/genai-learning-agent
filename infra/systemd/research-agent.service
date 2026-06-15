@@ -8,12 +8,12 @@ Type=oneshot
 User=agent
 Group=agent
 
-ExecStart=/opt/research-agent/scripts/run-agent.sh
+ExecStart=/opt/research-agent/repo/run-agent.sh
 
-# Expose the 1Password service account token via $CREDENTIALS_DIRECTORY/op-token.
-# The file is encrypted at rest using a machine-specific key (via systemd-creds).
-# Only systemd on this specific machine can decrypt it.
-LoadCredentialEncrypted=op-token:/etc/research-agent/op-token
+# Secrets are encrypted at rest using a machine-specific key (via systemd-creds).
+# Only systemd on this specific machine can decrypt them. Placed at deploy time.
+LoadCredentialEncrypted=anthropic-api-key:/etc/research-agent/anthropic-api-key
+LoadCredentialEncrypted=github-pat:/etc/research-agent/github-pat
 
 # Research + critic + revision + push can take 20+ minutes
 TimeoutStartSec=1800
