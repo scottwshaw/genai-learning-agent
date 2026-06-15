@@ -110,6 +110,8 @@ else
     CONTAINER_ARGS+=(--no-commit)
 fi
 
+touch "${REPO_ROOT}/agent.log"
+
 docker run --rm \
     --read-only \
     --tmpfs /tmp \
@@ -119,6 +121,7 @@ docker run --rm \
     -v "${REPO_ROOT}:/workspace:ro" \
     -v "${REPO_ROOT}/briefs:/workspace/briefs" \
     -v "${REPO_ROOT}/eval-runs:/workspace/eval-runs" \
+    -v "${REPO_ROOT}/agent.log:/workspace/agent.log" \
     research-agent:latest \
     ./research.sh "${CONTAINER_ARGS[@]}"
 
