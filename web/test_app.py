@@ -475,3 +475,311 @@ class TestBriefReviewedTracking:
         assert resp.status_code == 200
         annotations = json.loads((briefs_dir / dirname / "annotations.json").read_text())
         assert annotations["_reviewed"]["interesting"] is True
+
+
+class TestExtractStarredItems:
+    """Extracting starred items from a brief's markdown."""
+
+    def test_extracts_starred_key_development(self):
+        """Given brief markdown with 2 Key Developments and KD 0 starred,
+        when extract_starred_items is called,
+        then it returns only the first KD under 'Key Developments'."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Key Developments\n\n"
+            "- **[First headline]**\n"
+            "  - **What changed:** Something happened.\n"
+            "  - **Why it matters:** It is important.\n"
+            "  - *Sources: [1]*\n\n"
+            "- **[Second headline]**\n"
+            "  - **What changed:** Another thing.\n"
+            "  - **Why it matters:** Also important.\n"
+            "  - *Sources: [2]*\n\n"
+            "## Sources\n\n"
+            "1. Source one\n"
+            "2. Source two\n"
+        )
+        annotations = {"key-developments/0": {"interesting": True}}
+        result = app_module.extract_starred_items(md, annotations)
+        assert "Key Developments" in result
+        assert len(result["Key Developments"]) == 1
+        assert "First headline" in result["Key Developments"][0]
+        assert "Second headline" not in result["Key Developments"][0]
+
+    def test_extracts_starred_landscape_trend(self):
+        """Given brief markdown with 2 Landscape Trends and trend 1 starred,
+        when extract_starred_items is called,
+        then it returns only the second trend under 'Landscape Trends'."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Landscape Trends\n\n"
+            "- **First trend.** Details.\n\n"
+            "- **Second trend.** More details.\n\n"
+            "## Sources\n\n"
+            "1. A source\n"
+        )
+        annotations = {"landscape-trends/1": {"interesting": True}}
+        result = app_module.extract_starred_items(md, annotations)
+        assert "Landscape Trends" in result
+        assert len(result["Landscape Trends"]) == 1
+        assert "Second trend" in result["Landscape Trends"][0]
+
+    def test_extracts_starred_notable_paper(self):
+        """Given a brief with a Notable Papers table and row 0 starred,
+        when extract_starred_items is called,
+        then it returns the table header and the starred row."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Notable Papers / Models / Tools\n\n"
+            "| Item | Date | Source | Summary |\n"
+            "|------|------|--------|---------|\n"
+            "| Paper A | Jun 2026 | [1] | Summary A |\n"
+            "| Paper B | Jun 2026 | [2] | Summary B |\n\n"
+            "## Sources\n\n"
+            "1. Source one\n"
+            "2. Source two\n"
+        )
+        annotations = {"notable-papers/0": {"interesting": True}}
+        result = app_module.extract_starred_items(md, annotations)
+        assert "Notable Papers / Models / Tools" in result
+        assert len(result["Notable Papers / Models / Tools"]) == 1
+        assert "Paper A" in result["Notable Papers / Models / Tools"][0]
+        assert "Paper B" not in result["Notable Papers / Models / Tools"][0]
+
+    def test_extracts_starred_deep_dive(self):
+        """Given a brief with a Technical Deep-Dive and it is starred,
+        when extract_starred_items is called,
+        then it returns the deep dive content."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Technical Deep-Dive\n\n"
+            "### Some Heading\n\n"
+            "Deep dive content here.\n\n"
+            "## Sources\n\n"
+            "1. A source\n"
+        )
+        annotations = {"technical-deep-dive/0": {"interesting": True}}
+        result = app_module.extract_starred_items(md, annotations)
+        assert "Technical Deep-Dive" in result
+        assert "Deep dive content" in result["Technical Deep-Dive"][0]
+
+    def test_returns_empty_when_nothing_starred(self):
+        """Given brief markdown with no starred annotations,
+        when extract_starred_items is called,
+        then it returns an empty dict."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Key Developments\n\n"
+            "- **[A headline]**\n"
+            "  - **What changed:** Something.\n\n"
+            "## Sources\n\n"
+            "1. A source\n"
+        )
+        annotations = {}
+        result = app_module.extract_starred_items(md, annotations)
+        assert result == {}
+
+    def test_ignores_reviewed_annotation(self):
+        """Given only a _reviewed annotation,
+        when extract_starred_items is called,
+        then it returns an empty dict (reviewed is not a starred item)."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Key Developments\n\n"
+            "- **[A headline]**\n"
+            "  - **What changed:** Something.\n\n"
+            "## Sources\n\n"
+            "1. A source\n"
+        )
+        annotations = {"_reviewed": {"interesting": True}}
+        result = app_module.extract_starred_items(md, annotations)
+        assert result == {}
+
+    def test_includes_resolved_references(self):
+        """Given a starred KD citing [1] and [2],
+        when extract_starred_items is called,
+        then the item text includes the resolved source lines."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Key Developments\n\n"
+            "- **[First headline]**\n"
+            "  - **What changed:** Something happened.\n"
+            "  - **Why it matters:** It is important.\n"
+            "  - *Sources: [1], [2]*\n\n"
+            "## Sources\n\n"
+            "1. AISI Report (Jun 2026) — https://example.com/aisi [Tier 1 — Research]\n"
+            "2. TechCrunch (Jun 2026) — https://example.com/tc [Tier 2 — News]\n"
+        )
+        annotations = {"key-developments/0": {"interesting": True}}
+        result = app_module.extract_starred_items(md, annotations)
+        item = result["Key Developments"][0]
+        assert "https://example.com/aisi" in item
+        assert "https://example.com/tc" in item
+        assert "AISI Report" in item
+
+    def test_references_not_duplicated_from_other_items(self):
+        """Given two KDs citing different sources and only KD 1 starred,
+        when extract_starred_items is called,
+        then only KD 1's references appear, not KD 0's."""
+        import app as app_module
+
+        md = (
+            "# Topic — Research Brief (2026-06-14)\n\n"
+            "## Key Developments\n\n"
+            "- **[First headline]**\n"
+            "  - *Sources: [1]*\n\n"
+            "- **[Second headline]**\n"
+            "  - *Sources: [2]*\n\n"
+            "## Sources\n\n"
+            "1. Source one — https://example.com/one\n"
+            "2. Source two — https://example.com/two\n"
+        )
+        annotations = {"key-developments/1": {"interesting": True}}
+        result = app_module.extract_starred_items(md, annotations)
+        item = result["Key Developments"][0]
+        assert "Source two" in item
+        assert "Source one" not in item
+
+
+class TestCompileWeeklyMarkdown:
+    """Compiling starred items across briefs into a single markdown document."""
+
+    def test_compiles_starred_items_from_multiple_briefs(self, client, briefs_dir):
+        """Given two briefs with starred annotations,
+        when compile_weekly_markdown is called,
+        then it returns markdown with starred items grouped by brief."""
+        import json
+        import app as app_module
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+        (briefs_dir / f"{today}-agentic-systems" / "annotations.json").write_text(
+            json.dumps({"key-developments/0": {"interesting": True}})
+        )
+        (briefs_dir / f"{yesterday}-models-and-market" / "annotations.json").write_text(
+            json.dumps({"key-developments/0": {"interesting": True}})
+        )
+
+        result = app_module.compile_weekly_markdown()
+        assert "Weekly Research Compilation" in result
+        assert "Agentic Systems" in result
+        assert "Models" in result
+        assert "First KD headline" in result
+        assert "Some headline" in result
+
+    def test_skips_briefs_with_no_starred_items(self, client, briefs_dir):
+        """Given one brief with starred items and one without,
+        when compile_weekly_markdown is called,
+        then only the brief with starred items appears."""
+        import json
+        import app as app_module
+
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        (briefs_dir / f"{today}-agentic-systems" / "annotations.json").write_text(
+            json.dumps({"key-developments/0": {"interesting": True}})
+        )
+
+        result = app_module.compile_weekly_markdown()
+        assert "Agentic Systems" in result
+        assert "Models" not in result
+
+    def test_returns_empty_message_when_nothing_starred(self, client, briefs_dir):
+        """Given no briefs have starred items,
+        when compile_weekly_markdown is called,
+        then it returns a document indicating no starred items."""
+        import app as app_module
+
+        result = app_module.compile_weekly_markdown()
+        assert "Weekly Research Compilation" in result
+        assert "No starred items" in result
+
+    def test_includes_date_range_in_heading(self, client, briefs_dir):
+        """Given briefs from today and yesterday,
+        when compile_weekly_markdown is called,
+        then the heading includes the date range."""
+        import json
+        import app as app_module
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+        (briefs_dir / f"{today}-agentic-systems" / "annotations.json").write_text(
+            json.dumps({"key-developments/0": {"interesting": True}})
+        )
+
+        result = app_module.compile_weekly_markdown()
+        assert yesterday in result
+        assert today in result
+
+
+class TestWeeklyCompilationRoute:
+    """GET /compilation/weekly returns a downloadable markdown file."""
+
+    def test_returns_markdown_file(self, client, briefs_dir):
+        """Given briefs with starred items exist,
+        when I GET /compilation/weekly,
+        then I get a 200 with a markdown file download."""
+        import json
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        (briefs_dir / f"{today}-agentic-systems" / "annotations.json").write_text(
+            json.dumps({"key-developments/0": {"interesting": True}})
+        )
+
+        resp = client.get("/compilation/weekly")
+        assert resp.status_code == 200
+        assert resp.content_type == "text/markdown; charset=utf-8"
+        assert "attachment" in resp.headers.get("Content-Disposition", "")
+        assert "weekly-compilation-" in resp.headers.get("Content-Disposition", "")
+        assert ".md" in resp.headers.get("Content-Disposition", "")
+
+    def test_body_contains_starred_items(self, client, briefs_dir):
+        """Given a brief with a starred KD,
+        when I GET /compilation/weekly,
+        then the response body contains that item."""
+        import json
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        (briefs_dir / f"{today}-agentic-systems" / "annotations.json").write_text(
+            json.dumps({"key-developments/0": {"interesting": True}})
+        )
+
+        resp = client.get("/compilation/weekly")
+        body = resp.data.decode()
+        assert "First KD headline" in body
+
+    def test_empty_compilation_still_downloads(self, client, briefs_dir):
+        """Given no starred items,
+        when I GET /compilation/weekly,
+        then I still get a 200 with the empty-state message."""
+        resp = client.get("/compilation/weekly")
+        assert resp.status_code == 200
+        assert "No starred items" in resp.data.decode()
+
+
+class TestWeeklyCompilationButton:
+    """Download button on the queue page."""
+
+    def test_queue_page_has_compilation_link(self, client):
+        """Given the queue page,
+        when I load it,
+        then there is a link to /compilation/weekly."""
+        resp = client.get("/")
+        html = resp.data.decode()
+        assert '/compilation/weekly' in html

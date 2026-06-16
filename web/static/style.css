@@ -158,13 +158,16 @@ nav a.active {
     margin-top: 8px;
 }
 
-.sync-controls button {
+.sync-controls button,
+.sync-controls .btn-download {
     padding: 8px 16px;
     font-size: 0.9rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     background: #fff;
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
 }
 
 .sync-controls button:active {

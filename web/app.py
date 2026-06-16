@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from html import escape as _html_escape
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, render_template, request
+from flask import Flask, Response, abort, jsonify, render_template, request
 import mistune
 
 app = Flask(__name__)
@@ -237,10 +237,128 @@ def get_recent_briefs(days=7):
     return briefs
 
 
+_SLUG_TO_SECTION = {v: k for k, v in _SECTION_SLUGS.items()}
+
+
+def _resolve_refs(item_text: str, sources: dict) -> str:
+    """Append resolved source lines for any [N] citations found in item_text."""
+    refs = list(dict.fromkeys(int(n) for n in re.findall(r'\[(\d+)\]', item_text)))
+    resolved = [f"  - [{n}] {sources[n]}" for n in refs if n in sources]
+    if not resolved:
+        return item_text
+    return item_text.rstrip() + '\n' + '\n'.join(resolved)
+
+
+def extract_starred_items(md: str, annotations: dict) -> dict:
+    """Extract only the starred (interesting) items from brief markdown.
+
+    Returns {section_name: [item_text, ...]} for sections that have starred items.
+    """
+    starred_keys = {
+        k for k, v in annotations.items()
+        if k != "_reviewed" and v.get("interesting")
+    }
+    if not starred_keys:
+        return {}
+
+    sources = _parse_sources(md)
+    sections = re.split(r'^## ', md, flags=re.MULTILINE)
+    parsed = {}
+    for section in sections[1:]:
+        heading, _, body = section.partition('\n')
+        heading = heading.strip()
+        slug = _SECTION_SLUGS.get(heading)
+        if not slug:
+            continue
+        relevant = [k for k in starred_keys if k.startswith(slug + "/")]
+        if not relevant:
+            continue
+        indices = {int(k.split("/")[1]) for k in relevant}
+
+        if heading in _LIST_ITEM_SECTIONS:
+            items = []
+            current_lines = []
+            for line in body.split('\n'):
+                if line.startswith('- **'):
+                    if current_lines:
+                        items.append('\n'.join(current_lines))
+                    current_lines = [line]
+                elif current_lines:
+                    current_lines.append(line)
+            if current_lines:
+                items.append('\n'.join(current_lines))
+            parsed[heading] = [
+                _resolve_refs(items[i], sources)
+                for i in sorted(indices) if i < len(items)
+            ]
+
+        elif heading in _TABLE_ITEM_SECTIONS:
+            lines = [l for l in body.strip().split('\n') if l.strip()]
+            header_line = lines[0] if lines else ""
+            sep_line = lines[1] if len(lines) > 1 else ""
+            data_rows = lines[2:]
+            selected = [data_rows[i] for i in sorted(indices) if i < len(data_rows)]
+            if selected:
+                table = header_line + '\n' + sep_line + '\n' + '\n'.join(selected)
+                parsed[heading] = [_resolve_refs(table, sources)]
+
+        elif heading in _BLOCK_ITEM_SECTIONS:
+            if 0 in indices:
+                parsed[heading] = [_resolve_refs(body.strip(), sources)]
+
+    return parsed
+
+
+def compile_weekly_markdown() -> str:
+    """Compile starred items from the last 7 days into a single markdown document."""
+    from annotations import load_annotations
+
+    briefs = get_recent_briefs()
+    dates = [b["date"] for b in briefs]
+    date_min = min(dates) if dates else datetime.now().strftime("%Y-%m-%d")
+    date_max = max(dates) if dates else datetime.now().strftime("%Y-%m-%d")
+
+    lines = [f"# Weekly Research Compilation — {date_min} to {date_max}\n"]
+    has_content = False
+
+    for brief_info in briefs:
+        brief_dir = BRIEFS_DIR / brief_info["filename"]
+        md = (brief_dir / "brief.md").read_text()
+        annotations = load_annotations(brief_dir)
+        starred = extract_starred_items(md, annotations)
+        if not starred:
+            continue
+        has_content = True
+        lines.append(f"\n---\n")
+        lines.append(f"## {brief_info['topic']} ({brief_info['date']})\n")
+        for section_name, items in starred.items():
+            lines.append(f"### {section_name}\n")
+            for item in items:
+                lines.append(item.rstrip() + "\n")
+
+    if not has_content:
+        lines.append("\nNo starred items in the last 7 days.\n")
+
+    return "\n".join(lines)
+
+
 @app.route("/")
 def queue():
     briefs = get_recent_briefs()
     return render_template("queue.html", briefs=briefs)
+
+
+@app.route("/compilation/weekly")
+def weekly_compilation():
+    md = compile_weekly_markdown()
+    today = datetime.now().strftime("%Y-%m-%d")
+    return Response(
+        md,
+        mimetype="text/markdown",
+        headers={
+            "Content-Disposition": f'attachment; filename="weekly-compilation-{today}.md"'
+        },
+    )
 
 
 @app.route("/brief/<path:dirname>")
