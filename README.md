@@ -105,6 +105,33 @@ ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
 
 Eval outputs go to `eval-runs/YYYYMMDD-HHMMSS/` with scores, metadata, and the generated brief.
 
+## Annotation web app
+
+A Flask web app for reviewing and annotating briefs, served via Tailscale at **https://research-agent.tail45b6f0.ts.net** (accessible from any device on the tailnet).
+
+### Features
+
+- **Brief queue** — shows briefs from the last 7 days, with reviewed briefs dimmed
+- **Brief view** — renders markdown as HTML with hoverable source tooltips on each item
+- **Star items** — click the star on any Key Development, Landscape Trend, Notable Paper, or Deep Dive to mark it as interesting
+- **Mark reviewed** — toggle a brief as reviewed so it dims on the queue
+- **Weekly compilation** — download a markdown file of all starred items from the last 7 days, with resolved source references
+- **Git sync** — Pull/Push buttons to sync annotations with the repo
+
+### How annotations work
+
+Each brief directory (`briefs/YYYY-MM-DD-slug/`) has an `annotations.json` file alongside `brief.md`. Annotations are keyed by section and item index (e.g., `key-developments/0`, `landscape-trends/1`, `notable-papers/2`). The special key `_reviewed` tracks brief-level review status.
+
+### Running locally
+
+```bash
+cd web && BRIEFS_DIR=../briefs flask --app app run --port 5001
+```
+
+### On the server
+
+The web app runs as a Docker container managed by `web-app.service`, proxied via Tailscale serve (HTTPS). The GitHub PAT for git sync is mounted as a file at `/run/secrets/github-pat` (not passed as an env var).
+
 ## Server deployment
 
 The agent runs on a Hetzner CX23 VPS, provisioned with Terraform and configured via cloud-init. See [`infra/README.md`](infra/README.md) for full details.
@@ -169,16 +196,24 @@ prompts/
   revision-prompt.md     # Revision prompt template
   scoring-prompt.md      # Scoring rubric prompt
 briefs/
-  YYYY-MM-DD-<slug>.md   # Daily research briefs
+  YYYY-MM-DD-<slug>/
+    brief.md             # Daily research brief
+    annotations.json     # User annotations (stars, reviewed status)
 eval-runs/
   YYYYMMDD-HHMMSS/       # Eval session outputs
 evaluation/
   rubric.json            # Scoring dimensions and weights
+web/
+  app.py                 # Flask annotation web app
+  annotations.py         # Annotation persistence (load/save JSON)
+  git_sync.py            # Git pull/commit/push from web UI
+  templates/             # Jinja2 templates (queue, brief view)
+  static/                # CSS and JS (starring, tooltips, reviewed toggle)
 infra/
   terraform/             # Hetzner server provisioning
-  systemd/               # Service and timer units
-  scripts/               # Bootstrap and deploy scripts
-  docker/                # Dockerfile
+  systemd/               # Service and timer units (research-agent, web-app)
+  scripts/               # Deploy, web-start, git-askpass
+  docker/                # Dockerfiles (agent, web)
 .topic-index             # Round-robin state (gitignored)
 agent.log                # Runtime log (gitignored)
 ```
