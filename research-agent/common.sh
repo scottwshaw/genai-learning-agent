@@ -2,7 +2,8 @@
 # =============================================================================
 # common.sh — Shared setup for research agent scripts
 # =============================================================================
-# Source this from any script in the repo root. Provides:
+# Source this from any script in research-agent/. Provides:
+#   AGENT_DIR      — absolute path to the research-agent directory
 #   REPO_ROOT      — absolute path to the repository root
 #   PYTHON_BIN     — path to python3 (venv-aware)
 #   AGENT_CLI      — path to agent_cli.py
@@ -11,8 +12,9 @@
 #   resolve_topic  — function that sets TOPIC_* variables
 # =============================================================================
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENT_CLI="$REPO_ROOT/agent_cli.py"
+AGENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$AGENT_DIR/.." && pwd)"
+AGENT_CLI="$AGENT_DIR/agent_cli.py"
 TOPICS_FILE="$REPO_ROOT/topics.json"
 STATE_FILE="$REPO_ROOT/.topic-index"
 

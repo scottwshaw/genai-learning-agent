@@ -26,16 +26,17 @@ The agent runs daily on a remote server. Each run:
 ## Architecture
 
 ```
-research.sh                  # Main orchestrator — topic resolution, prompt rendering, API call, commit
-  ├── common.sh              # Shared shell boilerplate (Python resolution, topic resolution)
-  ├── agent_cli.py           # CLI tool for topic resolution, prompt rendering, scoring reports
-  ├── agent_utils.py         # Shared Python utilities (retry logic, prompt rendering, data models)
-  └── run_research.py        # Anthropic API caller — generation, critic, revision
-
-eval.sh                      # Eval runner — generates a brief, scores it, optionally compares two runs
-  └── score_brief.py         # Model-based rubric scorer
-
-run-agent.sh                 # Unified runner — credentials, Docker run, branch/push/PR (local & server)
+research-agent/                  # All research agent code
+  research.sh                    # Main orchestrator — topic resolution, prompt rendering, API call, commit
+    ├── common.sh                # Shared shell boilerplate (AGENT_DIR, REPO_ROOT, topic resolution)
+    ├── agent_cli.py             # CLI tool for topic resolution, prompt rendering, scoring reports
+    ├── agent_utils.py           # Shared Python utilities (retry logic, prompt rendering, data models)
+    └── run_research.py          # Anthropic API caller — generation, critic, revision
+  eval.sh                        # Eval runner — generates a brief, scores it, optionally compares two runs
+    └── score_brief.py           # Model-based rubric scorer
+  run-agent.sh                   # Unified runner — credentials, Docker run, branch/push/PR (local & server)
+  prompts/                       # Prompt templates
+  evaluation/                    # Scoring rubric
 ```
 
 ### Pipeline phases
@@ -70,34 +71,34 @@ python3 -m venv .venv
 
 Without Docker (runs research.sh directly):
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ./research.sh --no-commit
+ANTHROPIC_API_KEY=sk-ant-... ./research-agent/research.sh --no-commit
 ```
 
 With Docker (same path as the server, but credentials from env):
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ./run-agent.sh --no-commit
+ANTHROPIC_API_KEY=sk-ant-... ./research-agent/run-agent.sh --no-commit
 ```
 
 Override topic (by slug or index):
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ./run-agent.sh --topic safety-assurance-and-governance --no-commit
+ANTHROPIC_API_KEY=sk-ant-... ./research-agent/run-agent.sh --topic safety-assurance-and-governance --no-commit
 ```
 
 ### Run evals
 
 Generate and score a brief:
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ./eval.sh --topic safety-assurance-and-governance
+ANTHROPIC_API_KEY=sk-ant-... ./research-agent/eval.sh --topic safety-assurance-and-governance
 ```
 
 Score an existing brief:
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ./eval.sh --topic safety-assurance-and-governance --brief path/to/brief.md
+ANTHROPIC_API_KEY=sk-ant-... ./research-agent/eval.sh --topic safety-assurance-and-governance --brief path/to/brief.md
 ```
 
 Compare two runs:
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... ./eval.sh \
+ANTHROPIC_API_KEY=sk-ant-... ./research-agent/eval.sh \
   --topic safety-assurance-and-governance \
   --compare-model claude-sonnet-4-6 \
   --compare-label challenger
@@ -181,28 +182,25 @@ Prompt and script changes are picked up automatically — the bootstrap runs `gi
 ## File structure
 
 ```
-research.sh              # Main orchestrator
-eval.sh                  # Eval runner
-run-agent.sh             # Unified runner (local & server)
-common.sh                # Shared shell boilerplate
-run_research.py          # Anthropic API caller (generation + critic + revision)
-score_brief.py           # Model-based rubric scorer
-agent_cli.py             # CLI for topic resolution, prompt rendering, scoring
-agent_utils.py           # Shared Python utilities (retry, rendering, data models)
-topics.json              # Topic definitions, focus areas, and priority sources
-prompts/
-  research-prompt.md     # Research prompt template
-  critic-prompt.md       # Compliance checklist for critic
-  revision-prompt.md     # Revision prompt template
-  scoring-prompt.md      # Scoring rubric prompt
+research-agent/          # Research agent code
+  research.sh            # Main orchestrator
+  eval.sh                # Eval runner
+  run-agent.sh           # Unified runner (local & server)
+  common.sh              # Shared shell boilerplate (AGENT_DIR, REPO_ROOT)
+  run_research.py        # Anthropic API caller (generation + critic + revision)
+  score_brief.py         # Model-based rubric scorer
+  agent_cli.py           # CLI for topic resolution, prompt rendering, scoring
+  agent_utils.py         # Shared Python utilities (retry, rendering, data models)
+  discovery.py           # Scholarly discovery (Semantic Scholar, OpenAlex, arXiv)
+  prompts/               # Prompt templates (research, critic, revision, scoring)
+  evaluation/            # Scoring rubric
+topics.json              # Topic definitions (shared between agent and web app)
 briefs/
   YYYY-MM-DD-<slug>/
     brief.md             # Daily research brief
     annotations.json     # User annotations (stars, reviewed status)
 eval-runs/
   YYYYMMDD-HHMMSS/       # Eval session outputs
-evaluation/
-  rubric.json            # Scoring dimensions and weights
 web/
   app.py                 # Flask annotation web app
   annotations.py         # Annotation persistence (load/save JSON)

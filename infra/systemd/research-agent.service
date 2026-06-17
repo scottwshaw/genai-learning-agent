@@ -8,7 +8,7 @@ Type=oneshot
 User=agent
 Group=agent
 
-ExecStart=/opt/research-agent/repo/run-agent.sh
+ExecStart=/opt/research-agent/repo/research-agent/run-agent.sh
 
 # Secrets are encrypted at rest using a machine-specific key (via systemd-creds).
 # Only systemd on this specific machine can decrypt them. Placed at deploy time.

@@ -30,7 +30,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TOPICS_FILE = SCRIPT_DIR / "topics.json"
+TOPICS_FILE = SCRIPT_DIR.parent / "topics.json"
 
 
 def log(msg: str) -> None:

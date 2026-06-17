@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir anthropic
 
 RUN git config --global --add safe.directory /workspace
 
-WORKDIR /workspace
+WORKDIR /workspace/research-agent

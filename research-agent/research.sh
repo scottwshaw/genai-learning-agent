@@ -98,7 +98,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 # ---------------------------------------------------------------------------
 BRIEFS_DIR="$REPO_ROOT/briefs"
 LOG_FILE="$REPO_ROOT/agent.log"
-PROMPT_TEMPLATE="$REPO_ROOT/prompts/research-prompt.md"
+PROMPT_TEMPLATE="$AGENT_DIR/prompts/research-prompt.md"
 DATE="$(date +%Y-%m-%d)"
 MODEL="${ANTHROPIC_MODEL:-claude-sonnet-4-6}"
 
@@ -202,7 +202,7 @@ if [[ -n "$CRITIC_BRIEF" ]]; then
     BRIEF_FILE="$CRITIC_BRIEF"
     log "Critic-only mode: running critic on $CRITIC_BRIEF"
     if ! ENABLE_CRITIC=1 ANTHROPIC_MODEL="$MODEL" \
-        "$PYTHON_BIN" "$REPO_ROOT/run_research.py" --brief "$CRITIC_BRIEF" \
+        "$PYTHON_BIN" "$AGENT_DIR/run_research.py" --brief "$CRITIC_BRIEF" \
         > "${CRITIC_BRIEF%.md}-revised.md" 2>>"$LOG_FILE"; then
         log "ERROR: critic run failed"
         exit 1
@@ -245,7 +245,7 @@ if [[ "$SKIP_DISCOVERY" == "true" ]]; then
 else
     log "Running scholarly discovery for topic: $TOPIC_SLUG"
     DISCOVERY_DAYS="${DISCOVERY_DAYS:-30}"
-    if DISCOVERY_JSON="$("$PYTHON_BIN" "$REPO_ROOT/discovery.py" \
+    if DISCOVERY_JSON="$("$PYTHON_BIN" "$AGENT_DIR/discovery.py" \
         --topic "$TOPIC_SLUG" \
         --topics-file "$TOPICS_FILE" \
         --days "$DISCOVERY_DAYS" \
@@ -286,7 +286,7 @@ log "Invoking: python3 run_research.py (model=$MODEL)"
 
 if ! echo "$RESEARCH_PROMPT" \
     | ANTHROPIC_MODEL="$MODEL" ENABLE_CRITIC="${ENABLE_CRITIC:-}" \
-    "$PYTHON_BIN" "$REPO_ROOT/run_research.py" \
+    "$PYTHON_BIN" "$AGENT_DIR/run_research.py" \
     --topic-label "$TOPIC_LABEL" --date "$DATE" --topic-focus "$TOPIC_FOCUS" \
     --topics-file "$TOPICS_FILE" --topic-slug "$TOPIC_SLUG" \
     > "$BRIEF_FILE" 2>>"$LOG_FILE"; then
@@ -350,7 +350,7 @@ if [[ "$EVAL_MODE" == true ]]; then
     SCORE_REPORT="${BRIEF_FILE%.md}-scores.md"
     log "Running rubric evaluation (scoring_model=$SCORING_MODEL)..."
     if SCORING_MODEL="$SCORING_MODEL" \
-        "$PYTHON_BIN" "$REPO_ROOT/score_brief.py" \
+        "$PYTHON_BIN" "$AGENT_DIR/score_brief.py" \
         "$BRIEF_FILE" \
         --topic-label "$TOPIC_LABEL" \
         --output json \

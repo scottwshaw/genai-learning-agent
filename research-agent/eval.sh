@@ -87,9 +87,9 @@ done
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 # ---------------------------------------------------------------------------
-# Defaults that depend on REPO_ROOT
+# Defaults that depend on AGENT_DIR / REPO_ROOT
 # ---------------------------------------------------------------------------
-PROMPT="${PROMPT:-$REPO_ROOT/prompts/research-prompt.md}"
+PROMPT="${PROMPT:-$AGENT_DIR/prompts/research-prompt.md}"
 LABEL="${LABEL:-$MODEL}"
 COMPARE_PROMPT="${COMPARE_PROMPT:-$PROMPT}"
 
@@ -208,7 +208,7 @@ run_brief() {
 
     log "Running $label (model=$model, prompt=$(basename "$prompt_file"))..."
     ANTHROPIC_MODEL="$model" ENABLE_CRITIC=1 \
-        "$REPO_ROOT/research.sh" \
+        "$AGENT_DIR/research.sh" \
         --output-file "$out_file" \
         --topic-slug "$TOPIC_SLUG" \
         --prompt-file "$prompt_file" \
@@ -241,7 +241,7 @@ score_brief_file() {
 
     log "Scoring $label..."
     SCORING_MODEL="$SCORING_MODEL" \
-        "$PYTHON_BIN" "$REPO_ROOT/score_brief.py" \
+        "$PYTHON_BIN" "$AGENT_DIR/score_brief.py" \
         "$brief_file" \
         --topic-label "$TOPIC_LABEL" \
         --output json \
