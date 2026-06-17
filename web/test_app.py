@@ -783,3 +783,55 @@ class TestWeeklyCompilationButton:
         resp = client.get("/")
         html = resp.data.decode()
         assert '/compilation/weekly' in html
+
+
+class TestFreeTextAnnotation:
+    """Free-text annotation on items."""
+
+    def test_saved_text_appears_as_data_attribute(self, client, briefs_dir):
+        """Given an item has a text annotation saved,
+        when I view the brief,
+        then the item has a data-text attribute with the saved text."""
+        import json
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        ann_path = briefs_dir / dirname / "annotations.json"
+        ann_path.write_text(json.dumps({
+            "key-developments/0": {"interesting": True, "text": "This is my reaction."}
+        }))
+
+        resp = client.get(f"/brief/{dirname}")
+        html = resp.data.decode()
+        assert 'data-text="This is my reaction."' in html
+
+    def test_post_text_annotation_saves(self, client, briefs_dir):
+        """Given a brief exists,
+        when I POST an annotation with a text field,
+        then the text is saved to annotations.json."""
+        import json
+        today = datetime.now().strftime("%Y-%m-%d")
+        dirname = f"{today}-agentic-systems"
+        resp = client.post(
+            f"/brief/{dirname}/annotate",
+            json={"item_key": "key-developments/0", "text": "My note here"},
+        )
+        assert resp.status_code == 200
+        annotations = json.loads((briefs_dir / dirname / "annotations.json").read_text())
+        assert annotations["key-developments/0"]["text"] == "My note here"
+
+    def test_empty_text_not_in_data_attribute(self, client, briefs_dir):
+        """Given an item has no text annotation,
+        when I view the brief,
+        then the item does not have a data-text attribute."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        resp = client.get(f"/brief/{today}-agentic-systems")
+        html = resp.data.decode()
+        assert 'data-text=' not in html
+
+    def test_brief_page_includes_annotation_panel_css(self, client):
+        """Given CSS is loaded,
+        when the stylesheet is fetched,
+        then annotation-panel styles are defined."""
+        resp = client.get("/static/style.css")
+        css = resp.data.decode()
+        assert ".annotation-panel" in css
