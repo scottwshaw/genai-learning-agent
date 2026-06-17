@@ -205,10 +205,15 @@ def _wrap_table_rows(html: str, sources: dict, section_slug: str = "") -> str:
 def _apply_annotations(html: str, annotations: dict) -> str:
     """Inject annotation data attributes into items based on their data-item-key."""
     for key, data in annotations.items():
+        attrs = ""
         if data.get("interesting") is True:
+            attrs += ' data-interesting="true"'
+        if data.get("text"):
+            attrs += f' data-text="{_html_escape(data["text"])}"'
+        if attrs:
             html = html.replace(
                 f'data-item-key="{key}"',
-                f'data-item-key="{key}" data-interesting="true"',
+                f'data-item-key="{key}"{attrs}',
             )
     return html
 
