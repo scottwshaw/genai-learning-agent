@@ -1,8 +1,14 @@
 {
   "key-developments/0": {
-    "interesting": true
+    "text": "This sort of cryptographically secured trust mechanism has been missing AFAIK.  I know we are applying network security when accessing remote models, but how do we know the model that is responding is actually the same model we think we're using?  This seems like an unaddressed issue."
   },
   "landscape-trends/0": {
+    "text": "Need to fact check this, but the industry seem hellbent on OTel Semantic Conventions when we're still very much learning what sort of telemetry needs to be collected.  OTel as a protocol for tracing is great, but landing on a standard for what data needs to be collected seems premature"
+  },
+  "landscape-trends/2": {
+    "text": "Same comment as on the key development.  This is interesting from an trust and compliance perspective"
+  },
+  "_reviewed": {
     "interesting": true
   }
 }
