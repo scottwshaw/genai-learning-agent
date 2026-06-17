@@ -166,18 +166,23 @@ fi
 echo ""
 
 # ---------------------------------------------------------------------------
-# 9. Configure Tailscale serve (HTTPS proxy → Flask on port 5001)
+# 9. Authenticate Tailscale and configure HTTPS proxy → Flask on port 5001
 # ---------------------------------------------------------------------------
+echo "Authenticating Tailscale..."
+TS_AUTHKEY="$(op item get tailscale --vault Private --fields password --reveal)"
+if [[ -z "$TS_AUTHKEY" ]]; then
+    echo "ERROR: Failed to fetch Tailscale auth key from 1Password."
+    exit 1
+fi
+${SSH_CMD} "sudo tailscale up --authkey=${TS_AUTHKEY}"
+unset TS_AUTHKEY
+echo "Tailscale authenticated."
+
 echo "Configuring Tailscale serve..."
-${SSH_CMD} "sudo tailscale serve --bg https / http://localhost:5001" || \
-    echo "NOTE: Tailscale not yet authenticated. Run 'sudo tailscale up --authkey=<key>' on the server first."
+${SSH_CMD} "sudo tailscale serve --bg https / http://localhost:5001"
 
 WEB_URL="$(${SSH_CMD} "tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty'" 2>/dev/null || true)"
-if [[ -n "$WEB_URL" ]]; then
-    echo "Web app URL: https://${WEB_URL}"
-else
-    echo "Web app URL: https://<hostname>.<tailnet>.ts.net (available after tailscale up)"
-fi
+echo "Web app URL: https://${WEB_URL}"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -197,5 +202,4 @@ echo "  ssh ${SSH_USER}@${SERVER_IP} 'sudo systemctl start research-agent'      
 echo "  ssh ${SSH_USER}@${SERVER_IP} 'journalctl -u research-agent -f'           # watch logs"
 echo "  ssh ${SSH_USER}@${SERVER_IP} 'systemctl status web-app'                  # check web app"
 echo "  ssh ${SSH_USER}@${SERVER_IP} 'journalctl -u web-app -f'                  # web app logs"
-echo "  ssh ${SSH_USER}@${SERVER_IP} 'sudo tailscale up --authkey=<key>'         # connect Tailscale (first time)"
 echo "  ssh ${SSH_USER}@${SERVER_IP} 'tailscale serve status'                    # check HTTPS proxy"

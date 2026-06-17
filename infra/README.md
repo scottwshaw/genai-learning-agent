@@ -124,19 +124,16 @@ terraform destroy
 
 The Flask annotation app (`web/app.py`) runs on the server and is accessible from your phone via Tailscale — no open ports, no domain required.
 
-### First-time Tailscale setup
+### Tailscale setup
 
-1. Generate an auth key at https://login.tailscale.com/admin/settings/keys and store it in 1Password
-2. After `deploy.sh` completes, SSH to the server and authenticate:
-   ```bash
-   ssh deploy@$SERVER sudo tailscale up --authkey=<key-from-1password>
-   ```
-3. Install Tailscale on your phone and sign in with your Apple ID
-4. The web app URL will be `https://<hostname>.<tailnet>.ts.net`
+`deploy.sh` automatically authenticates Tailscale using the auth key from 1Password (`tailscale` item in `Private` vault, `password` field). Generate an auth key at https://login.tailscale.com/admin/settings/keys and store it there before first deploy.
+
+The web app URL is `https://research-agent.tail45b6f0.ts.net`.
 
 ### Access
 
-- Open Tailscale on your phone, then browse to `https://<hostname>.ts.net`
+- Install Tailscale on your phone and sign in with your Apple ID
+- Browse to `https://research-agent.tail45b6f0.ts.net`
 - Only devices on your Tailscale network can reach the app (auth = Tailscale membership)
 - **Pull** button fetches new briefs from GitHub
 - **Save & Push** button commits all annotation changes and pushes to main
