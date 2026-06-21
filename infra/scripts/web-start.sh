@@ -10,6 +10,7 @@
 set -euo pipefail
 
 REPO_DIR="/opt/research-agent/repo"
+WEB_REPO_DIR="/opt/research-agent/web-repo"
 SCRIPTS_DIR="/opt/research-agent/scripts"
 
 if [[ -z "${CREDENTIALS_DIRECTORY:-}" ]]; then
@@ -22,11 +23,19 @@ fi
 # The askpass script inside the container reads from this file.
 CRED_FILE="${CREDENTIALS_DIRECTORY}/github-pat"
 
+# Create a separate clone for the web app so it doesn't conflict
+# with the research agent's repo when both push concurrently.
+if [[ ! -d "$WEB_REPO_DIR/.git" ]]; then
+    GIT_ASKPASS="$SCRIPTS_DIR/git-askpass.sh" GITHUB_PAT="$(cat "$CRED_FILE")" \
+        git clone https://github.com/scottwshaw/genai-learning-agent.git "$WEB_REPO_DIR"
+    chown -R "$(id -u):$(id -g)" "$WEB_REPO_DIR"
+fi
+
 exec docker run --rm \
     --name research-agent-web \
     --user "$(id -u):$(id -g)" \
     -p 5001:5001 \
-    -v "${REPO_DIR}:/workspace" \
+    -v "${WEB_REPO_DIR}:/workspace" \
     -v "${CRED_FILE}:/run/secrets/github-pat:ro" \
     -e BRIEFS_DIR=/workspace/briefs \
     -e TOPICS_FILE=/workspace/topics.json \

@@ -5,6 +5,8 @@ Requires=docker.service
 
 [Service]
 Type=simple
+User=agent
+Group=agent
 ExecStart=/opt/research-agent/scripts/web-start.sh
 ExecStop=/usr/bin/docker stop research-agent-web
 Restart=on-failure
