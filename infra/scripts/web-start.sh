@@ -24,6 +24,7 @@ CRED_FILE="${CREDENTIALS_DIRECTORY}/github-pat"
 
 exec docker run --rm \
     --name research-agent-web \
+    --user "$(id -u):$(id -g)" \
     -p 5001:5001 \
     -v "${REPO_DIR}:/workspace" \
     -v "${CRED_FILE}:/run/secrets/github-pat:ro" \
