@@ -235,7 +235,7 @@ stage_tailscale() {
 
     # Always re-authenticate. TS_AUTHKEY was fetched up front.
     echo "Authenticating Tailscale..."
-    ${SSH_CMD} "sudo tailscale up --authkey=${TS_AUTHKEY}"
+    printf '%s' "$TS_AUTHKEY" | ${SSH_CMD} "sudo tailscale up --authkey=file:/dev/stdin"
     echo "Tailscale authenticated."
     unset TS_AUTHKEY
 
