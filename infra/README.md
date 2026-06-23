@@ -1,42 +1,34 @@
 # Infrastructure — Research Agent on Hetzner
 
-Deploys the research agent to a Hetzner CX22 VPS. Runs daily via systemd timer, containerised with Docker, secrets fetched from 1Password at runtime.
+Runs a daily GenAI research agent plus a Flask annotation web app on a Hetzner CX23 VPS (Ubuntu 24.04). Both services are Docker containers managed by systemd. The annotation web app is accessible from your phone via Tailscale — no open ports, no domain required.
 
 ## Prerequisites
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
-- [1Password CLI](https://developer.1password.com/docs/cli/get-started/) (`op`) installed locally
-- A Hetzner Cloud account with an API token stored in 1Password
-- A 1Password service account (see below)
-- An SSH key pair (defaults to `~/.ssh/id_ed25519`)
+- [1Password CLI](https://developer.1password.com/docs/cli/get-started/) (`op`) installed and signed in
+- [Tailscale](https://tailscale.com/download) installed on any device you want to reach the web app from
+- A Hetzner Cloud account with an API token in 1Password
 
 ## 1Password Setup
 
-### Hetzner API Token (local use)
+### Hetzner API token (Terraform only, local use)
 
-Stored in your personal vault. Used only when running Terraform from your Mac.
+| Vault | Item | Field |
+|-------|------|-------|
+| `Private` | `HETZNER_API_KEY` | `credential` |
+| `Private` | `Hetzner From Personal Laptop` | `public key` |
 
-- Item: `HETZNER_API_KEY` in `Private` vault — `credential` field
+### Application secrets (vault: `research-agent`)
 
-### Service Account Vault
+| Item | Field | Value |
+|------|-------|-------|
+| `ANTHROPIC_API_KEY` | `credential` | Anthropic API key |
+| `OC_GITHUB_TOKEN` | `credential` | GitHub PAT with `repo` scope |
+| `TAILSCALE_AUTH_KEY` | `password` | Tailscale auth key (reusable, one-off) |
 
-Create a vault called `ResearchAgent` with two items:
+These three secrets are fetched on your Mac at deploy time and never touch the server in plaintext. See "How secrets work" below.
 
-| Item name | Field | Value |
-|-----------|-------|-------|
-| `anthropic-api-key` | `credential` | Your Anthropic API key |
-| `github-pat` | `credential` | GitHub PAT with `repo` scope |
-
-Then create a **Service Account** in your 1Password account:
-
-1. Go to 1password.com → Settings → Service Accounts
-2. Create a new service account
-3. Grant it **read-only** access to the `ResearchAgent` vault only
-4. Copy the service account token — you'll need it during deploy
-
-## Deploy
-
-### 1. Provision the server
+## Provision the Server
 
 ```bash
 export HCLOUD_TOKEN=$(op item get 'HETZNER_API_KEY' --vault Private --fields credential --reveal)
@@ -46,133 +38,172 @@ terraform init
 terraform apply
 ```
 
-### 2. Deploy application files
+Terraform creates a `cx23` server, a firewall (SSH inbound only; no 80/443), and a cloud-init script that installs Docker, fail2ban, the 1Password CLI, the GitHub CLI, and clones the repo into `/opt/research-agent/repo`.
+
+## Deploy
 
 ```bash
 cd infra/scripts
 ./deploy.sh
 ```
 
-This will:
-- Wait for cloud-init to finish (timeout: 5 min)
-- Copy systemd units, scripts, and Dockerfile to the server
-- Build the Docker image
-- Prompt you for the 1Password service account token
-- Enable the systemd timer
+All three biometric prompts for 1Password fire up front. After you approve them the rest is unattended.
 
-### 3. Verify
+### Stages (in order)
+
+| Stage | What it does |
+|-------|-------------|
+| `cloud-init` | Polls until cloud-init finishes (up to 5 min) |
+| `copy` | SCPs systemd units, Dockerfiles, and `git-askpass.sh` to the server |
+| `build` | Builds `research-agent:latest` and `research-agent-web:latest` on the server |
+| `creds` | Pipes each secret over SSH into `systemd-creds encrypt`; places encrypted blobs under `/etc/research-agent/`; unsets variables from memory |
+| `timer` | `daemon-reload` + `enable --now research-agent.timer` |
+| `web` | Copies `web-app.service` and `web-start.sh`, then `enable --now web-app` |
+| `tailscale` | Installs Tailscale if absent, authenticates with the auth key, configures `tailscale serve` to proxy HTTPS to `localhost:5001` |
+
+### Resuming a failed deploy
+
+If a stage fails you can skip everything before it:
 
 ```bash
-SERVER=$(cd ../terraform && terraform output -raw server_ip)
-ssh deploy@$SERVER systemctl status research-agent.timer
+./deploy.sh --from creds      # re-encrypt secrets only
+./deploy.sh --from tailscale  # re-run just the Tailscale stage
+./deploy.sh --help            # list all stages
 ```
 
-### 4. Test run
+Secrets are always fetched from 1Password first regardless of `--from`, then execution jumps to the named stage.
 
-```bash
-ssh deploy@$SERVER sudo systemctl start research-agent.service
-ssh deploy@$SERVER journalctl -u research-agent -f
-```
+## How Secrets Work
 
-## Day-to-Day Operations
+1. `deploy.sh` calls `op read 'op://research-agent/<ITEM>/<field>'` on your Mac — secrets exist only in shell variables.
+2. Each secret is piped over SSH into `sudo systemd-creds encrypt --name=<name> - /etc/research-agent/<name>`.
+3. The resulting blobs are machine-bound (encrypted with a key derived from the host's TPM/machine-id). Root:root 600.
+4. The systemd units declare `LoadCredentialEncrypted=<name>:/etc/research-agent/<name>`. At runtime systemd decrypts and exposes each credential as a file in `$CREDENTIALS_DIRECTORY`.
+5. `research-agent.service` gets `anthropic-api-key` and `github-pat`. `web-app.service` gets `github-pat`.
 
-### Check timer status
-```bash
-ssh deploy@$SERVER systemctl status research-agent.timer
-```
+**If you restore to a new host** the encrypted blobs from the old machine are useless. Run `./deploy.sh --from creds` after rebuilding to re-encrypt against the new machine.
 
-### View logs
-```bash
-# Orchestration logs (systemd/wrapper)
-ssh deploy@$SERVER journalctl -u research-agent --since today
+## Services
 
-# Application logs (research.sh / API calls)
-ssh deploy@$SERVER cat /opt/research-agent/repo/agent.log
-```
+### `research-agent.timer` + `research-agent.service`
 
-### Manual run
-```bash
-ssh deploy@$SERVER sudo systemctl start research-agent.service
-```
+- Timer fires daily at 07:00 UTC, `Persistent=true` (catches up if the server was down), up to 5-minute random jitter.
+- Service is `Type=oneshot`, runs as the `agent` user.
+- Executes `/opt/research-agent/repo/research-agent/run-agent.sh` inside the `research-agent:latest` Docker container.
+- Timeout: 30 minutes (research + critic + revision + push can take a while).
 
-### Update prompts or scripts
-Push changes to the GitHub repo. The wrapper runs `git pull` before each run, so changes are picked up automatically.
+### `web-app.service`
 
-### Rebuild Docker image
-Only needed if Python dependencies change:
-```bash
-ssh deploy@$SERVER sudo docker build -t research-agent:latest /opt/research-agent/
-```
-
-### Rotate the 1Password service account token
-```bash
-# 1. Create a new service account token in 1Password web UI
-# 2. Re-encrypt it on the server:
-ssh deploy@$SERVER
-echo "NEW_TOKEN_HERE" | sudo systemd-creds encrypt --name=op-token - /etc/research-agent/op-token
-# 3. Revoke the old token in 1Password web UI
-```
-
-### Destroy
-```bash
-export HCLOUD_TOKEN=$(op item get 'HETZNER_API_KEY' --vault Private --fields credential --reveal)
-cd infra/terraform
-terraform destroy
-```
+- Long-running Flask app (`Type=simple`, `Restart=on-failure`).
+- `web-start.sh` is the entrypoint: it reads `github-pat` from `$CREDENTIALS_DIRECTORY`, clones the repo into `/opt/research-agent/web-repo` on first start, then runs the `research-agent-web:latest` container on port 5001.
+- Credentials are passed into the container via a bind-mounted file (`/run/secrets/github-pat`), never on the Docker command line.
 
 ## Annotation Web App
 
-The Flask annotation app (`web/app.py`) runs on the server and is accessible from your phone via Tailscale — no open ports, no domain required.
+- Separate git clone at `/opt/research-agent/web-repo` — isolated from the research agent's clone so concurrent pushes don't conflict.
+- After annotating, the web app commits to the `annotations` branch and opens a PR. You merge it manually on GitHub.
+- Access via Tailscale: install Tailscale on your phone, sign in with your Apple ID, browse to the `https://research-agent.<tailnet>.ts.net` URL printed at the end of deploy.
 
-### Tailscale setup
+## Useful SSH Commands
 
-`deploy.sh` automatically authenticates Tailscale using the auth key from 1Password (`tailscale` item in `Private` vault, `password` field). Generate an auth key at https://login.tailscale.com/admin/settings/keys and store it there before first deploy.
-
-The web app URL is `https://research-agent.tail45b6f0.ts.net`.
-
-### Access
-
-- Install Tailscale on your phone and sign in with your Apple ID
-- Browse to `https://research-agent.tail45b6f0.ts.net`
-- Only devices on your Tailscale network can reach the app (auth = Tailscale membership)
-- **Pull** button fetches new briefs from GitHub
-- **Save & Push** button commits all annotation changes and pushes to main
-
-### Check web app status
 ```bash
-ssh deploy@$SERVER systemctl status web-app
-ssh deploy@$SERVER journalctl -u web-app -f
-ssh deploy@$SERVER sudo tailscale serve status
+SERVER=$(cd infra/terraform && terraform output -raw server_ip)
+
+# Check timer
+ssh deploy@$SERVER 'systemctl status research-agent.timer'
+
+# Manual run
+ssh deploy@$SERVER 'sudo systemctl start research-agent'
+
+# Watch research agent logs
+ssh deploy@$SERVER 'journalctl -u research-agent -f'
+
+# Check web app
+ssh deploy@$SERVER 'systemctl status web-app'
+
+# Watch web app logs
+ssh deploy@$SERVER 'journalctl -u web-app -f'
+
+# Check Tailscale proxy
+ssh deploy@$SERVER 'tailscale serve status'
 ```
-
-## Security
-
-- **SSH**: key-only, no root login, fail2ban, Hetzner firewall (SSH inbound only; ports 80/443 stay closed — Tailscale handles HTTPS)
-- **Web app**: only reachable via Tailscale network; Tailscale acts as the auth gate (Apple ID SSO)
-- **Users**: `deploy` (sudo, your SSH user), `agent` (unprivileged, runs the service)
-- **Secrets**: 1Password SA token is the only credential on disk, encrypted at rest via `systemd-creds` (machine-specific key). Exposed to the service via `LoadCredentialEncrypted`. API key and PAT exist only in memory at runtime.
-- **Docker**: `--rm`, `--read-only`, `--tmpfs /tmp`, no privileged mode
-- **Updates**: unattended-upgrades enabled for automatic security patches
 
 ## File Layout on Server
 
 ```
 /opt/research-agent/
-  repo/                    # Git clone (bind-mounted into container)
-    briefs/                # Generated research briefs
-    agent.log              # Application log
-    .topic-index           # Round-robin state
+  repo/                         # Git clone (bind-mounted into agent container)
+    research-agent/
+      run-agent.sh              # Entry point called by research-agent.service
+    briefs/                     # Generated research briefs
+    .topic-index                # Round-robin topic state
+  web-repo/                     # Separate git clone for the web app
+    web/app.py                  # Flask annotation app
+    briefs/                     # Read-only view of briefs (same content, separate clone)
   scripts/
-    run-agent.sh           # Wrapper script (systemd calls this)
-    web-start.sh           # Wrapper script for the web app
-    git-askpass.sh         # Git credential helper (echoes $GITHUB_PAT)
-  Dockerfile               # Built locally on the server
+    web-start.sh                # Wrapper called by web-app.service
+    git-askpass.sh              # Git credential helper (reads from /run/secrets/github-pat)
+  Dockerfile                    # Agent image (python:3.12-slim + anthropic + jq + git)
+  Dockerfile.web                # Web image (python:3.12-slim + flask + gh CLI)
 
 /etc/research-agent/
-  op-token                 # 1Password SA token (encrypted via systemd-creds, root:root 0600)
+  anthropic-api-key             # systemd-creds blob (machine-bound, root:root 0600)
+  github-pat                    # systemd-creds blob (machine-bound, root:root 0600)
 
 /etc/systemd/system/
-  research-agent.service   # Oneshot service
-  research-agent.timer     # Daily at 07:00 UTC
-  web-app.service          # Persistent Flask annotation app
+  research-agent.service        # Oneshot service (runs agent container)
+  research-agent.timer          # Daily 07:00 UTC, Persistent=true
+  web-app.service               # Persistent Flask annotation app
+```
+
+## Credential Rotation
+
+### Rotate the Anthropic key or GitHub PAT
+
+1. Update the value in 1Password (`research-agent` vault).
+2. Re-run the creds stage — this fetches the new value and re-encrypts it on the server:
+   ```bash
+   cd infra/scripts && ./deploy.sh --from creds
+   ```
+3. Restart the affected service:
+   ```bash
+   ssh deploy@$SERVER 'sudo systemctl restart research-agent.timer'
+   ssh deploy@$SERVER 'sudo systemctl restart web-app'
+   ```
+
+### Rotate the Tailscale auth key
+
+1. Generate a new key at https://login.tailscale.com/admin/settings/keys.
+2. Update `TAILSCALE_AUTH_KEY` in the `research-agent` 1Password vault.
+3. Re-run the Tailscale stage:
+   ```bash
+   cd infra/scripts && ./deploy.sh --from tailscale
+   ```
+
+## Disaster Recovery
+
+Code and briefs live in GitHub — a VPS loss loses nothing except the encrypted credential blobs (which are machine-bound and useless on a new host anyway).
+
+To rebuild from scratch:
+
+```bash
+cd infra/terraform && terraform apply   # provision new VPS
+cd ../scripts && ./deploy.sh            # full deploy (re-clones repo, re-encrypts secrets)
+```
+
+## Security Notes
+
+- **SSH**: key-only (`PasswordAuthentication no`), no root login, fail2ban aggressive mode (3 retries, 1h ban), Hetzner firewall (SSH inbound only; ports 80/443 closed — Tailscale handles HTTPS).
+- **Web app**: reachable only via Tailscale; Tailscale membership (Apple ID SSO) is the auth gate.
+- **Users**: `deploy` (sudo, your SSH user), `agent` (system user, runs services, no sudo).
+- **Secrets**: encrypted at rest via `systemd-creds` (machine-specific key). Exposed to services only via `$CREDENTIALS_DIRECTORY`. Never written to disk in plaintext, never passed on command lines.
+- **Docker**: containers run as the `agent` uid, `--rm` flag, no privileged mode.
+- **Updates**: `unattended-upgrades` enabled for automatic security patches.
+
+## Destroy
+
+```bash
+export HCLOUD_TOKEN=$(op item get 'HETZNER_API_KEY' --vault Private --fields credential --reveal)
+cd infra/terraform
+terraform destroy
 ```
