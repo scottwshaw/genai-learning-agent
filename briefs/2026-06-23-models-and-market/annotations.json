@@ -1,0 +1,14 @@
+{
+  "key-developments/1": {
+    "interesting": true
+  },
+  "landscape-trends/2": {
+    "interesting": false
+  },
+  "landscape-trends/3": {
+    "text": "Orchestration will become commonplace. The question is if a third party can effectively arbitrage across frontier orovidersbornif the provider\u2019s own orchestration will always be more effective"
+  },
+  "_reviewed": {
+    "interesting": true
+  }
+}
