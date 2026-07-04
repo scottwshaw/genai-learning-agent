@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -27,10 +28,15 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, field
 from datetime import date, timedelta
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 TOPICS_FILE = SCRIPT_DIR.parent / "topics.json"
+
+# Long enough that relevance keywords appearing late in an abstract (e.g.
+# ~800 chars in) still survive for filter_relevant.
+ABSTRACT_MAX_CHARS = 1200
 
 
 def log(msg: str) -> None:
@@ -195,7 +201,7 @@ def _s2_to_paper(data: dict) -> Paper:
         authors=authors[:5],
         year=data.get("year"),
         venue=data.get("venue", ""),
-        abstract=(data.get("abstract") or "")[:500],
+        abstract=(data.get("abstract") or "")[:ABSTRACT_MAX_CHARS],
         url=_s2_best_url(data),
         citation_count=data.get("citationCount"),
         source="semantic_scholar",
@@ -275,7 +281,7 @@ def _oa_reconstruct_abstract(inverted_index: dict | None) -> str:
             word_positions.append((pos, word))
     word_positions.sort()
     text = " ".join(w for _, w in word_positions)
-    return text[:500]
+    return text[:ABSTRACT_MAX_CHARS]
 
 
 def _oa_to_paper(data: dict) -> Paper:
@@ -326,7 +332,11 @@ def arxiv_search(query: str, categories: list[str] | None = None,
         terms = urllib.parse.quote(query)
         search_parts.append(f"all:{terms}")
 
-    search_query = "+AND+".join(search_parts)
+    return arxiv_search_raw("+AND+".join(search_parts), max_results)
+
+
+def arxiv_search_raw(search_query: str, max_results: int = 10) -> list[Paper]:
+    """Run a pre-built arXiv search_query string (already URL-encoded)."""
     url = (f"http://export.arxiv.org/api/query"
            f"?search_query={search_query}"
            f"&sortBy=submittedDate&sortOrder=descending"
@@ -338,50 +348,85 @@ def arxiv_search(query: str, categories: list[str] | None = None,
 
     papers = []
     for entry in root.findall("atom:entry", ARXIV_NS):
-        title = (entry.findtext("atom:title", "", ARXIV_NS) or "").strip()
-        title = " ".join(title.split())
-        if not title:
-            continue
-
-        authors = []
-        for author in entry.findall("atom:author", ARXIV_NS):
-            name = author.findtext("atom:name", "", ARXIV_NS)
-            if name:
-                authors.append(name.strip())
-
-        abstract = (entry.findtext("atom:summary", "", ARXIV_NS) or "").strip()
-        abstract = " ".join(abstract.split())[:500]
-
-        link = ""
-        for link_el in entry.findall("atom:link", ARXIV_NS):
-            if link_el.get("type") == "text/html" or link_el.get("rel") == "alternate":
-                link = link_el.get("href", "")
-                break
-
-        published = entry.findtext("atom:published", "", ARXIV_NS)[:10]
-        year = int(published[:4]) if published else None
-
-        arxiv_id = entry.findtext("atom:id", "", ARXIV_NS)
-        if arxiv_id:
-            arxiv_id = arxiv_id.split("/abs/")[-1]
-
-        papers.append(Paper(
-            title=title,
-            authors=authors[:5],
-            year=year,
-            venue="arXiv",
-            abstract=abstract,
-            url=link or f"https://arxiv.org/abs/{arxiv_id}",
-            source="arxiv",
-            paper_id=arxiv_id or "",
-            published_date=published,
-        ))
+        paper = _arxiv_entry_to_paper(entry)
+        if paper:
+            papers.append(paper)
     return papers
 
 
-def arxiv_recent_by_category(categories: list[str],
-                             max_results: int = 20) -> list[Paper]:
-    return arxiv_search("", categories=categories, max_results=max_results)
+def _arxiv_entry_to_paper(entry: ET.Element) -> Paper | None:
+    title = (entry.findtext("atom:title", "", ARXIV_NS) or "").strip()
+    title = " ".join(title.split())
+    if not title:
+        return None
+
+    authors = []
+    for author in entry.findall("atom:author", ARXIV_NS):
+        name = author.findtext("atom:name", "", ARXIV_NS)
+        if name:
+            authors.append(name.strip())
+
+    abstract = (entry.findtext("atom:summary", "", ARXIV_NS) or "").strip()
+    abstract = " ".join(abstract.split())[:ABSTRACT_MAX_CHARS]
+
+    link = ""
+    for link_el in entry.findall("atom:link", ARXIV_NS):
+        if link_el.get("type") == "text/html" or link_el.get("rel") == "alternate":
+            link = link_el.get("href", "")
+            break
+
+    published = entry.findtext("atom:published", "", ARXIV_NS)[:10]
+    year = int(published[:4]) if published else None
+
+    arxiv_id = entry.findtext("atom:id", "", ARXIV_NS)
+    if arxiv_id:
+        arxiv_id = arxiv_id.split("/abs/")[-1]
+
+    return Paper(
+        title=title,
+        authors=authors[:5],
+        year=year,
+        venue="arXiv",
+        abstract=abstract,
+        url=link or f"https://arxiv.org/abs/{arxiv_id}",
+        source="arxiv",
+        paper_id=arxiv_id or "",
+        published_date=published,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Standards-body feeds (RSS)
+# ---------------------------------------------------------------------------
+
+def parse_standards_feed(root: ET.Element, feed_name: str) -> list[Paper]:
+    """Parse an RSS 2.0 feed into candidate Papers.
+
+    Standards bodies (NIST etc.) announce draft publications via news
+    feeds, not scholarly APIs — this is the only discovery pathway for
+    documents like NIST AI series drafts.
+    """
+    papers = []
+    for item in root.iter("item"):
+        title = " ".join((item.findtext("title") or "").split())
+        pub = (item.findtext("pubDate") or "").strip()
+        if not title or not pub:
+            continue
+        try:
+            published = parsedate_to_datetime(pub).date().isoformat()
+        except (TypeError, ValueError):
+            continue
+        abstract = " ".join((item.findtext("description") or "").split())
+        papers.append(Paper(
+            title=title,
+            year=int(published[:4]),
+            venue=feed_name,
+            abstract=abstract[:ABSTRACT_MAX_CHARS],
+            url=(item.findtext("link") or "").strip(),
+            source="standards_feed",
+            published_date=published,
+        ))
+    return papers
 
 
 # ---------------------------------------------------------------------------
@@ -397,6 +442,29 @@ def _resolve_seed_id(seed: dict) -> str | None:
     if results:
         return results[0].paper_id
     return None
+
+
+def build_arxiv_category_query(category: str, topic: dict,
+                               max_terms: int = 6) -> str:
+    """Build a category query keyword-filtered server-side.
+
+    Fetching the N newest submissions of a broad category is a lottery
+    (cs.AI gets hundreds per day); ANDing the category with the topic's
+    terms makes the newest results actually relevant. Capped at max_terms
+    because the arXiv API times out on long queries.
+    """
+    terms = (topic.get("match_terms", []) +
+             topic.get("concept_synonyms", []))[:max_terms]
+    cat_part = f"cat:{category}"
+    if not terms:
+        return cat_part
+    term_parts = []
+    for term in terms:
+        if " " in term:
+            term_parts.append(f"all:%22{urllib.parse.quote(term)}%22")
+        else:
+            term_parts.append(f"all:{urllib.parse.quote(term)}")
+    return f"({cat_part})+AND+({'+OR+'.join(term_parts)})"
 
 
 def build_arxiv_queries(topic: dict) -> list[str]:
@@ -435,29 +503,87 @@ def deduplicate(papers: list[Paper]) -> list[Paper]:
     return result
 
 
+def _matches_terms(paper: Paper, terms: list[str]) -> bool:
+    """Word-boundary match (with optional plural "s") on title + abstract."""
+    text = f"{paper.title} {paper.abstract}".lower()
+    return any(re.search(rf"\b{re.escape(t.lower())}s?\b", text)
+               for t in terms)
+
+
 def filter_relevant(papers: list[Paper], topic: dict) -> list[Paper]:
-    """Keep only papers whose title or abstract mentions a concept synonym."""
-    synonyms = [s.lower() for s in topic.get("concept_synonyms", [])]
-    if not synonyms:
+    """Keep only papers whose title or abstract mentions a topic term.
+
+    Terms come from concept_synonyms (also used to build API queries) plus
+    match_terms (filter-only, so short single words don't pollute queries).
+
+    Standards-feed items bypass topic-term matching: their feeds are
+    curated per topic and filtered by per-feed filter_terms instead —
+    standards titles rarely use research vocabulary (e.g. a NIST
+    evaluation-practices draft mentions no safety keywords).
+    """
+    terms = topic.get("concept_synonyms", []) + topic.get("match_terms", [])
+    if not terms:
         return papers
-    result = []
-    for p in papers:
-        text = f"{p.title} {p.abstract}".lower()
-        if any(s in text for s in synonyms):
-            result.append(p)
-    return result
+    return [p for p in papers
+            if p.source == "standards_feed" or _matches_terms(p, terms)]
+
+
+def filter_feed_items(papers: list[Paper], filter_terms: list[str]) -> list[Paper]:
+    """Filter standards-feed items by the feed's own terms (empty = keep all)."""
+    if not filter_terms:
+        return papers
+    return [p for p in papers if _matches_terms(p, filter_terms)]
+
+
+def rank_papers(papers: list[Paper], cap: int = 25,
+                recent_slots: int = 15) -> list[Paper]:
+    """Rank candidates without burying brand-new uncited papers.
+
+    Standards-feed items are always included: they are rare, pre-curated
+    per topic, and have no citation counts to compete on. Then fills up to
+    recent_slots newest-first (citation count as tiebreak, papers without
+    a date last), and the remaining slots from the leftovers by citation
+    count.
+    """
+    feed_items = [p for p in papers if p.source == "standards_feed"]
+    rest = [p for p in papers if p.source != "standards_feed"]
+    by_recency = sorted(
+        rest,
+        key=lambda p: (p.published_date or "", p.citation_count or 0),
+        reverse=True,
+    )
+    recent = by_recency[:recent_slots]
+    leftovers = by_recency[recent_slots:]
+    leftovers.sort(key=lambda p: (p.citation_count or 0), reverse=True)
+    return (feed_items + recent + leftovers)[:cap]
 
 
 def filter_recent(papers: list[Paper], days: int) -> list[Paper]:
     cutoff = (date.today() - timedelta(days=days)).isoformat()
+    # Some API records carry bogus future dates; a small tolerance covers
+    # timezone skew on genuinely new announcements.
+    future_cutoff = (date.today() + timedelta(days=2)).isoformat()
     cutoff_year = date.today().year
     result = []
     for p in papers:
-        if p.published_date and p.published_date >= cutoff:
+        if p.published_date and cutoff <= p.published_date <= future_cutoff:
             result.append(p)
         elif not p.published_date and p.year and p.year >= cutoff_year:
             result.append(p)
     return result
+
+
+def select_candidates(papers: list[Paper], topic: dict,
+                      recency_days: int) -> list[Paper]:
+    """Final selection over the merged stream pool.
+
+    Recency is re-applied here because some streams rely on one-sided API
+    date filters that let bogus future-dated records through.
+    """
+    unique = deduplicate(papers)
+    unique = filter_recent(unique, recency_days)
+    unique = filter_relevant(unique, topic)
+    return rank_papers(unique)
 
 
 def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
@@ -474,6 +600,7 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
         "author_papers": 0,
         "concept_searches": 0,
         "arxiv_papers": 0,
+        "standards_feeds": 0,
         "errors": 0,
     }
 
@@ -525,27 +652,43 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
     arxiv_cats = topic.get("arxiv_categories", [])
     if arxiv_cats:
         log(f"arXiv categories: {', '.join(arxiv_cats)}")
-        per_category_cap = 3
+        per_category_cap = 15
         for category in arxiv_cats:
             log(f"arXiv category: {category}")
-            category_papers = arxiv_recent_by_category([category],
-                                                       max_results=per_category_cap)
+            category_query = build_arxiv_category_query(category, topic)
+            category_papers = arxiv_search_raw(category_query,
+                                               max_results=per_category_cap)
             recent = filter_recent(category_papers, recency_days)
             stats["arxiv_papers"] += len(recent)
             all_papers.extend(recent)
 
         for query in build_arxiv_queries(topic):
             log(f"arXiv query: {query}")
-            papers = arxiv_search(query, max_results=3)
+            papers = arxiv_search(query, max_results=10)
             recent = filter_recent(papers, recency_days)
             stats["arxiv_papers"] += len(recent)
             all_papers.extend(recent)
 
-    # --- Deduplicate, filter relevance, and sort ---
-    unique = deduplicate(all_papers)
-    pre_filter = len(unique)
-    unique = filter_relevant(unique, topic)
-    unique.sort(key=lambda p: (p.citation_count or 0), reverse=True)
+    # --- Stream 5: Standards-body feeds ---
+    for feed in topic.get("standards_feeds", []):
+        feed_url = feed.get("url", "")
+        feed_name = feed.get("name", "standards feed")
+        if not feed_url:
+            continue
+        log(f"Standards feed: {feed_name}")
+        root = _fetch_xml(feed_url, "standards_feed")
+        if root is None:
+            stats["errors"] += 1
+            continue
+        items = parse_standards_feed(root, feed_name)
+        items = filter_feed_items(items, feed.get("filter_terms", []))
+        recent = filter_recent(items, recency_days)
+        stats["standards_feeds"] += len(recent)
+        all_papers.extend(recent)
+
+    # --- Deduplicate, filter recency and relevance, and rank ---
+    pre_filter = len(deduplicate(all_papers))
+    unique = select_candidates(all_papers, topic, recency_days)
 
     log(f"Discovery complete: {len(unique)} relevant papers "
         f"(of {pre_filter} unique, "
@@ -560,7 +703,7 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
         "discovery_date": date.today().isoformat(),
         "recency_days": recency_days,
         "stats": stats,
-        "papers": [asdict(p) for p in unique[:25]],
+        "papers": [asdict(p) for p in unique],
     }
 
 

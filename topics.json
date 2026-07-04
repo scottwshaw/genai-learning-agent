@@ -156,6 +156,22 @@
         "representation engineering",
         "activation analysis"
       ],
+      "match_terms": [
+        "guardrail",
+        "safeguard",
+        "safety classifier",
+        "content moderation",
+        "jailbreak",
+        "systemic risk",
+        "supervisory"
+      ],
+      "standards_feeds": [
+        {
+          "name": "NIST AI News",
+          "url": "https://www.nist.gov/news-events/artificial%20intelligence/rss.xml",
+          "filter_terms": ["language model", "generative", "draft", "public comment", "AI safety", "risk management", "benchmark", "evaluation", "AI system", "guidance", "framework"]
+        }
+      ],
       "academic_venues": [
         {"name": "FAccT", "type": "conference"},
         {"name": "AIES", "type": "conference"},
@@ -358,13 +374,21 @@
         "Model Context Protocol",
         "Agent2Agent"
       ],
+      "match_terms": [
+        "AI agent",
+        "agentic",
+        "autonomous agent",
+        "agent",
+        "multi-agent",
+        "tool-using agent"
+      ],
       "academic_venues": [
         {"name": "NeurIPS Agent Workshop", "type": "workshop"},
         {"name": "ICML Agent Workshop", "type": "workshop"},
         {"name": "AAAI", "type": "conference"},
         {"name": "ACL", "type": "conference"}
       ],
-      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL"],
+      "arxiv_categories": ["cs.AI", "cs.MA", "cs.CL", "q-fin.GN", "cs.CE"],
       "rejection_filters": [
         "Reject generic observability, eval, routing, or serving news unless the core novelty is about agent frameworks, agent orchestration, tool use, planning, memory, MCP/A2A, multi-agent coordination, or agent-specific reliability."
       ]

@@ -42,6 +42,11 @@ Search each source below using at least two different strategies (e.g., `site:` 
 
 {{TOPIC_SOURCES}}
 
+### Mandatory Search Angles
+
+- **Standards drafts:** Check standards bodies' draft-publications and open-for-comment pages (NIST CSRC drafts and the NIST AI series, ISO/IEC JTC 1/SC 42, OWASP) — draft guidance rarely gets press coverage, so search for it directly (e.g., `site:csrc.nist.gov draft`, "initial public draft" + topic terms).
+- **Regulated-sector angle:** Run at least one search combining this topic with regulated financial-services terms (banking, systemic risk, supervisory expectations, model risk management) — sector-specific research and guidance is high-value for this reader and often published outside the usual CS venues.
+
 ### Two-Stream Research
 
 **Stream 1 — Operational news (web search):** Announcements, regulation, incidents, vendor tooling, benchmark news, standards.
