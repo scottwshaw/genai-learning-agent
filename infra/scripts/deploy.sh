@@ -172,6 +172,13 @@ stage_copy() {
     scp "${INFRA_DIR}/docker/Dockerfile" "${SSH_USER}@${SERVER_IP}:/tmp/"
     scp "${INFRA_DIR}/docker/Dockerfile.web" "${SSH_USER}@${SERVER_IP}:/tmp/"
     ${SSH_CMD} "sudo mv /tmp/Dockerfile /tmp/Dockerfile.web /opt/research-agent/"
+
+    # The agent user must own the whole repo or its git pull fails the next
+    # time a root-owned file changes upstream (bit us on 2026-07-05: files
+    # left root-owned by an earlier deploy broke the first pull that touched
+    # them). Normalize on every deploy.
+    echo "Normalizing repo ownership..."
+    ${SSH_CMD} "sudo chown -R agent:agent /opt/research-agent/repo"
     echo ""
 }
 
