@@ -14,6 +14,7 @@ ExecStart=/opt/research-agent/repo/research-agent/run-agent.sh
 # Only systemd on this specific machine can decrypt them. Placed at deploy time.
 LoadCredentialEncrypted=anthropic-api-key:/etc/research-agent/anthropic-api-key
 LoadCredentialEncrypted=github-pat:/etc/research-agent/github-pat
+LoadCredentialEncrypted=openalex-mailto:/etc/research-agent/openalex-mailto
 
 # Research + critic + revision + push can take 20+ minutes
 TimeoutStartSec=1800

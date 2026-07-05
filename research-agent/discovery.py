@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -41,6 +42,17 @@ ABSTRACT_MAX_CHARS = 1200
 
 def log(msg: str) -> None:
     print(f"[discovery] {msg}", file=sys.stderr, flush=True)
+
+
+def resolve_contact_email(config: dict) -> str:
+    """OpenAlex polite-pool email: a secret, injected via env at runtime
+    (op read locally, systemd-creds on the server) — never committed."""
+    return os.environ.get("OPENALEX_MAILTO", "") or config.get("contact_email", "")
+
+
+def redact_url(url: str) -> str:
+    """Mask the mailto address before a URL reaches any log output."""
+    return re.sub(r"(mailto=)[^&]+", r"\1***", url)
 
 
 @dataclass
@@ -74,10 +86,35 @@ class RateLimiter:
         self._last_call[api] = time.time()
 
 
+class CircuitBreaker:
+    """Stop calling an API for the rest of the run once it is clearly blocked.
+
+    A sustained rate-limit window outlasts any in-run backoff, so after
+    `threshold` consecutive rate-limit failures the remaining requests to
+    that API are skipped instead of each burning a 10s backoff.
+    """
+
+    def __init__(self, threshold: int = 3):
+        self._threshold = threshold
+        self._failures: dict[str, int] = {}
+
+    def record_failure(self, api: str) -> None:
+        self._failures[api] = self._failures.get(api, 0) + 1
+
+    def record_success(self, api: str) -> None:
+        self._failures[api] = 0
+
+    def is_open(self, api: str) -> bool:
+        return self._failures.get(api, 0) >= self._threshold
+
+
 rate_limiter = RateLimiter()
+circuit_breaker = CircuitBreaker()
 
 
 def _fetch_json(url: str, api_name: str, headers: dict | None = None) -> dict | list | None:
+    if circuit_breaker.is_open(api_name):
+        return None
     rate_limiter.wait(api_name)
     req = urllib.request.Request(url)
     req.add_header("User-Agent", "ResearchAgent/1.0 (scholarly discovery)")
@@ -86,6 +123,7 @@ def _fetch_json(url: str, api_name: str, headers: dict | None = None) -> dict | 
             req.add_header(k, v)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
+            circuit_breaker.record_success(api_name)
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as e:
         if e.code == 429:
@@ -94,14 +132,19 @@ def _fetch_json(url: str, api_name: str, headers: dict | None = None) -> dict | 
             rate_limiter.wait(api_name)
             try:
                 with urllib.request.urlopen(req, timeout=30) as resp:
+                    circuit_breaker.record_success(api_name)
                     return json.loads(resp.read().decode())
             except Exception:
-                log(f"{api_name}: retry also failed for {url}")
+                log(f"{api_name}: retry also failed for {redact_url(url)}")
+                circuit_breaker.record_failure(api_name)
+                if circuit_breaker.is_open(api_name):
+                    log(f"{api_name}: circuit open — skipping remaining "
+                        f"{api_name} requests this run")
                 return None
-        log(f"{api_name}: HTTP {e.code} for {url}")
+        log(f"{api_name}: HTTP {e.code} for {redact_url(url)}")
         return None
     except Exception as e:
-        log(f"{api_name}: error fetching {url}: {e}")
+        log(f"{api_name}: error fetching {redact_url(url)}: {e}")
         return None
 
 
@@ -113,7 +156,7 @@ def _fetch_xml(url: str, api_name: str) -> ET.Element | None:
         with urllib.request.urlopen(req, timeout=30) as resp:
             return ET.fromstring(resp.read())
     except Exception as e:
-        log(f"{api_name}: error fetching {url}: {e}")
+        log(f"{api_name}: error fetching {redact_url(url)}: {e}")
         return None
 
 
@@ -396,15 +439,15 @@ def _arxiv_entry_to_paper(entry: ET.Element) -> Paper | None:
 
 
 # ---------------------------------------------------------------------------
-# Standards-body feeds (RSS)
+# Watch feeds (RSS)
 # ---------------------------------------------------------------------------
 
-def parse_standards_feed(root: ET.Element, feed_name: str) -> list[Paper]:
+def parse_watch_feed(root: ET.Element, feed_name: str) -> list[Paper]:
     """Parse an RSS 2.0 feed into candidate Papers.
 
-    Standards bodies (NIST etc.) announce draft publications via news
-    feeds, not scholarly APIs — this is the only discovery pathway for
-    documents like NIST AI series drafts.
+    Standards bodies (NIST) and frontier labs (Google Research) announce
+    drafts and model releases via news feeds, not scholarly APIs — this
+    is the only discovery pathway for those documents.
     """
     papers = []
     for item in root.iter("item"):
@@ -423,7 +466,7 @@ def parse_standards_feed(root: ET.Element, feed_name: str) -> list[Paper]:
             venue=feed_name,
             abstract=abstract[:ABSTRACT_MAX_CHARS],
             url=(item.findtext("link") or "").strip(),
-            source="standards_feed",
+            source="watch_feed",
             published_date=published,
         ))
     return papers
@@ -516,20 +559,20 @@ def filter_relevant(papers: list[Paper], topic: dict) -> list[Paper]:
     Terms come from concept_synonyms (also used to build API queries) plus
     match_terms (filter-only, so short single words don't pollute queries).
 
-    Standards-feed items bypass topic-term matching: their feeds are
+    Watch-feed items bypass topic-term matching: their feeds are
     curated per topic and filtered by per-feed filter_terms instead —
-    standards titles rarely use research vocabulary (e.g. a NIST
+    feed titles rarely use research vocabulary (e.g. a NIST
     evaluation-practices draft mentions no safety keywords).
     """
     terms = topic.get("concept_synonyms", []) + topic.get("match_terms", [])
     if not terms:
         return papers
     return [p for p in papers
-            if p.source == "standards_feed" or _matches_terms(p, terms)]
+            if p.source == "watch_feed" or _matches_terms(p, terms)]
 
 
 def filter_feed_items(papers: list[Paper], filter_terms: list[str]) -> list[Paper]:
-    """Filter standards-feed items by the feed's own terms (empty = keep all)."""
+    """Filter watch-feed items by the feed's own terms (empty = keep all)."""
     if not filter_terms:
         return papers
     return [p for p in papers if _matches_terms(p, filter_terms)]
@@ -539,14 +582,14 @@ def rank_papers(papers: list[Paper], cap: int = 25,
                 recent_slots: int = 15) -> list[Paper]:
     """Rank candidates without burying brand-new uncited papers.
 
-    Standards-feed items are always included: they are rare, pre-curated
+    Watch-feed items are always included: they are rare, pre-curated
     per topic, and have no citation counts to compete on. Then fills up to
     recent_slots newest-first (citation count as tiebreak, papers without
     a date last), and the remaining slots from the leftovers by citation
     count.
     """
-    feed_items = [p for p in papers if p.source == "standards_feed"]
-    rest = [p for p in papers if p.source != "standards_feed"]
+    feed_items = [p for p in papers if p.source == "watch_feed"]
+    rest = [p for p in papers if p.source != "watch_feed"]
     by_recency = sorted(
         rest,
         key=lambda p: (p.published_date or "", p.citation_count or 0),
@@ -589,7 +632,7 @@ def select_candidates(papers: list[Paper], topic: dict,
 def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
     recency_days = days or config.get("recency_days", 30)
     max_results = config.get("max_results_per_query", 20)
-    mailto = config.get("contact_email", "")
+    mailto = resolve_contact_email(config)
     year_from = date.today().year - 1
     from_date = (date.today() - timedelta(days=recency_days)).isoformat()
 
@@ -600,7 +643,7 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
         "author_papers": 0,
         "concept_searches": 0,
         "arxiv_papers": 0,
-        "standards_feeds": 0,
+        "watch_feeds": 0,
         "errors": 0,
     }
 
@@ -669,21 +712,21 @@ def run_discovery(topic: dict, config: dict, days: int | None = None) -> dict:
             stats["arxiv_papers"] += len(recent)
             all_papers.extend(recent)
 
-    # --- Stream 5: Standards-body feeds ---
-    for feed in topic.get("standards_feeds", []):
+    # --- Stream 5: Watch feeds (standards bodies, lab blogs) ---
+    for feed in topic.get("watch_feeds", []):
         feed_url = feed.get("url", "")
-        feed_name = feed.get("name", "standards feed")
+        feed_name = feed.get("name", "watch feed")
         if not feed_url:
             continue
-        log(f"Standards feed: {feed_name}")
-        root = _fetch_xml(feed_url, "standards_feed")
+        log(f"Watch feed: {feed_name}")
+        root = _fetch_xml(feed_url, "watch_feed")
         if root is None:
             stats["errors"] += 1
             continue
-        items = parse_standards_feed(root, feed_name)
+        items = parse_watch_feed(root, feed_name)
         items = filter_feed_items(items, feed.get("filter_terms", []))
         recent = filter_recent(items, recency_days)
-        stats["standards_feeds"] += len(recent)
+        stats["watch_feeds"] += len(recent)
         all_papers.extend(recent)
 
     # --- Deduplicate, filter recency and relevance, and rank ---

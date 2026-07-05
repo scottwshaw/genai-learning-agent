@@ -56,6 +56,15 @@ if [[ -z "${GITHUB_PAT:-}" ]]; then
     fi
 fi
 
+# OpenAlex polite-pool email — optional; discovery falls back to the
+# anonymous pool (worse rate limits) when absent.
+if [[ -z "${OPENALEX_MAILTO:-}" ]]; then
+    if [[ -n "${CREDENTIALS_DIRECTORY:-}" ]] && [[ -f "${CREDENTIALS_DIRECTORY}/openalex-mailto" ]]; then
+        OPENALEX_MAILTO="$(cat "${CREDENTIALS_DIRECTORY}/openalex-mailto")"
+    fi
+fi
+export OPENALEX_MAILTO="${OPENALEX_MAILTO:-}"
+
 export ANTHROPIC_API_KEY
 # GITHUB_PAT intentionally not exported — only used by this script for git ops
 
@@ -117,6 +126,7 @@ docker run --rm \
     --tmpfs /tmp \
     --user "$(id -u):$(id -g)" \
     -e ANTHROPIC_API_KEY \
+    -e OPENALEX_MAILTO \
     -e ENABLE_CRITIC=1 \
     -v "${REPO_ROOT}:/workspace:ro" \
     -v "${REPO_ROOT}/briefs:/workspace/briefs" \

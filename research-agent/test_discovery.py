@@ -4,14 +4,17 @@ import xml.etree.ElementTree as ET
 from datetime import date
 
 from discovery import (
+    CircuitBreaker,
     Paper,
     _arxiv_entry_to_paper,
     _s2_to_paper,
     build_arxiv_category_query,
     filter_recent,
     filter_relevant,
-    parse_standards_feed,
+    parse_watch_feed,
     rank_papers,
+    redact_url,
+    resolve_contact_email,
     select_candidates,
     filter_feed_items,
 )
@@ -173,11 +176,11 @@ class TestRankPapers:
         assert len(result) == 25
         assert len({p.title for p in result}) == 25
 
-    def test_standards_feed_items_always_included(self):
-        """Given a pool where uncited standards-feed items are older than
+    def test_watch_feed_items_always_included(self):
+        """Given a pool where uncited watch-feed items are older than
         fifteen newer papers,
         when the pool is ranked,
-        then the standards-feed items still appear in the result."""
+        then the watch-feed items still appear in the result."""
         newer = [
             Paper(title=f"New paper {i}", citation_count=0,
                   published_date="2026-07-01")
@@ -190,7 +193,7 @@ class TestRankPapers:
         ]
         feed = [
             Paper(title="NIST draft announcement", citation_count=None,
-                  published_date="2026-06-20", source="standards_feed"),
+                  published_date="2026-06-20", source="watch_feed"),
         ]
 
         result = rank_papers(newer + cited + feed, cap=25, recent_slots=15)
@@ -254,8 +257,8 @@ RSS_FEED_FIXTURE = """<?xml version="1.0" encoding="utf-8"?>
 </rss>"""
 
 
-class TestParseStandardsFeed:
-    """Parsing standards-body RSS feeds into candidate Papers."""
+class TestParseWatchFeed:
+    """Parsing watch-feed RSS sources into candidate Papers."""
 
     def test_parses_rss_items_to_papers(self):
         """Given an RSS 2.0 feed with two dated items,
@@ -263,13 +266,13 @@ class TestParseStandardsFeed:
         then two Papers are returned with feed metadata."""
         root = ET.fromstring(RSS_FEED_FIXTURE)
 
-        papers = parse_standards_feed(root, "NIST AI News")
+        papers = parse_watch_feed(root, "NIST AI News")
 
         assert len(papers) == 2
         first = papers[0]
         assert first.title == ("NIST Releases Draft Practices for "
                                "Automated Benchmark Evaluations")
-        assert first.source == "standards_feed"
+        assert first.source == "watch_feed"
         assert first.venue == "NIST AI News"
         assert first.published_date == "2026-06-29"
         assert first.url == "https://www.nist.gov/news-events/news/2026/01/draft-800-2"
@@ -281,22 +284,22 @@ class TestParseStandardsFeed:
         then the malformed item is dropped without raising."""
         root = ET.fromstring(RSS_FEED_FIXTURE)
 
-        papers = parse_standards_feed(root, "NIST AI News")
+        papers = parse_watch_feed(root, "NIST AI News")
 
         assert all(p.published_date for p in papers)
 
 
-class TestFilterRelevantStandardsFeed:
-    """Standards-feed items bypass term matching."""
+class TestFilterRelevantWatchFeed:
+    """Watch-feed items bypass term matching."""
 
-    def test_keeps_standards_feed_items_without_term_match(self):
+    def test_keeps_watch_feed_items_without_term_match(self):
         """Given a topic with terms a feed item's title does not mention,
         when papers are filtered,
-        then the standards_feed item is kept anyway."""
+        then the watch_feed item is kept anyway."""
         topic = {"concept_synonyms": ["guardrail"]}
         feed_item = Paper(
             title="Practices for Automated Benchmark Evaluations",
-            source="standards_feed",
+            source="watch_feed",
         )
         arxiv_item = Paper(title="Unrelated quantum chemistry paper",
                            source="arxiv")
@@ -344,7 +347,7 @@ class TestSelectCandidates:
 
 
 class TestFilterFeedItems:
-    """Per-feed term filtering for standards feeds."""
+    """Per-feed term filtering for watch feeds."""
 
     def test_keeps_items_matching_a_filter_term(self):
         """Given feed filter terms,
@@ -352,9 +355,9 @@ class TestFilterFeedItems:
         then the item is kept and non-matching items are dropped."""
         draft = Paper(title="NIST Releases Draft Practices for Benchmark "
                             "Evaluations of Language Models",
-                      source="standards_feed")
+                      source="watch_feed")
         robots = Paper(title="Test Your Robot Skills in Global Competition",
-                       source="standards_feed")
+                       source="watch_feed")
 
         result = filter_feed_items([draft, robots], ["draft", "benchmark"])
 
@@ -364,8 +367,117 @@ class TestFilterFeedItems:
         """Given a feed with no filter terms configured,
         when items are filtered,
         then all items are kept."""
-        items = [Paper(title="Anything", source="standards_feed")]
+        items = [Paper(title="Anything", source="watch_feed")]
 
         result = filter_feed_items(items, [])
 
         assert result == items
+
+
+class TestResolveContactEmail:
+    """Contact email comes from the environment, not committed config."""
+
+    def test_env_var_overrides_config(self, monkeypatch):
+        """Given OPENALEX_MAILTO is set in the environment,
+        when the contact email is resolved,
+        then the environment value wins over topics.json config."""
+        monkeypatch.setenv("OPENALEX_MAILTO", "real@example.org")
+
+        result = resolve_contact_email({"contact_email": "placeholder@x.com"})
+
+        assert result == "real@example.org"
+
+    def test_falls_back_to_config_when_env_unset(self, monkeypatch):
+        """Given OPENALEX_MAILTO is not set,
+        when the contact email is resolved,
+        then the config value is used."""
+        monkeypatch.delenv("OPENALEX_MAILTO", raising=False)
+
+        result = resolve_contact_email({"contact_email": "cfg@x.com"})
+
+        assert result == "cfg@x.com"
+
+    def test_empty_when_neither_set(self, monkeypatch):
+        """Given no env var and no config value,
+        when the contact email is resolved,
+        then it is empty (anonymous pool, no fake address sent)."""
+        monkeypatch.delenv("OPENALEX_MAILTO", raising=False)
+
+        result = resolve_contact_email({})
+
+        assert result == ""
+
+
+class TestRedactUrl:
+    """Logged URLs must not leak the mailto address."""
+
+    def test_redacts_mailto_param(self):
+        """Given a URL containing a mailto query parameter,
+        when it is redacted for logging,
+        then the address is masked and other params survive."""
+        url = "https://api.openalex.org/works?search=x&mailto=me%40example.org&per_page=5"
+
+        result = redact_url(url)
+
+        assert "me%40example.org" not in result
+        assert "mailto=***" in result
+        assert "per_page=5" in result
+
+    def test_leaves_urls_without_mailto_unchanged(self):
+        """Given a URL with no mailto parameter,
+        when it is redacted,
+        then it is returned unchanged."""
+        url = "https://api.semanticscholar.org/graph/v1/paper/search?query=x"
+
+        assert redact_url(url) == url
+
+
+class TestCircuitBreaker:
+    """Skipping an API for the rest of the run once it is clearly blocked."""
+
+    def test_opens_after_threshold_consecutive_failures(self):
+        """Given three consecutive rate-limit failures for one API,
+        when the breaker is checked,
+        then it is open for that API."""
+        breaker = CircuitBreaker(threshold=3)
+
+        for _ in range(3):
+            breaker.record_failure("openalex")
+
+        assert breaker.is_open("openalex")
+
+    def test_stays_closed_below_threshold(self):
+        """Given fewer failures than the threshold,
+        when the breaker is checked,
+        then it stays closed."""
+        breaker = CircuitBreaker(threshold=3)
+
+        breaker.record_failure("openalex")
+        breaker.record_failure("openalex")
+
+        assert not breaker.is_open("openalex")
+
+    def test_success_resets_the_count(self):
+        """Given failures followed by a success,
+        when more failures occur,
+        then the count restarts from zero."""
+        breaker = CircuitBreaker(threshold=3)
+
+        breaker.record_failure("openalex")
+        breaker.record_failure("openalex")
+        breaker.record_success("openalex")
+        breaker.record_failure("openalex")
+
+        assert not breaker.is_open("openalex")
+
+    def test_apis_are_independent(self):
+        """Given one API tripping the breaker,
+        when another API is checked,
+        then the other API is unaffected."""
+        breaker = CircuitBreaker(threshold=3)
+
+        for _ in range(3):
+            breaker.record_failure("openalex")
+
+        assert breaker.is_open("openalex")
+        assert not breaker.is_open("semantic_scholar")

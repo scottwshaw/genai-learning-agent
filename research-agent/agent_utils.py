@@ -15,16 +15,29 @@ from pathlib import Path
 DEFAULT_RUBRIC_PATH = Path(__file__).parent / "evaluation" / "daily-brief-rubric.md"
 
 
+def _is_retryable(e: Exception) -> bool:
+    """529 overloads, plus transport-level drops (e.g. connection reset
+    mid-stream — httpx errors leak through the SDK during streaming)."""
+    if getattr(e, "status_code", None) == 529:
+        return True
+    try:
+        import httpx
+    except ImportError:
+        return False
+    return isinstance(e, httpx.TransportError)
+
+
 def retry_on_overload(fn, max_attempts=5, label="api"):
-    """Retry a callable on HTTP 529 (API overloaded) with exponential backoff."""
+    """Retry a callable on HTTP 529 or connection errors with exponential backoff."""
     for attempt in range(max_attempts):
         try:
             return fn()
         except Exception as e:
-            if getattr(e, "status_code", None) == 529 and attempt < max_attempts - 1:
+            if _is_retryable(e) and attempt < max_attempts - 1:
                 wait = 30 * (2 ** attempt)
                 print(
-                    f"[{label}] API overloaded (529), retrying in {wait}s "
+                    f"[{label}] retryable API failure ({type(e).__name__}), "
+                    f"retrying in {wait}s "
                     f"(attempt {attempt + 1}/{max_attempts})...",
                     file=sys.stderr,
                     flush=True,

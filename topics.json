@@ -6,7 +6,7 @@
     "request_delay_seconds": 1.1,
     "max_results_per_query": 20,
     "recency_days": 30,
-    "contact_email": "research-agent@example.com"
+    "contact_email": ""
   },
   "ownership_matrix": [
     {
@@ -165,7 +165,7 @@
         "systemic risk",
         "supervisory"
       ],
-      "standards_feeds": [
+      "watch_feeds": [
         {
           "name": "NIST AI News",
           "url": "https://www.nist.gov/news-events/artificial%20intelligence/rss.xml",
@@ -467,6 +467,19 @@
         "scaling law",
         "context window",
         "multimodal foundation model"
+      ],
+      "match_terms": [
+        "foundation model",
+        "zero-shot",
+        "in-context learning",
+        "tabular prediction"
+      ],
+      "watch_feeds": [
+        {
+          "name": "Google Research Blog",
+          "url": "https://research.google/blog/rss/",
+          "filter_terms": ["foundation model", "language model", "LLM", "Gemini", "benchmark", "zero-shot"]
+        }
       ],
       "academic_venues": [
         {"name": "NeurIPS", "type": "conference"},
