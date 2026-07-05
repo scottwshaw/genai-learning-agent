@@ -4,7 +4,7 @@ agent.log
 .venv/
 \#*\#
 eval-runs/
-*/.DS_Store
+**/.DS_Store
 .restart-claude-session
 document-ingestion/
 
