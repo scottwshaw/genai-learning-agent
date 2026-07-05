@@ -15,6 +15,7 @@ ExecStart=/opt/research-agent/repo/research-agent/run-agent.sh
 LoadCredentialEncrypted=anthropic-api-key:/etc/research-agent/anthropic-api-key
 LoadCredentialEncrypted=github-pat:/etc/research-agent/github-pat
 LoadCredentialEncrypted=openalex-mailto:/etc/research-agent/openalex-mailto
+LoadCredentialEncrypted=s2-api-key:/etc/research-agent/s2-api-key
 
 # Research + critic + revision + push can take 20+ minutes
 TimeoutStartSec=1800

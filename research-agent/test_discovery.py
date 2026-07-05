@@ -15,6 +15,7 @@ from discovery import (
     rank_papers,
     redact_url,
     resolve_contact_email,
+    s2_headers,
     select_candidates,
     filter_feed_items,
 )
@@ -481,3 +482,27 @@ class TestCircuitBreaker:
 
         assert breaker.is_open("openalex")
         assert not breaker.is_open("semantic_scholar")
+
+
+class TestS2ApiKey:
+    """Semantic Scholar API key comes from the environment as a header."""
+
+    def test_header_built_when_env_set(self, monkeypatch):
+        """Given SEMANTIC_SCHOLAR_API_KEY is set,
+        when the S2 headers are built,
+        then the key is sent as x-api-key."""
+        monkeypatch.setenv("SEMANTIC_SCHOLAR_API_KEY", "test-key-123")
+
+        result = s2_headers()
+
+        assert result == {"x-api-key": "test-key-123"}
+
+    def test_no_header_when_env_unset(self, monkeypatch):
+        """Given SEMANTIC_SCHOLAR_API_KEY is not set,
+        when the S2 headers are built,
+        then no headers are returned (anonymous access unchanged)."""
+        monkeypatch.delenv("SEMANTIC_SCHOLAR_API_KEY", raising=False)
+
+        result = s2_headers()
+
+        assert result is None

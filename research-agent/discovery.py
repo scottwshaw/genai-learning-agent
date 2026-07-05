@@ -55,6 +55,14 @@ def redact_url(url: str) -> str:
     return re.sub(r"(mailto=)[^&]+", r"\1***", url)
 
 
+def s2_headers() -> dict | None:
+    """Semantic Scholar API key header: a secret, injected via env at
+    runtime (op read locally, systemd-creds on the server). A key gets a
+    dedicated rate-limit pool; absent, requests stay anonymous."""
+    key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")
+    return {"x-api-key": key} if key else None
+
+
 @dataclass
 class Paper:
     title: str
@@ -118,6 +126,8 @@ def _fetch_json(url: str, api_name: str, headers: dict | None = None) -> dict | 
     rate_limiter.wait(api_name)
     req = urllib.request.Request(url)
     req.add_header("User-Agent", "ResearchAgent/1.0 (scholarly discovery)")
+    if api_name == "semantic_scholar":
+        headers = {**(s2_headers() or {}), **(headers or {})} or None
     if headers:
         for k, v in headers.items():
             req.add_header(k, v)

@@ -107,6 +107,7 @@ GH_PAT="$(op read 'op://research-agent/OC_GITHUB_TOKEN/credential')"
 TS_AUTHKEY="$(op read 'op://research-agent/TAILSCALE_AUTH_KEY/password')"
 # RESEARCH_EMAIL_ADDRESS is an email item: address = username @ server
 OPENALEX_MAILTO_SECRET="$(op read 'op://research-agent/RESEARCH_EMAIL_ADDRESS/username')@$(op read 'op://research-agent/RESEARCH_EMAIL_ADDRESS/server')"
+S2_API_KEY_SECRET="$(op read 'op://research-agent/SEMANTIC_SCHOLAR_API_KEY/credential')"
 
 if [[ -z "$ANTHROPIC_KEY" ]]; then echo "ERROR: Failed to fetch Anthropic API key from 1Password."; exit 1; fi
 if [[ -z "$GH_PAT" ]];        then echo "ERROR: Failed to fetch GitHub PAT from 1Password.";        exit 1; fi
@@ -114,6 +115,7 @@ if [[ -z "$TS_AUTHKEY" ]];    then echo "ERROR: Failed to fetch Tailscale auth k
 if [[ "$OPENALEX_MAILTO_SECRET" == "@" || "$OPENALEX_MAILTO_SECRET" == @* || "$OPENALEX_MAILTO_SECRET" == *@ ]]; then
     echo "ERROR: Failed to compose research email from 1Password (RESEARCH_EMAIL_ADDRESS username/server)."; exit 1
 fi
+if [[ -z "$S2_API_KEY_SECRET" ]]; then echo "ERROR: Failed to fetch Semantic Scholar API key from 1Password."; exit 1; fi
 echo "All secrets fetched — you can walk away now."
 echo ""
 
@@ -212,7 +214,13 @@ stage_creds() {
     echo "OpenAlex mailto encrypted and placed."
     echo ""
 
-    unset ANTHROPIC_KEY GH_PAT OPENALEX_MAILTO_SECRET
+    echo "$S2_API_KEY_SECRET" | ${SSH_CMD} "sudo systemd-creds encrypt --name=s2-api-key - /etc/research-agent/s2-api-key && \
+        sudo chmod 600 /etc/research-agent/s2-api-key && \
+        sudo chown root:root /etc/research-agent/s2-api-key"
+    echo "Semantic Scholar API key encrypted and placed."
+    echo ""
+
+    unset ANTHROPIC_KEY GH_PAT OPENALEX_MAILTO_SECRET S2_API_KEY_SECRET
 }
 
 # 6. Enable and start the timer

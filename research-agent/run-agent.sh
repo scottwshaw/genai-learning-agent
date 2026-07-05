@@ -65,6 +65,14 @@ if [[ -z "${OPENALEX_MAILTO:-}" ]]; then
 fi
 export OPENALEX_MAILTO="${OPENALEX_MAILTO:-}"
 
+# Semantic Scholar API key — optional; anonymous access when absent.
+if [[ -z "${SEMANTIC_SCHOLAR_API_KEY:-}" ]]; then
+    if [[ -n "${CREDENTIALS_DIRECTORY:-}" ]] && [[ -f "${CREDENTIALS_DIRECTORY}/s2-api-key" ]]; then
+        SEMANTIC_SCHOLAR_API_KEY="$(cat "${CREDENTIALS_DIRECTORY}/s2-api-key")"
+    fi
+fi
+export SEMANTIC_SCHOLAR_API_KEY="${SEMANTIC_SCHOLAR_API_KEY:-}"
+
 export ANTHROPIC_API_KEY
 # GITHUB_PAT intentionally not exported — only used by this script for git ops
 
@@ -127,6 +135,7 @@ docker run --rm \
     --user "$(id -u):$(id -g)" \
     -e ANTHROPIC_API_KEY \
     -e OPENALEX_MAILTO \
+    -e SEMANTIC_SCHOLAR_API_KEY \
     -e ENABLE_CRITIC=1 \
     -v "${REPO_ROOT}:/workspace:ro" \
     -v "${REPO_ROOT}/briefs:/workspace/briefs" \
