@@ -53,13 +53,23 @@
       "development_type": "Model safety evaluations, red-teaming results, dangerous capability findings",
       "primary_owner": "safety-assurance-and-governance",
       "never_kd_in": ["models-and-market", "enterprise-genai-adoption"]
+    },
+    {
+      "development_type": "Telemetry/observability standards status and schema governance (OTel semconv, OpenInference)",
+      "primary_owner": "enterprise-genai-adoption",
+      "never_kd_in": ["llm-production-infrastructure"]
+    },
+    {
+      "development_type": "Academic evaluation-methodology research (evaluator validity, LLM-as-judge reliability, eval design)",
+      "primary_owner": "safety-assurance-and-governance",
+      "never_kd_in": ["llm-production-infrastructure", "models-and-market"]
     }
   ],
   "topics": [
     {
       "slug": "safety-assurance-and-governance",
       "label": "Safety, Assurance & Governance",
-      "focus": "This topic has two pillars with UNEQUAL weight. Pillar 1 is the PRIMARY focus. PILLAR 1 (PRIMARY — aim for 2 of 3 Key Developments): AI SAFETY RESEARCH & ASSURANCE — alignment research (RLHF, constitutional AI, scalable oversight, weak-to-strong generalization); interpretability and mechanistic interpretability advances; red-teaming methodologies and adversarial robustness; dangerous capability evaluations (cyber, biological, persuasion, autonomous replication) from AISI, METR, Apollo Research, and lab-internal teams; evaluation integrity and benchmark gaming; agentic supervision and control (monitoring, kill switches, CoT faithfulness, sandboxing); jailbreak research and mitigation; responsible AI tooling (guardrails, content filtering, bias detection); AI auditing methodologies and assurance tooling; and safety benchmarks. Search arXiv, lab blogs (Anthropic, OpenAI, DeepMind, METR, MIRI, Redwood Research), and safety evaluation bodies (AISI, Apollo Research, CAIS) explicitly. PILLAR 2 (SECONDARY — at most 1 of 3 Key Developments): GOVERNANCE & REGULATION — only include legislation or regulation as a Key Development if it sets a genuinely new precedent (e.g., first law of its kind, first enforcement action, new compliance deadline). Routine legislative movement (committee votes, session scheduling, bill amendments, incremental trilogue progress) belongs in Landscape Trends, not Key Developments. Cover: formal AI governance frameworks (EU AI Act enforcement, NIST AI RMF, ISO 42001); multi-jurisdiction regulatory developments; enterprise risk management for LLM deployments. BALANCE RULE: At least 2 of 3 Key Developments MUST come from Pillar 1 (safety research, evaluations, techniques, tooling). If web search returns mostly regulatory news, you have not searched hard enough for safety research — go back and run dedicated searches for lab blogs, AISI, METR, Apollo Research, arXiv safety papers before finalizing.",
+      "focus": "This topic has two pillars with UNEQUAL weight. Pillar 1 is the PRIMARY focus. PILLAR 1 (PRIMARY — aim for 2 of 3 Key Developments): AI SAFETY RESEARCH & ASSURANCE — alignment research (RLHF, constitutional AI, scalable oversight, weak-to-strong generalization); interpretability and mechanistic interpretability advances; red-teaming methodologies and adversarial robustness; dangerous capability evaluations (cyber, biological, persuasion, autonomous replication) from AISI, METR, Apollo Research, and lab-internal teams; evaluation integrity and benchmark gaming; evaluation methodology research (evaluator validity, LLM-as-judge reliability, eval design); agentic supervision and control (monitoring, kill switches, CoT faithfulness, sandboxing); jailbreak research and mitigation; responsible AI tooling (guardrails, content filtering, bias detection); AI auditing methodologies and assurance tooling; and safety benchmarks. Search arXiv, lab blogs (Anthropic, OpenAI, DeepMind, METR, MIRI, Redwood Research), and safety evaluation bodies (AISI, Apollo Research, CAIS) explicitly. PILLAR 2 (SECONDARY — at most 1 of 3 Key Developments): GOVERNANCE & REGULATION — only include legislation or regulation as a Key Development if it sets a genuinely new precedent (e.g., first law of its kind, first enforcement action, new compliance deadline). Routine legislative movement (committee votes, session scheduling, bill amendments, incremental trilogue progress) belongs in Landscape Trends, not Key Developments. Cover: formal AI governance frameworks (EU AI Act enforcement, NIST AI RMF, ISO 42001); multi-jurisdiction regulatory developments; enterprise risk management for LLM deployments; audit-stable telemetry and observability schema compliance. BALANCE RULE: At least 2 of 3 Key Developments MUST come from Pillar 1 (safety research, evaluations, techniques, tooling). If web search returns mostly regulatory news, you have not searched hard enough for safety research — go back and run dedicated searches for lab blogs, AISI, METR, Apollo Research, arXiv safety papers before finalizing.",
       "sources": [
         {"name": "Anthropic Research Blog — alignment, interpretability, responsible scaling", "url": "https://research.anthropic.com"},
         {"name": "OpenAI Safety — safety research and red-teaming", "url": "https://openai.com/safety"},
@@ -194,7 +204,7 @@
     {
       "slug": "enterprise-genai-adoption",
       "label": "Enterprise GenAI Adoption",
-      "focus": "how enterprises are deploying GenAI at scale including specific case studies with ROI data, productivity metrics, and failure modes; organizational and workforce change management; build-vs-buy and vendor selection decisions; large-scale regulated industry adoption (financial services, healthcare, legal, government); barriers to production deployment; and analyst forecasts from IDC, Gartner, Forrester, and McKinsey on enterprise AI spend and readiness",
+      "focus": "how enterprises are deploying GenAI at scale including specific case studies with ROI data, productivity metrics, and failure modes; organizational and workforce change management; build-vs-buy and vendor selection decisions; large-scale regulated industry adoption (financial services, healthcare, legal, government); barriers to production deployment; standards adoption exposure — telemetry/observability standards stability (e.g., OTel GenAI semconv status) and its procurement and migration implications; and analyst forecasts from IDC, Gartner, Forrester, and McKinsey on enterprise AI spend and readiness",
       "sources": [
         {"name": "McKinsey AI Insights", "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights"},
         {"name": "Gartner AI Research", "url": "https://www.gartner.com/en/topics/artificial-intelligence"},
@@ -491,7 +501,7 @@
     {
       "slug": "llm-production-infrastructure",
       "label": "LLM Production Infrastructure",
-      "focus": "The full LLM production stack, with priority determined by the reader's role in LLM observability, evaluation, and governance at enterprise scale. Structure coverage accordingly: LEAD WITH (and use for Technical Deep-Dive) — observability and monitoring platforms (Langfuse, Arize Phoenix, Braintrust, etc.); evaluation frameworks for quality, safety, hallucination, and policy compliance; LLMOps tooling and deployment pipelines; production monitoring including drift detection, multi-turn evaluation, and eval-driven alerting; fine-tuning and PEFT workflows; vendor landscape for LLM ops. ALSO COVER (Key Developments bullets, no deep dive needed) — serving framework releases (vLLM, SGLang, TGI) and inference efficiency developments including kernel optimisation, KV cache compression, quantisation — surface what changed and why it matters operationally, but do not deep-dive into implementation details. EXCLUDE FROM THIS TOPIC — AI safety research, alignment, regulatory frameworks, and governance policy (those belong in Safety & Governance); model benchmark results and capability research (those belong in Models & Market)",
+      "focus": "Infrastructure for businesses to RUN generative AI and agentic systems in production — the operate side. Distinct from Enterprise GenAI Adoption, which covers how businesses USE GenAI and manage transformation: this topic is the platform and infrastructure businesses operate; that topic is how the business deploys, governs change, and measures value. Pitch coverage at a reader who is both a senior ML engineer and a technology executive: technical depth is welcome at the tool, platform, and deployment-architecture level — not at the inference-engine implementation level. LEAD WITH (and use for Technical Deep-Dive) — observability, monitoring, and evaluation platforms for production GenAI and agentic systems (Langfuse, Arize Phoenix, Braintrust, LangSmith): releases and operational capabilities; managed model-hosting and fine-tuning services (Bedrock, Vertex AI, Together, Fireworks, Modal, Baseten): pricing, SLAs, capability and API changes; the serving stack at the selection level — vLLM/SGLang/TGI/TensorRT-LLM releases and their operational trade-offs for hosting choices; self-hosting economics (utilization-aware cost models, make-vs-buy, GPU capacity planning); deployment patterns for regulated environments (on-prem, sovereign, VPC isolation). ALSO COVER (single Key Development bullets at most, never the Technical Deep-Dive) — inference-efficiency and serving research ONLY when it changes a near-term procurement, capacity, cost, or SLA decision: lead with the decision implication, keep mechanism to a sentence. If fewer than 2 pre-retrieved candidates are decision-relevant for this audience, include fewer — audience relevance outranks the scholarly quota. EXCLUDE FROM THIS TOPIC — inference-engine implementation research (scheduler algorithms, KV-cache transfer optimization, MoE routing internals, parallelism switching mechanics) with no direct platform-decision consequence; academic studies of evaluation methodology and evaluator validity (those belong in Safety, Assurance & Governance); telemetry standards status and governance such as OTel semconv stability status (adoption/migration exposure belongs in Enterprise GenAI Adoption, audit/compliance implications in Safety & Governance); AI safety research, alignment, and regulation (Safety & Governance); model capability and benchmark results (Models & Market); agent frameworks and orchestration (Agentic Systems); GPU supply, data center buildout, and sovereign-compute policy (AI Infrastructure & Geopolitics owns the macro supply and geopolitics story — this topic owns running models on infrastructure you or your vendor already have)",
       "sources": [
         {"name": "InfoQ AI/ML", "url": "https://www.infoq.com/ai-ml-data-eng/"},
         {"name": "arXiv cs.SE (Software Engineering)", "url": "https://arxiv.org/list/cs.SE/recent"},
@@ -507,18 +517,6 @@
       "seed_papers": [
         {"id": "ARXIV:2309.06180", "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention (vLLM)"},
         {"id": "ARXIV:2312.07104", "title": "SGLang: Efficient Execution of Structured Language Model Programs"},
-        {"id": "ARXIV:2401.09670", "title": "DistServe: Disaggregating Prefill and Decoding for Goodput-optimized LLM Serving"},
-        {"id": "ARXIV:2311.18677", "title": "Splitwise: Efficient Generative LLM Inference Using Phase Splitting"},
-        {"id": "ARXIV:2407.00079", "title": "Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving"},
-        {"id": "ARXIV:2205.14135", "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"},
-        {"id": "ARXIV:2307.08691", "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning"},
-        {"id": "ARXIV:2211.17192", "title": "Fast Inference from Transformers via Speculative Decoding"},
-        {"id": "ARXIV:2401.10774", "title": "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads"},
-        {"id": "ARXIV:2210.17323", "title": "GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers"},
-        {"id": "ARXIV:2306.00978", "title": "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration"},
-        {"id": "ARXIV:2501.01005", "title": "FlashInfer: Efficient and Customizable Attention Engine for LLM Inference Serving"},
-        {"id": "ARXIV:2306.05685", "title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena"},
-        {"id": "ARXIV:2307.03109", "title": "A Survey on Evaluation of Large Language Models"},
         {"id": "ARXIV:2310.03714", "title": "DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines"},
         {"id": "ARXIV:2309.15217", "title": "RAGAS: Automated Evaluation of Retrieval Augmented Generation"},
         {"id": "ARXIV:2005.11401", "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"},
@@ -530,7 +528,6 @@
         {"name": "Matei Zaharia", "note": "Databricks/Stanford — MLOps, Spark"},
         {"name": "Qinghua Lu", "note": "CSIRO Data61 — SE for AI, AI engineering patterns"},
         {"name": "Liming Zhu", "note": "CSIRO Data61 — AI engineering, responsible AI"},
-        {"name": "Tri Dao", "note": "FlashAttention, efficient attention kernels"},
         {"name": "Lianmin Zheng", "note": "UC Berkeley — SGLang, vLLM, Chatbot Arena"},
         {"name": "Woosuk Kwon", "note": "UC Berkeley — vLLM, PagedAttention"},
         {"name": "Edward Hu", "note": "Microsoft/OpenAI — LoRA"},
@@ -545,28 +542,21 @@
         "MLCommons"
       ],
       "concept_synonyms": [
-        "LLMOps",
         "LLM serving",
         "LLM evaluation",
         "LLM inference",
-        "KV cache",
-        "speculative decoding",
         "vLLM",
         "SGLang",
         "model serving system",
-        "inference throughput",
-        "token generation",
-        "prompt caching",
-        "continuous batching",
+        "model hosting",
+        "AI gateway",
+        "inference cost",
         "LoRA",
         "fine-tuning",
         "retrieval-augmented generation",
         "LLM observability",
         "LLM monitoring",
-        "LLM deployment",
-        "quantization serving",
-        "disaggregated serving",
-        "prefix caching"
+        "LLM deployment"
       ],
       "academic_venues": [
         {"name": "MLSys", "type": "conference"},
@@ -576,7 +566,13 @@
         {"name": "ICSE SE4AI Workshop", "type": "workshop"},
         {"name": "KDD", "type": "conference"}
       ],
-      "arxiv_categories": ["cs.SE", "cs.DC", "cs.LG", "cs.PF"]
+      "arxiv_categories": ["cs.SE", "cs.DC", "cs.LG", "cs.PF"],
+      "rejection_filters": [
+        "Reject inference-engine implementation research (scheduling algorithms, KV-cache transfer, MoE routing internals, parallelism mechanics) unless it changes a procurement, capacity, cost, or SLA decision — and then cover the decision implication in one bullet with mechanism kept to a sentence. It must never be the Technical Deep-Dive subject.",
+        "Reject standards-status updates and unresolved-gap restatements (e.g., a spec still in Development status) unless a concrete change occurred this cycle (spec release, stability promotion, breaking schema change).",
+        "Reject vendor maintenance-only releases (bugfix changelogs with no new operational capability) from all sections including Vendor Landscape.",
+        "Reject academic evaluation-methodology studies (evaluator validity, LLM-as-judge reliability, eval design) unless the core novelty is an operational platform capability."
+      ]
     },
     {
       "slug": "ai-infrastructure-and-geopolitics",

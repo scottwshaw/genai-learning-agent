@@ -134,7 +134,7 @@ class TestCommitAndPush:
                 _mock_run(stdout=""),                           # git ls-remote (no branch)
                 _mock_run(),                                    # git checkout main
                 _mock_run(),                                    # git pull --ff-only
-                _mock_run(),                                    # git checkout -b annotations
+                _mock_run(),                                    # git checkout -B annotations
                 _mock_run(),                                    # git add
                 _mock_run(returncode=1),                        # git diff --cached (has changes)
                 _mock_run(),                                    # git commit
@@ -150,7 +150,7 @@ class TestCommitAndPush:
             cwd=tmp_path, capture_output=True, text=True, check=True,
         )
         assert calls[4] == call(
-            ["git", "checkout", "-b", "annotations"],
+            ["git", "checkout", "-B", "annotations"],
             cwd=tmp_path, capture_output=True, text=True, check=True,
         )
         # Should commit
@@ -191,6 +191,34 @@ class TestCommitAndPush:
         assert len(calls) == 9
         assert "pushed" in result
 
+    def test_fresh_branch_creation_survives_stale_local_branch(self, tmp_path):
+        """Given the annotations branch was deleted remotely (PR merged)
+        but a stale local annotations branch still exists,
+        when commit_and_push() is called,
+        then it uses checkout -B so branch creation resets the stale branch
+        instead of failing with 'branch already exists'."""
+        with patch("git_sync.subprocess.run") as mock_run, \
+             patch("git_sync._load_gh_token", return_value="ghp_test123"):
+            mock_run.side_effect = [
+                _mock_run(),                                    # git fetch
+                _mock_run(stdout=""),                           # git ls-remote (branch gone)
+                _mock_run(),                                    # git checkout main
+                _mock_run(),                                    # git pull --ff-only
+                _mock_run(),                                    # git checkout -B annotations
+                _mock_run(),                                    # git add
+                _mock_run(returncode=1),                        # git diff --cached (has changes)
+                _mock_run(),                                    # git commit
+                _mock_run(stdout="pushed\n"),                   # git push -u
+                _mock_run(stdout="https://github.com/…/pull/3\n"),  # gh pr create
+            ]
+            git_sync.commit_and_push(tmp_path)
+
+        calls = mock_run.call_args_list
+        assert calls[4] == call(
+            ["git", "checkout", "-B", "annotations"],
+            cwd=tmp_path, capture_output=True, text=True, check=True,
+        )
+
     def test_creates_fresh_branch_after_previous_pr_merged(self, tmp_path):
         """Given the previous annotations branch was merged and deleted,
         when commit_and_push() is called,
@@ -202,7 +230,7 @@ class TestCommitAndPush:
                 _mock_run(stdout=""),                           # git ls-remote (branch gone)
                 _mock_run(),                                    # git checkout main
                 _mock_run(),                                    # git pull --ff-only
-                _mock_run(),                                    # git checkout -b annotations
+                _mock_run(),                                    # git checkout -B annotations
                 _mock_run(),                                    # git add
                 _mock_run(returncode=1),                        # git diff --cached (has changes)
                 _mock_run(),                                    # git commit
@@ -218,7 +246,7 @@ class TestCommitAndPush:
             cwd=tmp_path, capture_output=True, text=True, check=True,
         )
         assert calls[4] == call(
-            ["git", "checkout", "-b", "annotations"],
+            ["git", "checkout", "-B", "annotations"],
             cwd=tmp_path, capture_output=True, text=True, check=True,
         )
         # Should create PR
