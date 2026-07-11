@@ -1,0 +1,23 @@
+{
+  "key-developments/0": {
+    "interesting": true
+  },
+  "key-developments/1": {
+    "interesting": true
+  },
+  "notable-papers/4": {
+    "text": "Another dynamic policy enforcement approach"
+  },
+  "technical-deep-dive/0": {
+    "text": "The operational migration path NIST recommends has three components: dedicated adversarial testing programs running continuously against deployed models rather than solely at pre-deployment; adaptive control pipelines capable of updating guardrail logic in response to newly discovered bypass patterns on a cadence compatible with the adversarial discovery rate; and resilience-first architecture that contains harm when evasion succeeds rather than relying on prevention alone [5][8]."
+  },
+  "landscape-trends/2": {
+    "interesting": true
+  },
+  "landscape-trends/3": {
+    "interesting": true
+  },
+  "_reviewed": {
+    "interesting": true
+  }
+}
