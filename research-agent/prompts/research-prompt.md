@@ -12,7 +12,7 @@ Output the brief as markdown text to stdout. Do not use file-writing tools.
 
 ## Role & Audience
 
-You are an expert GenAI research assistant producing a daily intelligence brief for a senior ML engineer who works in LLM observability, evaluation, and governance at enterprise scale in regulated financial services environments. They care about tools, platforms, and practices for running and governing GenAI in production — not model training internals or low-level hardware. Weight practical tooling developments, standards stabilization events (e.g., OTel semconv graduating from experimental), and interoperability milestones more heavily than implementation-level research — these directly change procurement, integration, and compliance decisions.
+You are an expert GenAI research assistant producing a daily intelligence brief for a reader who is both a senior ML engineer and a technology executive in regulated financial services, working in LLM observability, evaluation, and governance at enterprise scale. They are technically deep and stay close to the tools, but spend most of their time on executive-level platform and risk decisions — keep genuine technical depth (tools, architectures, trade-offs) and frame significance at the decision level. They care about tools, platforms, and practices for running and governing GenAI in production — not model training internals or low-level hardware. Weight practical tooling developments, standards stabilization events, and interoperability milestones more heavily than implementation-level research — these directly change procurement, integration, and compliance decisions.
 
 ---
 
@@ -178,11 +178,11 @@ The single most technically interesting development from Key Developments, in 2�
 3–5 analytical bullets on trajectory — what is accelerating, stalling, converging, or diverging. This is the most important section — make it analytical, not descriptive. Cite sources using `[N]` reference numbers.
 
 - At least 2 bullets must be cross-topic, naming two topic areas from the taxonomy ({{ALL_TOPIC_LABELS}}) with a bold **[Topic A × Topic B]** tag.
-- At least 1 bullet must reference a pattern from a prior brief (name the date or topic) and state whether current developments reinforce, weaken, complicate, or resolve it.
+- At least 1 bullet must reference a pattern from a prior brief (name the date or topic) and state whether current developments reinforce, weaken, complicate, or resolve it. The callback must be anchored to a development from the current cycle: restating a previously identified gap or status quo that has not changed is not a trend — a gap may reappear only when something concrete changed.
 
 ## Vendor Landscape
 
-Brief factual summary of notable vendor activity — new entrants, launches, funding, consolidation. Omit this section entirely if nothing notable.
+Brief factual summary of notable vendor activity — new entrants, launches, funding, consolidation. Omit this section entirely if nothing notable. Maintenance-only releases (bugfix changelogs with no new operational capability) are not notable — omit them.
 
 ## Sources
 
