@@ -96,7 +96,8 @@ def commit_and_push(repo_root: Path = REPO_ROOT) -> str:
         # Create fresh branch from up-to-date main
         _run(["git", "checkout", "main"], cwd=repo_root, check=True)
         _run(["git", "pull", "--ff-only", "origin", "main"], cwd=repo_root)
-        _run(["git", "checkout", "-b", BRANCH], cwd=repo_root, check=True)
+        # -B resets any stale local branch left behind after the PR merged
+        _run(["git", "checkout", "-B", BRANCH], cwd=repo_root, check=True)
 
     # Stage and check for changes
     subprocess.run(["git", "add", "--", "briefs/"], cwd=repo_root, check=True)
