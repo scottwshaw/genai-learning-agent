@@ -1,0 +1,78 @@
+# LLM Production Infrastructure — Research Brief (2026-07-17)
+
+## Key Developments
+
+- **Published exploit proofs for serving-layer RCEs make self-hosting risk concrete and immediate**
+  - **What changed:** Antiproof assigned 12 CVEs covering RCEs in Ray, SGLang, vLLM, and LiteLLM after scanning 50 production systems.
+  - **Why it matters:** Proof-of-exploitability documentation now exists for the two serving frameworks most commonly selected for production FS deployments.
+  - *Sources: [1], [2]*
+
+- **Constraint-Driven framework provides structured technique-selection guidance for self-hosting economics**
+  - **What changed:** A five-axis constraint taxonomy maps quantization, pruning, distillation, PEFT, and inference-time optimization to operational constraints.
+  - **Why it matters:** FS teams scoping on-premises deployments gain a prescriptive decision framework replacing heuristic technique selection.
+  - *Sources: [5]*
+
+---
+
+## Notable Papers / Models / Tools
+
+| Item | Date | Source | Summary |
+|------|------|--------|---------|
+| Antiproof: Synthesizing Vulnerability Detectors and Proofs of Exploitability | 2026 | [1] | *Pre-retrieved candidate — Shakevsky, Villa, Stoica et al. (UC Berkeley/Anyscale); Tier 1 affiliated.* Neuro-symbolic static detector synthesis with proof-of-exploitability oracle validation; scanned 50 production systems; 64 of 66 known vulnerabilities detected; 12 CVEs confirmed including RCEs in Ray, SGLang, vLLM, and LiteLLM. See Key Development and Technical Deep-Dive. |
+| Constraint-Driven Model Optimization (arXiv:2607.13735) | July 15, 2026 | [5] | *Pre-retrieved candidate — Shivkant (IISc), Mohanty and Wadhwa (EXL); Tier 1 affiliated.* Five-axis constraint taxonomy — data availability, latency budget, memory budget, accuracy tolerance, retraining budget — mapped to quantization, pruning, distillation, PEFT, and inference-time optimization technique selection. A five-axis framework mapping technique selection to operational constraints; authors argue it is the first to synthesize production literature into prescriptive pipelines rather than algorithmic categories [5]. |
+| KV Cache Optimization Survey, ACL Findings 2026 (arXiv:2607.08057) | 2026 | [6] | Jiang, Yang, Zhang, Liu; peer-reviewed ACL Findings; 12 citations. Three-axis taxonomy (temporal/spatial/structural) with cross-axis co-design analysis. Covered in depth in the 2026-07-11 brief; noted here as reference architecture context for serving-stack selection in light of this cycle's security findings. |
+| TGI maintenance-mode formalization; Inference Endpoints default shift | December 2025 — ongoing | [7] | Hugging Face placed TGI in maintenance mode (bug-fixes only) in December 2025; Inference Endpoints now defaults to vLLM or SGLang for new deployments. Decision-relevant for any team still on TGI in procurement or refresh cycles. |
+
+---
+
+## Technical Deep-Dive
+
+**Antiproof: Why proof-of-exploitability changes the risk calculus for self-hosted serving**
+
+The methodological distinction that makes the Antiproof findings operationally significant — rather than another CVE advisory to triage — is the proof-of-exploitability requirement [1]. Prior vulnerability research in the serving-framework space relied on manual code audit or behavioral fuzzing, producing potential-vulnerability reports that infrastructure teams, under normal patching prioritization pressure, often deprioritized when functional impact was not demonstrated. Antiproof instead learns static vulnerability detectors iteratively from known-vulnerability training corpora through a neuro-symbolic synthesis loop, then validates each candidate by generating executable proof-of-concept code demonstrating concrete attacker capability before a CVE is assigned [1]. This removes the ambiguity that permits triage deferral: each of the 12 CVEs carries a working exploit demonstration, not an analyst judgment that exploitation is theoretically possible.
+
+The four affected frameworks are not equivalent in patch status or in blast radius. vLLM has published patch releases addressing its Antiproof-documented CVEs; no equivalent remediation has been published for SGLang at time of writing [1], [2]. FS teams should confirm their deployed vLLM version is on a patched release. SGLang presents the more acute risk: it has achieved rapid adoption at hyperscaler scale precisely because its RadixAttention prefix-sharing and structured-output performance is superior to vLLM on those workload shapes, yet its security engineering maturity has not kept pace with its deployment footprint. At time of writing, no official patches are confirmed for SGLang's Antiproof-documented RCEs, and the framework's default serving examples expose API sockets on all network interfaces — making the common "just follow the quickstart" deployment pattern directly vulnerable [1], [2]. LiteLLM's exposure is categorically different: as an AI gateway and multi-provider proxy, it holds API credentials for all downstream model providers, processes routing policies, and in many deployments handles system prompts. An RCE in LiteLLM is not a single-model compromise but a control-plane compromise spanning the entire multi-model stack [1].
+
+For regulated financial services teams, the risk framing extends beyond patching SLAs. DORA resilience testing requirements and SR 11-7 model risk management obligations both require firms to identify and maintain visibility into material operational dependencies. A serving framework with confirmed unpatched RCE and active proof-of-exploit code in circulation is a material operational risk event under both frameworks — not a patching backlog item. The threat model that most FS serving deployments have not formally articulated is now visible: an adversary with network access to the serving layer — whether via misconfigured VPC security groups, lateral movement from a co-tenant, or supply-chain compromise of a CI/CD pipeline that builds the container image — can achieve code execution on the host running production model weights and potentially cached inference context containing sensitive financial data [1], [2].
+
+The constructive procurement implication is that the unpriced security engineering labor for self-hosted deployments has become materially more visible. Managed API services handle serving-framework patching within the provider's operational SLA; self-hosted deployments place the entire obligation on the operating team, including continuous CVE monitoring for a dependency category — OSS inference engines — that most enterprise vulnerability management pipelines have not yet explicitly scoped. For FS teams that must self-host due to data residency or compliance requirements, the minimum viable response this week is: audit network exposure of all serving-framework API and scheduler sockets; enforce API key authentication on all endpoints (both vLLM and SGLang expose unauthenticated surfaces by default in their quickstart configurations); rotate all provider API credentials stored in LiteLLM deployments; and establish a named owner for serving-framework CVE tracking, distinct from the application-layer patching process [1], [2].
+
+---
+
+## Landscape Trends
+
+- **[LLM Production Infrastructure × Safety, Assurance & Governance]: Infrastructure-layer compromise can bypass all model-level safety controls — a risk gap that most enterprise AI governance programs have not addressed.** Safety evaluations, red-teaming, and guardrail pipelines are now standard in regulated-sector AI governance; serving-framework CVE management is not. The 2026-07-02 Safety & Governance brief covered evaluation-level control failures (METR's GPT-5.6 Sol evaluation) and the "defeat devices" conceptual framework; the Antiproof findings reveal an entirely distinct failure mode below the model layer [1]. An RCE in the serving layer can be used to exfiltrate system prompts, extract cached context containing PII or trade-sensitive data, or poison the inference environment in ways that make model-level safety controls irrelevant. Enterprise AI risk registers that scope threats only to model behavior and prompt injection are structurally incomplete.
+
+- **[LLM Production Infrastructure × Enterprise GenAI Adoption]: Managed agent runtimes are beginning to absorb the Day 2 operational costs that prior briefs identified as the dominant barrier to agentic scale.** The 2026-06-27 Enterprise GenAI Adoption brief cited survey findings that 72% of organizations report operating AI costs more than building it, driven substantially by absent managed infrastructure for agentic workloads. Bedrock AgentCore Harness GA this week instantiates a concrete counter-pattern: session observability, IAM governance, and orchestration integration delivered as a first-class managed service [3], [4]. The near-term risk for FS institutions is that the same IAM and CloudWatch integration that eliminates custom telemetry build is also the mechanism that makes future portability difficult — a strategic lock-in trade-off that deserves explicit platform governance documentation before it becomes invisible.
+
+- **The vLLM/SGLang duopoly identified in the 2026-07-05 brief has acquired a security patch cadence differential that is now a first-order procurement criterion, not a secondary consideration.** Earlier in 2026, the primary selection axes between vLLM and SGLang were hardware breadth — favoring vLLM on AMD ROCm and Intel XPU — and prefix-sharing throughput on structured-output workloads, favoring SGLang's RadixAttention. The Antiproof findings add a third axis: vLLM has published CVE remediations; SGLang does not yet have confirmed patches for its documented RCEs [1], [7]. For regulated institutions with defined patching SLAs — required under DORA and standard operational risk frameworks — an unpatched critical CVE with proof-of-exploit constitutes a deployment-hold condition for new SGLang production workloads until remediated. This does not reflect a permanent capability disadvantage for SGLang but is an immediate procurement gate that platform teams should formally track and document.
+
+- **The Constraint-Driven Model Optimization framework addresses a structured decision gap in self-hosting economics that has been accumulating across prior briefs.** The 2026-06-24 and 2026-07-05 briefs both surfaced serving optimization research at the implementation level — KV cache scheduling, adapter fusion, disaggregated serving; the Constraint-Driven framework from IISc/EXL (arXiv:2607.13735) takes a complementary approach by mapping technique selection to five operational constraint axes rather than algorithmic categories [5]. For FS platform teams scoping on-premises deployments — where 63% of organizations in the 2026-06-27 brief reported requiring on-premises for compliance — the absence of structured decision frameworks for compression and fine-tuning tradeoffs has been a recurring factor in post-deployment operational failures. This paper does not resolve the gap entirely, but provides a five-axis constraint taxonomy mapping technique selection to operational constraints — a decision-pipeline structure absent from prior serving optimization surveys in this topic's coverage window [5].
+
+- **[LLM Production Infrastructure × AI Infrastructure & Geopolitics]: Serving framework selection is increasingly entangled with infrastructure sovereignty decisions for regulated workloads in European jurisdictions.** The 2026-07-01 AI Infrastructure & Geopolitics brief established that operational sovereignty requires infrastructure control at compute, network, and energy layers jointly — not data residency declarations alone. Performance benchmarking data shows that both vLLM and SGLang are now deployed within EU-region hyperscaler infrastructure, meaning the serving-layer security posture of these frameworks intersects directly with broader questions about infrastructure control and regulatory topology for FS teams operating high-risk AI workloads [7]. Teams deploying these frameworks within EU-region managed infrastructure should assess whether serving-layer patch cadence and network exposure defaults are compatible with their institution's infrastructure sovereignty commitments.
+
+---
+
+## Vendor Landscape
+
+**AWS:** AgentCore Harness promoted to GA with CreateHarness/InvokeHarness two-call API, per-primitive span drill-down in CloudWatch, Step Functions native integration, and CDK L2 constructs at stable. The CDK promotion removes the alpha-dependency flag that had blocked infrastructure-as-code adoption at regulated institutions with strict dependency governance policies. [3], [4]
+
+**SGLang (open source):** No confirmed patches for RCEs documented in Antiproof at time of writing [1], [2]. Platform teams should treat any SGLang deployment with unrestricted network exposure as a deployment-hold condition for new production workloads, and implement network isolation and authentication proxy compensating controls for existing deployments pending official remediation.
+
+**vLLM (open source):** CVE remediations published; teams should verify their deployed version against patched release versions [1], [2]. vLLM's security patch process, while not at enterprise software vendor standards, is materially more active than SGLang's in the current cycle.
+
+**LiteLLM:** Antiproof confirms RCE exposure; the gateway's position as multi-provider credential broker and routing control plane amplifies blast radius across the full model stack [1]. Teams should verify they are on a patched release and rotate all stored provider API credentials as an immediate precautionary measure regardless of version.
+
+**Hugging Face:** TGI remains in maintenance mode (bug-fixes only since December 2025); Inference Endpoints continues to default to vLLM or SGLang for new deployments [7]. No new operational capability this cycle.
+
+---
+
+## Sources
+
+1. Shakevsky, A., Villa, C., Stoica, I. et al. "Antiproof: Synthesizing Vulnerability Detectors and Proofs of Exploitability." arXiv (Cornell University), 2026. https://openalex.org/W7168401925 [Tier 1 — arXiv preprint, UC Berkeley / Anyscale affiliated]
+2. Orca Security. "Pickle in the Pipeline: Critical RCE Vulnerabilities in SGLang's LLM Serving Framework." 2026. https://orca.security/resources/blog/sglang-llm-framework-rce-vulnerabilities/ [Tier 2 — independent security research firm]
+3. AWS Machine Learning Blog. "Amazon Bedrock AgentCore harness is now generally available." Amazon Web Services, July 2026. https://aws.amazon.com/blogs/machine-learning/amazon-bedrock-agentcore-harness-is-now-generally-available-go-from-idea-to-production-grade-agent-in-minutes/ [Tier 2 — vendor blog]
+4. AWS Documentation. "Amazon Bedrock AgentCore Release Notes." July 2026. https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/release-notes.html [Tier 2 — vendor documentation]
+5. Shivkant, D., Mohanty, S., Wadhwa, U. "Constraint-Driven Model Optimization: An Industry Framework for Selecting Compression and Acceleration Techniques in Modern Machine Learning Systems." arXiv:2607.13735, July 15, 2026. https://arxiv.org/abs/2607.13735 [Tier 1 — arXiv preprint, IISc / EXL affiliated]
+6. Jiang, J., Yang, P., Zhang, R., Liu, J. "Towards Efficient Large Language Model Serving: A Survey on System-Aware KV Cache Optimization." ACL Findings 2026; arXiv:2607.08057, 2026. https://arxiv.org/abs/2607.08057 [Tier 1 — peer-reviewed ACL Findings, 12 citations]
+7. Techsy.io. "vLLM vs SGLang 2026: H100 Benchmarks Inside." July 14, 2026. https://techsy.io/en/blog/vllm-vs-sglang [Tier 2 — independent technical benchmarking and serving framework comparison]
