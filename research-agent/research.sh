@@ -100,7 +100,7 @@ BRIEFS_DIR="$REPO_ROOT/briefs"
 LOG_FILE="$REPO_ROOT/agent.log"
 PROMPT_TEMPLATE="$AGENT_DIR/prompts/research-prompt.md"
 DATE="$(date +%Y-%m-%d)"
-MODEL="${ANTHROPIC_MODEL:-claude-sonnet-4-6}"
+MODEL="${ANTHROPIC_MODEL:-claude-sonnet-5}"
 
 # ---------------------------------------------------------------------------
 # Remaining prerequisite checks

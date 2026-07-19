@@ -9,12 +9,11 @@ Setup:
 
 Environment variables:
     ANTHROPIC_API_KEY        (required)
-    ANTHROPIC_MODEL          (optional, default: claude-sonnet-4-6)
-    THINKING_BUDGET          (optional, default: 20000)
+    ANTHROPIC_MODEL          (optional, default: claude-sonnet-5)
     MAX_TOKENS               (optional, default: 32000)
     ENABLE_CRITIC            (optional, set to "1" or "true" to enable critic loop)
     CRITIC_MODEL             (optional, default: same as ANTHROPIC_MODEL)
-    CRITIC_THINKING_BUDGET   (optional, default: 8000)
+    CRITIC_THINKING_BUDGET   (optional, default: 8000; sizes critic/revision max_tokens)
 """
 
 import json
@@ -66,7 +65,7 @@ def strip_preamble(text_output: str) -> tuple[str, int]:
     return text_output[marker:].strip(), marker
 
 
-def call_api(client, model, max_tokens, messages, thinking_budget,
+def call_api(client, model, max_tokens, messages,
              tools=None, label="api"):
     """Make an API call with retry-on-529 and streaming.
 
@@ -75,7 +74,8 @@ def call_api(client, model, max_tokens, messages, thinking_budget,
     kwargs = dict(
         model=model,
         max_tokens=max_tokens,
-        thinking={"type": "enabled", "budget_tokens": thinking_budget},
+        # Adaptive thinking: fixed budget_tokens is rejected on Sonnet 5+
+        thinking={"type": "adaptive"},
         messages=messages,
     )
     if tools:
@@ -156,7 +156,7 @@ def run_critic(client, model, brief, topic_label, topic_focus,
 
     log("Critic: running compliance check...")
     max_tokens = thinking_budget + 8192
-    response = call_api(client, model, max_tokens, messages, thinking_budget,
+    response = call_api(client, model, max_tokens, messages,
                         tools=tools, label="critic")
     log(f"Critic: stop_reason={response.stop_reason}, blocks={len(response.content)}")
 
@@ -186,7 +186,7 @@ def run_revision(client, model, brief, violations_json, topic_label,
 
     max_tokens = thinking_budget + 16000
     log("Revision: rewriting brief to fix violations...")
-    response = call_api(client, model, max_tokens, messages, thinking_budget,
+    response = call_api(client, model, max_tokens, messages,
                         label="revision")
     log(f"Revision: stop_reason={response.stop_reason}, blocks={len(response.content)}")
 
@@ -197,7 +197,7 @@ def run_revision(client, model, brief, violations_json, topic_label,
     return revised
 
 
-def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
+def generate_brief(client, model, prompt, max_tokens, tools):
     """Two-phase brief generation: research with web search, then write with fresh thinking."""
 
     # --- Phase 1: Research (web search, collect findings) ---
@@ -208,7 +208,7 @@ def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
         log(f"Research API call #{iteration + 1}")
 
         response = call_api(client, model, max_tokens, messages,
-                            thinking_budget, tools=tools, label="research")
+                            tools=tools, label="research")
 
         log(f"stop_reason={response.stop_reason}, blocks={len(response.content)}")
 
@@ -243,7 +243,7 @@ def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
         sys.exit(1)
 
     # --- Phase 2: Write (fresh thinking, no tools) ---
-    log("Phase 2: writing brief (fresh thinking budget, no tools)")
+    log("Phase 2: writing brief (fresh context, no tools)")
     write_messages = [
         {"role": "user", "content": prompt},
         {"role": "assistant", "content": research_notes},
@@ -253,7 +253,7 @@ def generate_brief(client, model, prompt, max_tokens, thinking_budget, tools):
     ]
 
     response = call_api(client, model, max_tokens, write_messages,
-                        thinking_budget, tools=None, label="writing")
+                        tools=None, label="writing")
 
     log(f"stop_reason={response.stop_reason}, blocks={len(response.content)}")
     text_output = extract_text(response)
@@ -340,7 +340,7 @@ def main():
         print("ERROR: ANTHROPIC_API_KEY environment variable not set", file=sys.stderr)
         sys.exit(1)
 
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5")
     client = anthropic.Anthropic(api_key=api_key)
 
     enable_critic = os.environ.get("ENABLE_CRITIC", "").lower() in ("1", "true")
@@ -373,17 +373,15 @@ def main():
         print("ERROR: No prompt received on stdin", file=sys.stderr)
         sys.exit(1)
 
-    thinking_budget = int(os.environ.get("THINKING_BUDGET", "20000"))
     max_tokens = int(os.environ.get("MAX_TOKENS", "32000"))
 
     log(f"Starting: model={model}, prompt_chars={len(prompt)}, "
-        f"thinking_budget={thinking_budget}, max_tokens={max_tokens}, "
+        f"max_tokens={max_tokens}, "
         f"critic={'enabled (model=' + critic_model + ')' if enable_critic else 'disabled'}")
 
-    tools = [{"type": "web_search_20250305", "name": "web_search"}]
+    tools = [{"type": "web_search_20260209", "name": "web_search"}]
 
-    brief = generate_brief(client, model, prompt, max_tokens,
-                           thinking_budget, tools)
+    brief = generate_brief(client, model, prompt, max_tokens, tools)
 
     if enable_critic:
         brief = critique_and_revise(client, brief, prompt, critic_model,
